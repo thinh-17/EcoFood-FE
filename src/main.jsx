@@ -1,15 +1,18 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import React from "react";
+import { createRoot } from "react-dom/client";
 
-import '@/index.css';
+import "@thinh-17/fe-core/style.css";
 
-import { AppProviders } from '@/app/AppProviders';
-import { AppRouter } from '@/app/AppRouter';
+import { AppProviders } from "./app/AppProviders/AppProviders.jsx";
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
+import { AppRouter } from "./app/AppRouter/AppRouter.jsx";
+
+import "./index.css";
+
+createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
     <AppProviders>
       <AppRouter />
     </AppProviders>
-  </StrictMode>,
+  </React.StrictMode>
 );
