@@ -1,0 +1,31 @@
+/* Each widget is a single flat surface; do not nest cards. */
+.wb-widget { height: 100%; display: flex; flex-direction: column; overflow: hidden; border-radius: 9px; background: #fff; }
+.wb-widget-heading { min-height: 46px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 19px; }
+.wb-widget-heading strong { font-size: 12px; font-weight: 700; color: #465960; }
+.wb-widget-heading-text, .wb-widget-handle { display: flex; align-items: center; gap: 9px; min-height: 44px; flex: 1; }
+.wb-widget-handle { cursor: grab; user-select: none; }
+.wb-widget-handle:active { cursor: grabbing; }
+.wb-grip { font-size: 23px; line-height: 1; color: #729a91; }
+.wb-remove { color: #a64b45; border: 0; border-radius: 4px; background: #fff0ef; width: 27px; height: 27px; font-size: 19px; }
+.wb-widget-body { min-height: 0; flex: 1; overflow: hidden; padding: 9px 19px 17px; }
+.wb-kpi { height: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 10px; }
+.wb-kpi-icon { color: #168373; display: flex; align-items: center; }
+.wb-kpi strong { font-size: clamp(20px,2.5vw,30px); line-height: 1.1; letter-spacing: -.6px; }
+.wb-kpi small { color: #2d8870; font-size: 11px; font-weight: 700; display: flex; align-items: center; }
+.wb-chart { height: 100%; width: 100%; min-height: 100px; }
+.wb-caption { font-size: 10px; color: #8b969a; height: 20px; }
+.wb-product-list { display: grid; align-content: center; gap: 15px; height: 100%; }
+.wb-product-row { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 11px; row-gap: 7px; font-size: 12px; }
+.wb-product-row b { color: #227b6d; }
+.wb-progress { background: #e5eee9; height: 5px; grid-column: span 2; overflow: hidden; border-radius: 5px; }
+.wb-progress i { display: block; height: 100%; background: #1b9880; border-radius: 5px; }
+.wb-feed, .wb-alert-list { list-style: none; margin: 0; padding: 0; height: 100%; overflow: auto; }
+.wb-feed li { padding: 11px 0; display: flex; align-items: flex-start; gap: 9px; font-size: 12px; }
+.wb-feed li + li { border-top: 1px solid #f1f3f1; }
+.wb-feed svg { flex-shrink: 0; margin-top: 2px; color: #3b917c; }
+.wb-feed span { font-weight: 700; }
+.wb-feed small { display: block; margin-top: 4px; font-weight: 400; color: #859397; }
+.wb-alert-list { display: grid; align-content: start; gap: 10px; }
+.wb-alert-list li { display: flex; align-items: center; gap: 9px; padding: 8px 0; font-size: 12px; color: #956f3c; }
+.wb-alert-list svg { flex: 0 0 auto; }
+.wb-unsupported { color: #869398; font-size: 12px; }

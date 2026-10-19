@@ -1,0 +1,17 @@
+/* News cards are peers; parent is not a card, avoiding card-in-card nesting. */
+.insights-panel { margin-top: 32px; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.section-heading h2 { margin: 0; font-size: 22px; letter-spacing: -.5px; }
+.carousel-actions { display: flex; gap: 7px; }
+.carousel-actions button { height: 34px; width: 34px; display: grid; place-items: center; background: white; border: 0; border-radius: 50%; color: #487266; }
+.carousel-actions button:hover { background: #e7f1eb; }
+.insight-track { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(235px, 1fr); overflow-x: auto; gap: 14px; margin-top: 17px; scroll-snap-type: x mandatory; scrollbar-width: thin; padding-bottom: 3px; }
+.insight-card { background: #fff; border-radius: 9px; overflow: hidden; scroll-snap-align: start; min-width: 230px; }
+.insight-image { height: 150px; background: #e5ebe7; position: relative; overflow: hidden; }
+.insight-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.insight-tag { position: absolute; bottom: 10px; left: 10px; background: #176c5f; color: white; border-radius: 4px; padding: 5px 8px; font-size: 10px; font-weight: 700; }
+.insight-content { padding: 16px 15px 18px; }
+.insight-content h3 { margin: 0 0 15px; font-size: 13px; line-height: 1.55; min-height: 55px; }
+.insight-source { display: flex; align-items: center; gap: 7px; color: #849196; font-size: 11px; }
+@media (max-width: 1100px) { .insight-track { grid-auto-columns: minmax(230px, 36%); } }
+@media (max-width: 750px) { .insight-track { grid-auto-columns: minmax(215px, 83%); } }

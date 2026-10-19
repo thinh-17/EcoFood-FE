@@ -1,11 +1,24 @@
-@import "tailwindcss";
-
-html,
-body,
-#root {
-  min-height: 100%;
+/* Base styles only: reset, typography, design tokens, and accessibility. */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+:root {
+  font-family: 'DM Sans', Arial, sans-serif;
+  color: #1b2933;
+  background: #f5f6f6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --fnb-ink: #1b2933;
+  --fnb-muted: #74818a;
+  --fnb-accent: #087f6e;
+  --fnb-accent-hover: #076759;
+  --fnb-paper: #fff;
+  --fnb-canvas: #f5f6f6;
+  --fnb-line: #e9eded;
 }
-
-body {
-  margin: 0;
-}
+*, *::before, *::after { box-sizing: border-box; }
+html { min-width: 320px; }
+body { margin: 0; min-width: 320px; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--fnb-accent); outline-offset: 3px; }
