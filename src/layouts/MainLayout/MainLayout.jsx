@@ -21,6 +21,7 @@ import { ROUTES } from "../../constants/routes.js";
 import { useActiveTenant } from
   "../../features/tenant/context/TenantProvider.jsx";
 import { useAuthStore } from "../../features/auth/store/authStore.js";
+import { TenantSwitcher } from "../../features/tenant/components/TenantSwitcher.jsx";
 
 export function MainLayout() {
   const location = useLocation();
@@ -248,14 +249,7 @@ export function MainLayout() {
         </nav>
 
         <div className="eco-sidebar__footer">
-          <div className="eco-sidebar__workspace">
-            <FiLayers size={19} aria-hidden="true" />
-
-            <div className="eco-nav-label">
-              <strong>Workspace</strong>
-              <small>EcoFood Platform</small>
-            </div>
-          </div>
+          <TenantSwitcher />
         </div>
       </aside>
 
