@@ -9,6 +9,7 @@ import {
   FiShield,
   FiLock,
   FiDatabase,
+  FiLogOut,
 } from "react-icons/fi";
 
 import { ROUTES } from "../../constants/routes.js";
@@ -93,6 +94,20 @@ export const navItems = [
     id: "account",
     label: "Account",
     icon: FiUser,
-    to: ROUTES.ACCOUNT,
+
+    children: [
+      {
+        id: "account-profile",
+        label: "Account",
+        icon: FiUser,
+        to: ROUTES.ACCOUNT,
+      },
+      {
+        id: "account-logout",
+        label: "Đăng xuất",
+        icon: FiLogOut,
+        action: "logout",
+      },
+    ],
   },
 ];

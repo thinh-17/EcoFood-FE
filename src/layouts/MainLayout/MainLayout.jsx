@@ -20,6 +20,7 @@ import { ROUTES } from "../../constants/routes.js";
 
 import { useActiveTenant } from
   "../../features/tenant/context/TenantProvider.jsx";
+import { useAuthStore } from "../../features/auth/store/authStore.js";
 
 export function MainLayout() {
   const location = useLocation();
@@ -39,6 +40,8 @@ export function MainLayout() {
     tenantsQuery,
     switchTenant,
   } = useActiveTenant();
+
+  const logout = useAuthStore((s) => s.logout);
 
   const allLinks = navItems.flatMap((item) =>
     item.children ?? [item]
@@ -106,6 +109,30 @@ export function MainLayout() {
             >
               {item.children.map((child) => {
                 const ChildIcon = child.icon;
+
+                if (child.action === "logout") {
+                  return (
+                    <button
+                      key={child.id}
+                      type="button"
+                      className="eco-submenu__link"
+                      title={child.label}
+                      onClick={() => {
+                        closeMobileMenu();
+                        logout();
+                      }}
+                    >
+                      <ChildIcon
+                        size={16}
+                        aria-hidden="true"
+                      />
+
+                      <span className="eco-nav-label">
+                        {child.label}
+                      </span>
+                    </button>
+                  );
+                }
 
                 return (
                   <NavLink

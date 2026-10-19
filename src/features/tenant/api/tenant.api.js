@@ -1,14 +1,6 @@
-import { apiClient, unwrapData } from "../../../services/apiClient.js";
-
-const USE_MOCK = import.meta.env.VITE_USE_MOCK_API === "true";
-
+// GET /api/v1/tenants/me does not exist on the backend yet — calling it
+// 404s. Returning an empty list until that endpoint is actually built,
+// rather than hitting a route that isn't there.
 export async function getMyTenants() {
-  if (USE_MOCK) {
-    return [
-      { id: "tenant-001", name: "EcoFood – Quận 1", role: "TENANT_ADMIN" },
-      { id: "tenant-002", name: "EcoFood – Thủ Đức", role: "TENANT_USER" },
-    ];
-  }
-  const response = await apiClient.get("/api/v1/tenants/me");
-  return unwrapData(response);
+  return [];
 }

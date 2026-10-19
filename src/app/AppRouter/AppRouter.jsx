@@ -12,10 +12,21 @@ import { ModulePage } from "../../features/modules/pages/ModulePage/ModulePage.j
 
 import { NotFoundPage } from "../../pages/NotFoundPage/NotFoundPage.jsx";
 
+import { RequireAuth } from "../../features/auth/components/RequireAuth.jsx";
+import { CallbackPage } from "../../features/auth/pages/CallbackPage.jsx";
+
 export function AppRouter() {
   return (
     <Routes>
-      <Route element={<MainLayout />}>
+      <Route path="/callback" element={<CallbackPage />} />
+
+      <Route
+        element={
+          <RequireAuth>
+            <MainLayout />
+          </RequireAuth>
+        }
+      >
         <Route index element={<HomePage />} />
 
         <Route

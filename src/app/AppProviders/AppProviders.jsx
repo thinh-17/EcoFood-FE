@@ -7,14 +7,17 @@ import { queryClient } from "../queryClient.js";
 
 import { TenantProvider } from
   "../../features/tenant/context/TenantProvider.jsx";
+import { AuthBootstrap } from "../../features/auth/components/AuthBootstrap.jsx";
 
 export function AppProviders({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <TenantProvider>
-          {children}
-        </TenantProvider>
+        <AuthBootstrap>
+          <TenantProvider>
+            {children}
+          </TenantProvider>
+        </AuthBootstrap>
       </BrowserRouter>
     </QueryClientProvider>
   );
