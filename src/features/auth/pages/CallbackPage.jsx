@@ -8,9 +8,7 @@ export function CallbackPage() {
   const [status, setStatus] = useState("Đang xác thực đăng nhập…");
   const handleCallback = useAuthStore((s) => s.handleCallback);
   const navigate = useNavigate();
-  // Guards against React 18 StrictMode's dev-only double-invoke of effects
-  // — without this, the same authorization code gets redeemed twice (the
-  // second redemption is harmlessly rejected by Keycloak, but noisy).
+  // guards against StrictMode's double-invoke redeeming the code twice
   const hasRun = useRef(false);
 
   useEffect(() => {
@@ -22,7 +20,7 @@ export function CallbackPage() {
     const params = new URLSearchParams(window.location.search);
     handleCallback(params)
       .then(() => {
-        // Per requirement: always land on the homepage after a successful login.
+        // always land on the homepage after a successful login
         navigate(ROUTES.HOME, { replace: true });
       })
       .catch((err) => setStatus(`Đăng nhập thất bại: ${err.message}`));

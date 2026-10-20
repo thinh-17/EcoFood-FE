@@ -14,11 +14,13 @@ import { NotFoundPage } from "../../pages/NotFoundPage/NotFoundPage.jsx";
 
 import { RequireAuth } from "../../features/auth/components/RequireAuth.jsx";
 import { CallbackPage } from "../../features/auth/pages/CallbackPage.jsx";
+import { AuthHandoffPage } from "../../features/auth/pages/AuthHandoffPage.jsx";
 
 export function AppRouter() {
   return (
     <Routes>
       <Route path="/callback" element={<CallbackPage />} />
+      <Route path="/auth-handoff" element={<AuthHandoffPage />} />
 
       <Route
         element={

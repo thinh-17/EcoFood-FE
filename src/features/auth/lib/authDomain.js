@@ -1,23 +1,14 @@
-// Resolves the "domain" identifier the backend's GET /api/v1/tenants/
-// login-info uses to pick a tenant's realm/clientId — mirrors DCMP's real
-// DCMPLoginService.getDomain():
-//  - already-authenticated: trust the tenant domain the session was minted
-//    for, not whatever the browser happens to be on right now.
-//  - localhost (or any dev build): a single configured stand-in domain,
-//    swapped by editing VITE_DEV_TENANT_DOMAIN to test a different tenant
-//    locally — same trick DCMP's own hardcoded localhostDomain constant
-//    uses, just env-configurable instead of a source edit.
-//  - anything else (a real deployment): the actual hostname the app is
-//    served from.
+// Resolves which tenant domain to use: current session's, else the dev
+// override for bare localhost, else the real host.
 export function resolveLoginDomain(currentTenantDomain) {
   if (currentTenantDomain) {
     return currentTenantDomain;
   }
 
   const hostname = window.location.hostname;
-  const isLocalDev = hostname === "localhost" || hostname === "127.0.0.1" || import.meta.env.DEV;
+  const isBareLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
 
-  if (isLocalDev) {
+  if (isBareLocalhost) {
     const devDomain = import.meta.env.VITE_DEV_TENANT_DOMAIN;
     if (!devDomain) {
       throw new Error(
@@ -27,5 +18,6 @@ export function resolveLoginDomain(currentTenantDomain) {
     return devDomain;
   }
 
-  return hostname;
+  // host, not hostname — domainUrl includes the port (e.g. "x.localhost:5173").
+  return window.location.host;
 }

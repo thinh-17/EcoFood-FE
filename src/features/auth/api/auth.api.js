@@ -88,3 +88,9 @@ export async function refreshInternalTokenRequest(refreshToken) {
 export async function revokeInternalTokens(accessToken, refreshToken) {
   await apiClient.post("/api/v1/auth/logout", { accessToken, refreshToken });
 }
+
+/** POST /api/v1/auth/switch-tenant — re-mints the internal token pair scoped to a different tenant the caller belongs to. */
+export async function switchTenantRequest(tenantId) {
+  const response = await apiClient.post("/api/v1/auth/switch-tenant", { tenantId });
+  return unwrapData(response);
+}

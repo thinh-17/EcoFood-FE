@@ -12,6 +12,7 @@ import {
   exchangeInternalTokenRequest,
   refreshInternalTokenRequest,
   revokeInternalTokens,
+  switchTenantRequest,
 } from "../api/auth.api.js";
 
 const SCOPES = "openid profile offline_access phone";
@@ -25,18 +26,17 @@ let silentRefreshTimeoutId = null;
 export const useAuthStore = create(
   persist(
     (set, get) => ({
-      // --- persisted across reloads (recovery only — never the access
-      // tokens themselves, which live in memory for the life of the tab) ---
+      // persisted (recovery only, not the access token itself)
       internalRefreshToken: "",
       kcRefreshToken: "",
 
-      // --- resolved at bootstrap, not persisted (re-resolved every load) ---
+      // resolved at bootstrap, not persisted
       domain: "",
       realm: "",
       clientId: "",
       tenantId: "",
 
-      // --- in-memory only ---
+      // in-memory only
       internalAccessToken: "",
       keycloakIdToken: "",
       status: "idle", // idle | checking | authenticated | unauthenticated
@@ -90,9 +90,7 @@ export const useAuthStore = create(
           nonce,
           code_challenge: codeChallenge,
           code_challenge_method: "S256",
-          // Required for the backend's AppLoginFormsProvider SPI to resolve
-          // this tenant's login method (password vs. email OTP) — clientId
-          // is always {tenantId}-public, so strip that suffix back off.
+          // needed for the backend's tenant-login-method resolution
           kc_tenant_identifier: clientId.replace(/-public$/, ""),
         });
 
@@ -139,7 +137,10 @@ export const useAuthStore = create(
       /** Step 6 (matches the backend's own naming): hands the Keycloak access token to our own exchange endpoint. */
       async exchangeInternalToken(keycloakAccessToken) {
         const data = await exchangeInternalTokenRequest(keycloakAccessToken);
+        // token's own claim is the source of truth for the current tenant
+        const { tenantId } = decodeJwt(data.accessToken);
         set({
+          tenantId,
           internalAccessToken: data.accessToken,
           internalRefreshToken: data.refreshToken,
           status: "authenticated",
@@ -154,7 +155,8 @@ export const useAuthStore = create(
           throw new Error("No internal refresh token stored - cannot refresh.");
         }
         const data = await refreshInternalTokenRequest(refreshToken);
-        set({ internalAccessToken: data.accessToken, internalRefreshToken: data.refreshToken });
+        const { tenantId } = decodeJwt(data.accessToken);
+        set({ tenantId, internalAccessToken: data.accessToken, internalRefreshToken: data.refreshToken });
         scheduleSilentRefresh(data.accessToken, get);
         return data;
       },
@@ -175,11 +177,7 @@ export const useAuthStore = create(
         await get().exchangeInternalToken(tokens.access_token);
       },
 
-      /**
-       * Two-layer check, mirrors the oke/frontend mockup's checkAuth():
-       * Layer 1 — local/sync. Layer 2 — only reached if Layer 1 fails: try
-       * our own refresh first, then Keycloak's silent SSO as a last resort.
-       */
+      /** Two-layer check: local validity, then refresh, then Keycloak SSO recovery. */
       async checkAuth() {
         if (get().isValid()) {
           return { isAuth: true };
@@ -235,6 +233,36 @@ export const useAuthStore = create(
         }
         window.location.href = "/";
       },
+
+      /** Re-mints the token pair for another tenant; hands off cross-origin via URL if domainUrl differs. */
+      async switchTenant(tenantId, domainUrl) {
+        console.log("[switchTenant] current URL before switching:", window.location.href);
+
+        const data = await switchTenantRequest(tenantId);
+
+        if (domainUrl && domainUrl !== window.location.host) {
+          const targetUrl = `${window.location.protocol}//${domainUrl}/auth-handoff?accessToken=${encodeURIComponent(data.accessToken)}&refreshToken=${encodeURIComponent(data.refreshToken)}`;
+          console.log("[switchTenant] target tenant is on a different origin, navigating to:", targetUrl);
+          window.location.href = targetUrl;
+          return;
+        }
+
+        set({
+          tenantId,
+          internalAccessToken: data.accessToken,
+          internalRefreshToken: data.refreshToken,
+        });
+        scheduleSilentRefresh(data.accessToken, get);
+        console.log("[switchTenant] same origin, reloading:", window.location.href);
+        window.location.reload();
+      },
+
+      /** Finishes a cross-origin switch, called by /auth-handoff with the tokens carried in the URL. */
+      completeHandoff(accessToken, refreshToken) {
+        const { tenantId } = decodeJwt(accessToken);
+        set({ tenantId, internalAccessToken: accessToken, internalRefreshToken: refreshToken, status: "authenticated" });
+        scheduleSilentRefresh(accessToken, get);
+      },
     }),
     {
       name: "ecofood-auth",
@@ -247,8 +275,7 @@ export const useAuthStore = create(
   )
 );
 
-// Mirrors the mockup's AuthFacade-equivalent silent-refresh loop: fires at
-// 80% of the access token's remaining lifetime, re-arming itself.
+// fires at 80% of the access token's remaining lifetime, re-arming itself
 function scheduleSilentRefresh(accessToken, get) {
   clearTimeout(silentRefreshTimeoutId);
   if (!accessToken) {

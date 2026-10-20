@@ -6,16 +6,15 @@ import { FiLayers } from "react-icons/fi";
 import { useAuthStore } from "../../auth/store/authStore.js";
 import { useEligibleTenants } from "../hooks/useEligibleTenants.js";
 
-// Mirrors DCMP's real settings-section flyout (hover-open, anchored to the
-// right of the trigger, active tenant highlighted) — but shows the current
-// TENANT's name on the trigger itself (per explicit requirement), not the
-// user's name as DCMP's does.
+// hover-open flyout, anchored right, active tenant highlighted
 const CLOSE_DELAY_MS = 200;
 
 export function TenantSwitcher() {
   const currentTenantId = useAuthStore((s) => s.tenantId);
+  const switchTenant = useAuthStore((s) => s.switchTenant);
   const { data: tenants = [], isLoading, isError } = useEligibleTenants();
   const [isOpen, setIsOpen] = useState(false);
+  const [switchingTenantId, setSwitchingTenantId] = useState(null);
   const closeTimerRef = useRef(null);
 
   const currentTenant = tenants.find((tenant) => tenant.tenantId === currentTenantId);
@@ -34,14 +33,17 @@ export function TenantSwitcher() {
     closeTimerRef.current = setTimeout(() => setIsOpen(false), CLOSE_DELAY_MS);
   };
 
-  const handleSelect = (tenant) => {
-    if (tenant.tenantId === currentTenantId) {
+  const handleSelect = async (tenant) => {
+    if (tenant.tenantId === currentTenantId || switchingTenantId) {
       return;
     }
-    // TODO: wire up the actual switch-tenant flow (re-authenticating
-    // against the target tenant's realm, matching DCMP's
-    // handleSwitchTenant()) once the backend supports it — this is the
-    // frontend display/selection piece only for now.
+    setSwitchingTenantId(tenant.tenantId);
+    try {
+      // navigates/reloads on success, so no reset here for the happy path
+      await switchTenant(tenant.tenantId, tenant.domainUrl);
+    } catch {
+      setSwitchingTenantId(null);
+    }
     setIsOpen(false);
   };
 
@@ -82,10 +84,13 @@ export function TenantSwitcher() {
                     type="button"
                     className={`eco-tenant-switcher__item ${isActive ? "eco-tenant-switcher__item--active" : ""}`}
                     title={`${tenant.tenantName}\n${tenant.tenantCode}`}
+                    disabled={!!switchingTenantId}
                     onClick={() => handleSelect(tenant)}
                   >
                     <span className="eco-tenant-switcher__item-name">{tenant.tenantName}</span>
-                    <span className="eco-tenant-switcher__item-code">{tenant.tenantCode}</span>
+                    <span className="eco-tenant-switcher__item-code">
+                      {switchingTenantId === tenant.tenantId ? "Đang chuyển..." : tenant.tenantCode}
+                    </span>
                   </button>
                 </li>
               );
