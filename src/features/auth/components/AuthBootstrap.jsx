@@ -2,13 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAuthStore } from "../store/authStore.js";
 
-/**
- * Resolves which tenant this browser belongs to (GET /api/v1/tenants/
- * login-info) and runs the initial auth check BEFORE anything under it
- * renders — mirrors DCMP's KeycloakConfigLoader.loadConfig() gating
- * angular-auth-oidc-client's module init. Without this gate, a route guard
- * could run before realm/clientId are known and fail to redirect anywhere.
- */
+/** Gates rendering until the tenant is resolved and the initial auth check runs. */
 export function AuthBootstrap({ children }) {
   const bootstrap = useAuthStore((s) => s.bootstrap);
   const error = useAuthStore((s) => s.error);
