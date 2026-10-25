@@ -3,8 +3,8 @@ export const ROUTES = {
 
   ACCOUNT: "/account",
 
-  PARTNER_ONBOARDING: "/partner/onboarding",
   TENANT: "/partner/tenants",
+  TENANT_ONBOARDING: "/partner/tenants/onboarding",
 
   MANAGER: "/manager",
   PRODUCT_LIBRARY: "/product-library",
@@ -14,6 +14,6 @@ export const ROUTES = {
   PERMISSIONS: "/users/permissions",
   DATA_ACCESS_RULES: "/users/data-access-rules",
 
-  // Legacy URL: redirect sang Manager
+  // Legacy URL: redirects to Manager
   DASHBOARD: "/dashboard",
 };

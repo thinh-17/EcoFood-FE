@@ -1,0 +1,11 @@
+.user-list__search {
+  width: 280px;
+  max-width: 100%;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.user-list__error {
+  color: #b42318;
+  margin-bottom: 12px;
+}

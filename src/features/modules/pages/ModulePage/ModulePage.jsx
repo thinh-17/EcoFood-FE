@@ -28,18 +28,18 @@ export function ModulePage({
 
       <CoreEmptyState
         icon={FiTool}
-        title={`${title} đang được phát triển`}
+        title={`${title} is under development`}
         description={
-          "Module đã được cấu hình routing và navigation. " +
-          "Các chức năng nghiệp vụ sẽ được tích hợp " +
-          "trong những giai đoạn tiếp theo."
+          "Routing and navigation for this module are already set up. " +
+          "Business features will be integrated " +
+          "in upcoming phases."
         }
       >
         <CoreButton
           variant="primary"
           onClick={() => navigate(ROUTES.HOME)}
         >
-          Quay về Home
+          Back to Home
         </CoreButton>
       </CoreEmptyState>
     </div>

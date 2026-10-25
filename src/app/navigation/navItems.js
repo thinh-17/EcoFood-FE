@@ -10,6 +10,7 @@ import {
   FiLock,
   FiDatabase,
   FiLogOut,
+  FiUserPlus,
 } from "react-icons/fi";
 
 import { ROUTES } from "../../constants/routes.js";
@@ -29,16 +30,16 @@ export const navItems = [
 
     children: [
       {
-        id: "partner-onboarding",
-        label: "Partner Onboarding",
-        icon: FiUserCheck,
-        to: ROUTES.PARTNER_ONBOARDING,
-      },
-      {
         id: "tenant",
         label: "Tenant",
         icon: FiLayers,
         to: ROUTES.TENANT,
+      },
+      {
+        id: "tenant-onboarding",
+        label: "Tenant Onboarding",
+        icon: FiUserPlus,
+        to: ROUTES.TENANT_ONBOARDING,
       },
     ],
   },
@@ -104,7 +105,7 @@ export const navItems = [
       },
       {
         id: "account-logout",
-        label: "Đăng xuất",
+        label: "Log out",
         icon: FiLogOut,
         action: "logout",
       },
