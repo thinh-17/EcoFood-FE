@@ -19,10 +19,10 @@ export function TenantSwitcher() {
 
   const currentTenant = tenants.find((tenant) => tenant.tenantId === currentTenantId);
   const currentTenantLabel = isLoading
-    ? "Đang tải..."
+    ? "Loading..."
     : isError
-      ? "Không tải được tenant"
-      : (currentTenant?.tenantName ?? "Tenant hiện tại");
+      ? "Failed to load tenant"
+      : (currentTenant?.tenantName ?? "Current tenant");
 
   const openFlyout = () => {
     clearTimeout(closeTimerRef.current);
@@ -58,7 +58,7 @@ export function TenantSwitcher() {
 
         <div className="eco-nav-label eco-tenant-switcher__label">
           <strong>{currentTenantLabel}</strong>
-          <small>Tenant hiện tại</small>
+          <small>Current tenant</small>
         </div>
       </button>
 
@@ -68,12 +68,12 @@ export function TenantSwitcher() {
           onMouseEnter={openFlyout}
           onMouseLeave={scheduleClose}
         >
-          <div className="eco-tenant-switcher__flyout-title">Tenant khả dụng</div>
+          <div className="eco-tenant-switcher__flyout-title">Available tenants</div>
           <div className="eco-tenant-switcher__divider" />
 
           <ul className="eco-tenant-switcher__list">
             {!isLoading && tenants.length === 0 && (
-              <li className="eco-tenant-switcher__empty">Không có tenant nào</li>
+              <li className="eco-tenant-switcher__empty">No tenants available</li>
             )}
 
             {tenants.map((tenant) => {
@@ -89,7 +89,7 @@ export function TenantSwitcher() {
                   >
                     <span className="eco-tenant-switcher__item-name">{tenant.tenantName}</span>
                     <span className="eco-tenant-switcher__item-code">
-                      {switchingTenantId === tenant.tenantId ? "Đang chuyển..." : tenant.tenantCode}
+                      {switchingTenantId === tenant.tenantId ? "Switching..." : tenant.tenantCode}
                     </span>
                   </button>
                 </li>

@@ -1,0 +1,26 @@
+.tenant-list__search {
+  width: 280px;
+  max-width: 100%;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.tenant-list__error {
+  color: #b42318;
+  margin-bottom: 12px;
+}
+
+.tenant-edit-form__footer {
+  /* Counteracts CoreModal's own `.fe-modal__body` padding so this
+     footer-styled block reaches the modal's edges, approximating a sticky
+     footer even though it isn't actually pinned — see TenantEditForm's
+     javadoc on why it renders its own footer instead of using CoreModal's
+     `footer` prop. */
+  margin: 20px -26px -22px;
+}
+
+.tenant-edit-form__contact-detail {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #eef2f0;
+}
