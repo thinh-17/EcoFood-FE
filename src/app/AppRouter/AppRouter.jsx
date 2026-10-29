@@ -13,6 +13,8 @@ import { ModulePage } from "../../features/modules/pages/ModulePage/ModulePage.j
 import { TenantOnboardingPage } from "../../features/tenant/pages/TenantOnboardingPage/TenantOnboardingPage.jsx";
 import { TenantListPage } from "../../features/tenant/pages/TenantListPage/TenantListPage.jsx";
 import { UserListPage } from "../../features/user/pages/UserListPage/UserListPage.jsx";
+import { DataAccessRuleListPage } from "../../features/dataAccessRules/pages/DataAccessRuleListPage/DataAccessRuleListPage.jsx";
+import { DataAccessRuleDetailPage } from "../../features/dataAccessRules/pages/DataAccessRuleDetailPage/DataAccessRuleDetailPage.jsx";
 
 import { RequireAuth } from "../../features/auth/components/RequireAuth.jsx";
 import { RequirePartnerAccess } from "../../features/auth/components/RequirePartnerAccess.jsx";
@@ -115,15 +117,8 @@ export function AppRouter() {
           </Route>
 
           <Route element={<RequireDataAccessRulesAccess />}>
-            <Route
-              path="users/data-access-rules"
-              element={
-                <ModulePage
-                  title="Data Access Rules"
-                  description="Configure data access policies."
-                />
-              }
-            />
+            <Route path="users/data-access-rules" element={<DataAccessRuleListPage />} />
+            <Route path="users/data-access-rules/new" element={<DataAccessRuleDetailPage />} />
           </Route>
         </Route>
 
