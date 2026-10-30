@@ -1,8 +1,11 @@
 import { useMemo, useState } from "react";
 
-import { CoreCard, CorePageHeader, CoreTable } from "@thinh-17/fe-core";
+import { CoreButton, CoreCard, CoreModal, CorePageHeader, CoreTable, useDisclosure } from "@thinh-17/fe-core";
 
+import { useUserDetail } from "../../hooks/useUserDetail.js";
 import { useUserDirectory } from "../../hooks/useUserDirectory.js";
+import { UserCreateForm } from "./UserCreateForm.jsx";
+import { UserDetailForm } from "./UserDetailForm.jsx";
 import "./UserListPage.css";
 
 const PAGE_SIZE = 20;
@@ -14,18 +17,13 @@ const COLUMNS = [
   { accessorKey: "relationship", header: "Relationship" },
 ];
 
-/**
- * Mirrors TenantListPage's directory pattern exactly (same page/size/sort/
- * search state shape, same CoreTable wiring) — GET /api/v1/users/directory
- * doesn't exist on the backend yet, so this will 404 until that endpoint is
- * built following the same pagination + regex-search strategy as
- * TenantService.listTenantDirectory.
- */
+/** Mirrors TenantListPage's directory + row-click detail pattern exactly. */
 export function UserListPage() {
   const [page, setPage] = useState(0);
   const [sort, setSort] = useState({ field: "updatedAt", direction: "desc" });
   const [search, setSearch] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   const { data, isLoading, isError, error } = useUserDirectory({
     page,
@@ -34,6 +32,10 @@ export function UserListPage() {
     search,
     hasSearched,
   });
+
+  const detailModal = useDisclosure(false);
+  const createModal = useDisclosure(false);
+  const { data: userDetail, isLoading: isDetailLoading, isError: isDetailError } = useUserDetail(selectedUserId);
 
   const columns = useMemo(() => COLUMNS, []);
 
@@ -48,12 +50,18 @@ export function UserListPage() {
     setPage(0);
   }
 
+  function handleRowClick(user) {
+    setSelectedUserId(user.id);
+    detailModal.open();
+  }
+
   return (
     <div className="eco-module-page user-list-page">
       <CorePageHeader
         eyebrow="EcoFood Platform"
         title="Users"
         description="Manage the system's list of users."
+        aside={<CoreButton onClick={createModal.open}>+ New User</CoreButton>}
       />
 
       {isError && (
@@ -81,10 +89,25 @@ export function UserListPage() {
           sort={sort}
           onSortChange={handleSortChange}
           onPageChange={setPage}
+          onRowClick={handleRowClick}
           emptyTitle="No users found"
           emptyDescription="Try a different search term."
         />
       </CoreCard>
+
+      <CoreModal isOpen={detailModal.isOpen} onClose={detailModal.close} title="Edit User" size="lg">
+        {isDetailLoading && <p>Loading…</p>}
+
+        {isDetailError && <p className="user-list__error">Failed to load user detail.</p>}
+
+        {userDetail && (
+          <UserDetailForm key={userDetail.id} user={userDetail} onCancel={detailModal.close} onSaved={detailModal.close} />
+        )}
+      </CoreModal>
+
+      <CoreModal isOpen={createModal.isOpen} onClose={createModal.close} title="New User" size="lg">
+        <UserCreateForm onCancel={createModal.close} onCreated={createModal.close} />
+      </CoreModal>
     </div>
   );
 }

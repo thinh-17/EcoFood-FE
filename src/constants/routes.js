@@ -13,6 +13,7 @@ export const ROUTES = {
   ROLES: "/users/roles",
   PERMISSIONS: "/users/permissions",
   DATA_ACCESS_RULES: "/users/data-access-rules",
+  DATA_ACCESS_RULE_NEW: "/users/data-access-rules/new",
 
   // Legacy URL: redirects to Manager
   DASHBOARD: "/dashboard",

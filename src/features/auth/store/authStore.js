@@ -234,14 +234,25 @@ export const useAuthStore = create(
         window.location.href = "/";
       },
 
-      /** Re-mints the token pair for another tenant; hands off cross-origin via URL if domainUrl differs. */
+      /** Re-mints the token pair for another tenant; hands off cross-origin via URL if domainUrl's HOST differs. */
       async switchTenant(tenantId, domainUrl) {
         console.log("[switchTenant] current URL before switching:", window.location.href);
 
         const data = await switchTenantRequest(tenantId);
 
-        if (domainUrl && domainUrl !== window.location.host) {
-          const targetUrl = `${window.location.protocol}//${domainUrl}/auth-handoff?accessToken=${encodeURIComponent(data.accessToken)}&refreshToken=${encodeURIComponent(data.refreshToken)}`;
+        // A SUB_TENANT's domainUrl is "{masterDomainUrl}/{subName}" — host
+        // PLUS a path segment (see TenantOnboardingPage's buildDomainUrl) —
+        // not a bare host, even though it's served from the exact same
+        // origin as its master. Comparing/navigating with the raw string
+        // (as this used to) meant switching into/out of any sub-tenant
+        // always took the cross-origin branch below and built an invalid
+        // target like ".../sub1/auth-handoff", which matches no route and
+        // silently drops the tokens — looking exactly like a forced
+        // re-login. Only the host portion is meaningful for either check.
+        const targetHost = domainUrl ? domainUrl.split("/")[0] : null;
+
+        if (targetHost && targetHost !== window.location.host) {
+          const targetUrl = `${window.location.protocol}//${targetHost}/auth-handoff?accessToken=${encodeURIComponent(data.accessToken)}&refreshToken=${encodeURIComponent(data.refreshToken)}`;
           console.log("[switchTenant] target tenant is on a different origin, navigating to:", targetUrl);
           window.location.href = targetUrl;
           return;
