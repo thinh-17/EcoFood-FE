@@ -1,6 +1,6 @@
 import "./MainLayout.css";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
 import {
@@ -16,10 +16,14 @@ import {
 import { useDisclosure } from "@thinh-17/fe-core";
 
 import { navItems } from "../../app/navigation/navItems.js";
+import { filterNavItems } from "../../app/navigation/navAccess.js";
 import { ROUTES } from "../../constants/routes.js";
 
 import { useActiveTenant } from
   "../../features/tenant/context/TenantProvider.jsx";
+import { useAuthStore } from "../../features/auth/store/authStore.js";
+import { useCurrentRoles } from "../../features/auth/hooks/useCurrentRoles.js";
+import { TenantSwitcher } from "../../features/tenant/components/TenantSwitcher.jsx";
 
 export function MainLayout() {
   const location = useLocation();
@@ -40,7 +44,15 @@ export function MainLayout() {
     switchTenant,
   } = useActiveTenant();
 
-  const allLinks = navItems.flatMap((item) =>
+  const logout = useAuthStore((s) => s.logout);
+
+  const roles = useCurrentRoles();
+  const visibleNavItems = useMemo(
+    () => filterNavItems(navItems, roles),
+    [roles]
+  );
+
+  const allLinks = visibleNavItems.flatMap((item) =>
     item.children ?? [item]
   );
 
@@ -107,6 +119,30 @@ export function MainLayout() {
               {item.children.map((child) => {
                 const ChildIcon = child.icon;
 
+                if (child.action === "logout") {
+                  return (
+                    <button
+                      key={child.id}
+                      type="button"
+                      className="eco-submenu__link"
+                      title={child.label}
+                      onClick={() => {
+                        closeMobileMenu();
+                        logout();
+                      }}
+                    >
+                      <ChildIcon
+                        size={16}
+                        aria-hidden="true"
+                      />
+
+                      <span className="eco-nav-label">
+                        {child.label}
+                      </span>
+                    </button>
+                  );
+                }
+
                 return (
                   <NavLink
                     key={child.id}
@@ -171,7 +207,7 @@ export function MainLayout() {
         <button
           type="button"
           className="eco-overlay"
-          aria-label="Đóng menu"
+          aria-label="Close menu"
           onClick={mobileMenu.close}
         />
       )}
@@ -197,7 +233,7 @@ export function MainLayout() {
             type="button"
             className="eco-sidebar__collapse"
             aria-label={
-              collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"
+              collapsed ? "Expand sidebar" : "Collapse sidebar"
             }
             onClick={() => setCollapsed((value) => !value)}
           >
@@ -211,24 +247,17 @@ export function MainLayout() {
 
         <nav
           className="eco-sidebar__nav"
-          aria-label="Điều hướng chính"
+          aria-label="Main navigation"
         >
           <span className="eco-sidebar__caption eco-nav-label">
             WORKSPACE
           </span>
 
-          {navItems.map(renderNavItem)}
+          {visibleNavItems.map(renderNavItem)}
         </nav>
 
         <div className="eco-sidebar__footer">
-          <div className="eco-sidebar__workspace">
-            <FiLayers size={19} aria-hidden="true" />
-
-            <div className="eco-nav-label">
-              <strong>Workspace</strong>
-              <small>EcoFood Platform</small>
-            </div>
-          </div>
+          <TenantSwitcher />
         </div>
       </aside>
 
@@ -239,7 +268,7 @@ export function MainLayout() {
               type="button"
               className="eco-mobile-toggle"
               aria-label={
-                mobileMenu.isOpen ? "Đóng sidebar" : "Mở sidebar"
+                mobileMenu.isOpen ? "Close sidebar" : "Open sidebar"
               }
               aria-expanded={mobileMenu.isOpen}
               onClick={mobileMenu.toggle}
@@ -259,7 +288,7 @@ export function MainLayout() {
               <FiLayers size={17} aria-hidden="true" />
 
               <select
-                aria-label="Tenant đang hoạt động"
+                aria-label="Active tenant"
                 value={tenantId}
                 disabled={tenantsQuery.isLoading}
                 onChange={(event) =>
@@ -269,10 +298,10 @@ export function MainLayout() {
                 {!tenantId && (
                   <option value="">
                     {tenantsQuery.isLoading
-                      ? "Đang tải tenant..."
+                      ? "Loading tenants..."
                       : tenantsQuery.isError
-                        ? "Lỗi tải tenant"
-                        : "Chọn tenant"}
+                        ? "Failed to load tenants"
+                        : "Select tenant"}
                   </option>
                 )}
 
@@ -289,8 +318,8 @@ export function MainLayout() {
 
             <div
               className="eco-user-avatar"
-              title="Tài khoản demo"
-              aria-label="Tài khoản demo"
+              title="Demo account"
+              aria-label="Demo account"
             >
               DU
             </div>
