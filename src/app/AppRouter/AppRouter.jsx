@@ -13,6 +13,8 @@ import { ModulePage } from "../../features/modules/pages/ModulePage/ModulePage.j
 import { TenantOnboardingPage } from "../../features/tenant/pages/TenantOnboardingPage/TenantOnboardingPage.jsx";
 import { TenantListPage } from "../../features/tenant/pages/TenantListPage/TenantListPage.jsx";
 import { UserListPage } from "../../features/user/pages/UserListPage/UserListPage.jsx";
+import { RoleListPage } from "../../features/role/pages/RoleListPage/RoleListPage.jsx";
+import { PermissionListPage } from "../../features/permission/pages/PermissionListPage/PermissionListPage.jsx";
 import { DataAccessRuleListPage } from "../../features/dataAccessRules/pages/DataAccessRuleListPage/DataAccessRuleListPage.jsx";
 import { DataAccessRuleDetailPage } from "../../features/dataAccessRules/pages/DataAccessRuleDetailPage/DataAccessRuleDetailPage.jsx";
 
@@ -95,25 +97,9 @@ export function AppRouter() {
           <Route path="users" element={<UserListPage />} />
 
           <Route element={<RequireRolesAndPermissionsAccess />}>
-            <Route
-              path="users/roles"
-              element={
-                <ModulePage
-                  title="Roles"
-                  description="Manage roles and permission groups."
-                />
-              }
-            />
+            <Route path="users/roles" element={<RoleListPage />} />
 
-            <Route
-              path="users/permissions"
-              element={
-                <ModulePage
-                  title="Permission"
-                  description="Manage functional access permissions."
-                />
-              }
-            />
+            <Route path="users/permissions" element={<PermissionListPage />} />
           </Route>
 
           <Route element={<RequireDataAccessRulesAccess />}>

@@ -1,0 +1,17 @@
+.data-access-rule-list__search {
+  width: 280px;
+  max-width: 100%;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.data-access-rule-list__error {
+  color: #b42318;
+  margin-bottom: 12px;
+}
+
+.dar-detail-form__footer {
+  /* Same non-sticky-footer trade-off as .tenant-edit-form__footer/
+     .user-detail-form__footer — see TenantEditForm's javadoc. */
+  margin: 20px -26px -22px;
+}
