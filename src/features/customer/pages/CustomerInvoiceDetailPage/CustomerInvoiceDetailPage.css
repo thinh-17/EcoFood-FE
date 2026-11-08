@@ -1,0 +1,10 @@
+.customer-invoice-detail__back { display: inline-flex; align-items: center; gap: 8px; color: var(--fnb-accent); margin-bottom: 20px; text-decoration: none; font-size: 14px; }
+.customer-invoice-detail__info { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 18px 0 24px; }
+.customer-invoice-detail__info div { padding: 8px 0; }
+.customer-invoice-detail__info dt { color: #667085; font-size: 12px; }
+.customer-invoice-detail__info dd { margin: 6px 0 0; font-size: 15px; font-weight: 600; }
+.customer-invoice-detail__scroll { overflow-x: auto; }
+.customer-invoice-detail__table { width: 100%; min-width: 540px; border-collapse: collapse; }
+.customer-invoice-detail__table th,.customer-invoice-detail__table td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--fnb-line); font-size: 13px; }
+.customer-invoice-detail h3 { font-size: 16px; margin-top: 24px; }
+@media(max-width: 580px) { .customer-invoice-detail__info { grid-template-columns: 1fr; } }

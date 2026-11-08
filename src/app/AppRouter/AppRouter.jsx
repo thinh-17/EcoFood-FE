@@ -5,6 +5,13 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { ROUTES } from "../../constants/routes.js";
 
 import { MainLayout } from "../../layouts/MainLayout/MainLayout.jsx";
+import { RequireTransactionAccess } from "../../features/transaction/components/RequireTransactionAccess.jsx";
+import { TransactionManagementPage } from "../../features/transaction/pages/TransactionManagementPage.jsx";
+import { PosSimulatorPage } from "../../features/transaction/pages/PosSimulatorPage.jsx";
+import { CustomerPortalLayout } from "../../features/customer/layouts/CustomerPortalLayout.jsx";
+import { CustomerProfilePage } from "../../features/customer/pages/CustomerProfilePage/CustomerProfilePage.jsx";
+import { CustomerInvoicePage } from "../../features/customer/pages/CustomerInvoicePage/CustomerInvoicePage.jsx";
+import { CustomerInvoiceDetailPage } from "../../features/customer/pages/CustomerInvoiceDetailPage/CustomerInvoiceDetailPage.jsx";
 
 import { HomePage } from "../../features/home/pages/HomePage/HomePage.jsx";
 
@@ -31,6 +38,14 @@ export function AppRouter() {
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/auth-handoff" element={<AuthHandoffPage />} />
 
+      {/* Customer portal has a separate layout from the admin/tenant console. */}
+      <Route element={<RequireAuth><CustomerPortalLayout /></RequireAuth>}>
+        <Route path="customer" element={<Navigate to={ROUTES.CUSTOMER_PROFILE} replace />} />
+        <Route path="customer/profile" element={<CustomerProfilePage />} />
+        <Route path="customer/invoices" element={<CustomerInvoicePage />} />
+        <Route path="customer/invoices/:invoiceId" element={<CustomerInvoiceDetailPage />} />
+      </Route>
+
       <Route
         element={
           <RequireAuth>
@@ -39,6 +54,13 @@ export function AppRouter() {
         }
       >
         <Route index element={<HomePage />} />
+
+        <Route element={<RequireTransactionAccess />}>
+          <Route path="transactions" element={<TransactionManagementPage />} />
+        </Route>
+        <Route element={<RequireTransactionAccess submit />}>
+          <Route path="pos-simulator" element={<PosSimulatorPage />} />
+        </Route>
 
         <Route
           path="account"

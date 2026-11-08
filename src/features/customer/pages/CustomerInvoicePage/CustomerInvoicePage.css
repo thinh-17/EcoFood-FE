@@ -1,0 +1,9 @@
+.customer-invoices__table-scroll { overflow-x: auto; }
+.customer-invoices__table { width: 100%; border-collapse: collapse; min-width: 680px; }
+.customer-invoices__table th { color: #667085; text-align: left; font-size: 12px; font-weight: 600; padding: 14px 10px; border-bottom: 1px solid var(--fnb-line); }
+.customer-invoices__table td { padding: 16px 10px; border-bottom: 1px solid var(--fnb-line); font-size: 13px; }
+.customer-invoices__table tbody tr:last-child td { border-bottom: none; }
+.customer-invoices__table a { color: var(--fnb-accent); }
+.customer-invoices__amount { text-align: right !important; white-space: nowrap; }
+.customer-invoices__pagination { padding-top: 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; color: #667085; font-size: 13px; }
+.customer-invoices__error { color: #b42318; }

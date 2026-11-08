@@ -23,6 +23,7 @@ import { useActiveTenant } from
   "../../features/tenant/context/TenantProvider.jsx";
 import { useAuthStore } from "../../features/auth/store/authStore.js";
 import { useCurrentRoles } from "../../features/auth/hooks/useCurrentRoles.js";
+import { useTransactionAccess } from "../../features/transaction/hooks/useTransactionAccess.js";
 import { TenantSwitcher } from "../../features/tenant/components/TenantSwitcher.jsx";
 
 export function MainLayout() {
@@ -47,9 +48,10 @@ export function MainLayout() {
   const logout = useAuthStore((s) => s.logout);
 
   const roles = useCurrentRoles();
+  const transactionAccess = useTransactionAccess();
   const visibleNavItems = useMemo(
-    () => filterNavItems(navItems, roles),
-    [roles]
+    () => filterNavItems(navItems, roles, transactionAccess),
+    [roles, transactionAccess]
   );
 
   const allLinks = visibleNavItems.flatMap((item) =>

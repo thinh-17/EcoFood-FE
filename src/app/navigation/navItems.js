@@ -11,6 +11,8 @@ import {
   FiDatabase,
   FiLogOut,
   FiUserPlus,
+  FiShoppingCart,
+  FiList,
 } from "react-icons/fi";
 
 import { ROUTES } from "../../constants/routes.js";
@@ -56,6 +58,19 @@ export const navItems = [
     label: "Product Library",
     icon: FiPackage,
     to: ROUTES.PRODUCT_LIBRARY,
+  },
+
+  {
+    id: "transactions",
+    label: "Quản lý giao dịch",
+    icon: FiList,
+    to: ROUTES.TRANSACTIONS,
+  },
+  {
+    id: "pos-simulator",
+    label: "POS Simulator",
+    icon: FiShoppingCart,
+    to: ROUTES.POS_SIMULATOR,
   },
 
   {

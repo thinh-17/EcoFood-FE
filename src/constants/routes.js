@@ -3,11 +3,16 @@ export const ROUTES = {
 
   ACCOUNT: "/account",
 
+  CUSTOMER_PROFILE: "/customer/profile",
+  CUSTOMER_INVOICES: "/customer/invoices",
+
   TENANT: "/partner/tenants",
   TENANT_ONBOARDING: "/partner/tenants/onboarding",
 
   MANAGER: "/manager",
   PRODUCT_LIBRARY: "/product-library",
+  TRANSACTIONS: "/transactions",
+  POS_SIMULATOR: "/pos-simulator",
 
   USERS: "/users",
   ROLES: "/users/roles",

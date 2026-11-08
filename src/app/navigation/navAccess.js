@@ -25,9 +25,11 @@ const CHILD_VISIBILITY_RULES = {
   "data-access": canSeeDataAccessRulesSubTab,
 };
 
-export function filterNavItems(items, roleCodes) {
+export function filterNavItems(items, roleCodes, transactionAccess = {}) {
   return items
     .filter((item) => {
+      if (item.id === "transactions") return Boolean(transactionAccess.canRead);
+      if (item.id === "pos-simulator") return Boolean(transactionAccess.canSubmit);
       const rule = VISIBILITY_RULES[item.id];
       return rule ? rule(roleCodes) : true;
     })
