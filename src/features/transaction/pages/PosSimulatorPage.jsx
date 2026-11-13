@@ -1,8 +1,11 @@
 import { useMemo, useRef, useState } from "react";
 import { CoreButton, CoreCard, CoreEmptyState, CorePageHeader, CoreSelect } from "@thinh-17/fe-core";
 import { useSubmitTransaction } from "../hooks/useTransactions.js";
+import { issueReceipt, readPublicReceipt } from "../api/receipt.api.js";
+import { createReceiptSession } from "../lib/receiptFlow.js";
+import { PaymentSuccess } from "../components/PaymentSuccess.jsx";
 import { buildPosPayload, calculateCart, localDateTime, newInvoiceNumber } from "../lib/posPayload.js";
-import { formatDate, formatMoney, transactionError } from "../lib/transactionFormat.js";
+import { formatMoney, transactionError } from "../lib/transactionFormat.js";
 import "../transaction.css";
 
 const EMPTY_PRODUCT = { productCode: "", productName: "", unitPrice: "" };
@@ -21,6 +24,7 @@ export function PosSimulatorPage() {
   const [lastPayload, setLastPayload] = useState(null);
   const [lastSuccess, setLastSuccess] = useState(null);
   const busy = useRef(false);
+  const receiptSessions = useRef(new Map());
   const submit = useSubmitTransaction();
   const calculation = useMemo(() => {
     try { return { ...calculateCart(lines), error: "" }; }
@@ -54,12 +58,18 @@ export function PosSimulatorPage() {
   async function send(payload, replay = false) {
     if (busy.current) return;
     busy.current = true;
-    setError(""); setResult(null);
+    setError("");
     setLastPayload(structuredClone(payload));
     try {
       const response = await submit.mutateAsync(payload);
-      setResult({ response, replay });
+      let session = receiptSessions.current.get(response.id);
+      if (!session) {
+        session = createReceiptSession({ response, payload, replay }, { issue: issueReceipt, read: readPublicReceipt });
+        receiptSessions.current.set(response.id, session);
+      }
+      setResult(session);
       setLastSuccess(structuredClone(payload));
+      void session.ensure();
     } catch (error) { setError(transactionError(error, true)); }
     finally { busy.current = false; }
   }
@@ -67,7 +77,7 @@ export function PosSimulatorPage() {
   function submitForm(event) {
     event.preventDefault();
     try { send(buildPosPayload({ invoiceNumber, transactionTime, currency, lines }, mode)); }
-    catch (error) { setError(error.message); setResult(null); }
+    catch (error) { setError(error.message); }
   }
 
   function startNewInvoice() {
@@ -144,13 +154,7 @@ export function PosSimulatorPage() {
     </CoreCard>
 
     {error && <div className="transaction-error" role="alert">{error}</div>}
-    {result && <CoreCard><div role="status" className="transaction-success">
-      <h2>Đã tiếp nhận giao dịch · HTTP 201</h2>
-      <p>Mã hóa đơn: <strong>{result.response.invoiceNumber}</strong></p>
-      <p>Invoice ID: {result.response.id}</p><p>Trạng thái: {result.response.status}</p>
-      <p>Tiếp nhận lúc: {formatDate(result.response.receivedAt)}</p>
-      {result.replay && <p>Payload gửi lại được backend tiếp nhận thành công.</p>}
-    </div></CoreCard>}
+    {result && <PaymentSuccess key={result.payment.response.id} session={result} />}
     {lastPayload && <CoreCard><details><summary>Payload gần nhất đã gửi</summary>
       <pre className="transaction-payload">{JSON.stringify(lastPayload, null, 2)}</pre></details></CoreCard>}
   </div>;

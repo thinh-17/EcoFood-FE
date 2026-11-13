@@ -5,6 +5,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { ROUTES } from "../../constants/routes.js";
 
 import { MainLayout } from "../../layouts/MainLayout/MainLayout.jsx";
+import { GuestReceiptPage } from "../../features/receipt/pages/GuestReceiptPage.jsx";
 import { RequireTransactionAccess } from "../../features/transaction/components/RequireTransactionAccess.jsx";
 import { TransactionManagementPage } from "../../features/transaction/pages/TransactionManagementPage.jsx";
 import { PosSimulatorPage } from "../../features/transaction/pages/PosSimulatorPage.jsx";
@@ -37,6 +38,7 @@ import { AuthHandoffPage } from "../../features/auth/pages/AuthHandoffPage.jsx";
 export function AppRouter() {
   return (
     <Routes>
+      <Route path={ROUTES.GUEST_RECEIPT} element={<GuestReceiptPage />} />
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/auth-handoff" element={<AuthHandoffPage />} />
 

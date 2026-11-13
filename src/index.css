@@ -1,5 +1,4 @@
 /* Base styles only: reset, typography, design tokens, and accessibility. */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
 :root {
   font-family: 'DM Sans', Arial, sans-serif;
   color: #1b2933;
