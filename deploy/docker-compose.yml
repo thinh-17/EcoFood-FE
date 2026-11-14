@@ -1,0 +1,34 @@
+services:
+  frontend:
+    image: ghcr.io/thinh-17/frontend:${IMAGE_TAG}
+    container_name: frontend
+    restart: always
+    # Just a static nginx server — nothing in-flight worth draining, unlike
+    # the backend's graceful-shutdown handling. A short grace period is fine.
+    stop_grace_period: 10s
+
+    # Not published to the host directly — the shared Caddy stack
+    # (../../caddy/docker-compose.yml) fronts it with TLS over the shared
+    # oke-internal network instead. Only `expose` (internal to the compose
+    # network), no `ports`.
+    expose:
+      - "80"
+
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - http://localhost:80/
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    networks:
+      - oke-internal
+
+networks:
+  oke-internal:
+    external: true
