@@ -4,7 +4,7 @@ import { useAuthStore } from "../features/auth/store/authStore.js";
 
 // Đây là cấu hình gắn với FE-main. FE-core không được hard-code URL/tenant của ứng dụng.
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8080",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8081",
   timeout: 10_000,
 });
 
