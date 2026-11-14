@@ -1,0 +1,117 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: frontend-dev-deployment
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/frontend
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Generate version
+        id: version
+        run: |
+          VERSION=$(date +%Y%m).$(date +%j).${GITHUB_RUN_NUMBER}
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+        run: npm ci
+
+      # VITE_* values are baked into the JS bundle at build time, not read at
+      # container runtime — must be set here, before `vite build` runs.
+      - name: Build
+        env:
+          VITE_API_BASE_URL: https://api.ecofood.dpdns.org
+          VITE_KEYCLOAK_BASE_URL: https://idp.ecofood.dpdns.org
+          VITE_USE_MOCK_API: "false"
+        run: npm run build
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/frontend:${{ steps.version.outputs.version }}
+
+      - name: Trivy security scan
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/frontend:${{ steps.version.outputs.version }}
+          severity: CRITICAL
+          exit-code: '1'
+
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/frontend:${{ steps.version.outputs.version }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Deploy to Azure VM
+        uses: appleboy/ssh-action@v1.2.0
+
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          envs: VERSION
+
+          script: |
+            set -eu
+
+            cd /home/huyluong/frontend
+
+            export IMAGE_TAG="$VERSION"
+
+            sed -i '/^IMAGE_TAG=/d' .env
+            echo "IMAGE_TAG=$VERSION" >> .env
+
+            docker compose pull
+            docker compose stop -t 10 frontend
+            docker compose up -d --remove-orphans
