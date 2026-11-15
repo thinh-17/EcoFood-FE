@@ -9,6 +9,7 @@ import { MainLayout } from "../../layouts/MainLayout/MainLayout.jsx";
 import { HomePage } from "../../features/home/pages/HomePage/HomePage.jsx";
 
 import { ModulePage } from "../../features/modules/pages/ModulePage/ModulePage.jsx";
+import { ProductListPage } from "../../features/product/pages/ProductListPage.jsx";
 
 import { TenantOnboardingPage } from "../../features/tenant/pages/TenantOnboardingPage/TenantOnboardingPage.jsx";
 import { TenantListPage } from "../../features/tenant/pages/TenantListPage/TenantListPage.jsx";
@@ -85,13 +86,10 @@ export function AppRouter() {
 
         <Route
           path="product-library"
-          element={
-            <ModulePage
-              title="Product Library"
-              description="Manage the product library and catalog."
-            />
-          }
+          element={<Navigate to={ROUTES.PRODUCTS} replace />}
         />
+        <Route path="product-library/products" element={<ProductListPage />} />
+        <Route path="product-library/propositions" element={<ModulePage title="Propositions" description="Proposition management is not available yet." />} />
 
         <Route element={<RequireUsersAccess />}>
           <Route path="users" element={<UserListPage />} />

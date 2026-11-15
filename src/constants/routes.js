@@ -8,6 +8,8 @@ export const ROUTES = {
 
   MANAGER: "/manager",
   PRODUCT_LIBRARY: "/product-library",
+  PRODUCTS: "/product-library/products",
+  PROPOSITIONS: "/product-library/propositions",
 
   USERS: "/users",
   ROLES: "/users/roles",
