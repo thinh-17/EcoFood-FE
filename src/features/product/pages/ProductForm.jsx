@@ -1,8 +1,11 @@
+import { CURRENCIES } from "../../../constants/currencies.js";
+import { ProductUnitInput } from "./ProductUnitInput.jsx";
+import { ProductCategoryInput } from "./ProductCategoryInput.jsx";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiBox, FiCheck, FiCopy, FiLayers, FiPackage } from "react-icons/fi";
 import { createProduct, getReferenceProducts, productAction, updateProduct } from "../api/product.api.js";
-import { PRODUCT_STEPS, PRODUCT_TYPES, buildProductPayload, inheritIngredients, productError, productFormState, validateProductStep } from "../lib/product.js";
+import { PRODUCT_STEPS, PRODUCT_TYPES, buildProductPayload, inheritIngredients, productMoney, productError, productFormState, validateProductStep } from "../lib/product.js";
 import { ProductSummary } from "./ProductSummary.jsx";
 import { ProductCostingPanel } from "./ProductCostingPanel.jsx";
 
@@ -78,7 +81,7 @@ export function ProductForm({ product, scope, onSaved, onCancel, onBusyChange })
         {step === 0 && <div className="product-type-cards" role="radiogroup" aria-label="Product type">{TYPE_CARDS.map(({ type, icon: Icon, description, example, rules }) => <label key={type} className={`product-type-card ${form.type === type ? "is-selected" : ""}`}><input type="radio" name="productType" value={type} checked={form.type === type} disabled={Boolean(savedProduct)} onChange={() => { setForm((current) => ({ ...current, type, sourceProductId: "", componentProducts: [] })); setComponentId(""); setReferenceSearch(""); }} /><Icon className="product-type-icon" /><strong>{PRODUCT_TYPES[type]}</strong><p>{description}</p><small>{rules}</small><span className="product-type-example">{example}</span></label>)}</div>}
         {step === 1 && <>
           <div className="product-grid"><label>Product name *<input value={form.name} onChange={(e) => set("name", e.target.value)} /></label><label>Product code *<input maxLength={64} disabled={Boolean(savedProduct?.code)} value={form.code} onChange={(e) => set("code", e.target.value)} /><small>Unique in your enterprise. Fixed after creation.</small></label></div>
-          <div className="product-grid"><label>Category *<input list="product-categories" value={form.category} onChange={(e) => set("category", e.target.value)} placeholder="Select or enter a category" /><datalist id="product-categories">{["Main dishes", "Side dishes", "Drinks", "Desserts", "Combos", "Other"].map((value) => <option key={value} value={value} />)}</datalist></label><label>Product type<input readOnly value={PRODUCT_TYPES[form.type]} /></label></div>
+          <div className="product-grid"><ProductCategoryInput value={form.category} onChange={(value) => set("category", value)} /><label>Product type<input readOnly value={PRODUCT_TYPES[form.type]} /></label></div>
           <label>Description<textarea rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} /></label>
           <label>Product image URL<input type="url" value={form.imageUrl} placeholder="https://..." onChange={(e) => set("imageUrl", e.target.value)} /><small>Optional HTTP(S) link to the product image.</small></label>
           {/^https?:\/\//i.test(form.imageUrl) && <img className="product-preview" src={form.imageUrl} alt="Product preview" />}
@@ -97,8 +100,7 @@ export function ProductForm({ product, scope, onSaved, onCancel, onBusyChange })
           <div className="product-section-heading"><h3>Ingredients ({form.ingredients.length})</h3><div className="product-inline-actions">{form.type !== "STANDALONE" && <button type="button" disabled={refs.isPending || refs.isError} onClick={importIngredients}>Inherit from {form.type === "ADAPTED" ? "base product" : "components"}</button>}<button type="button" onClick={() => set("ingredients", [...form.ingredients, { name: "", quantity: "", unit: "g", note: "" }])}>+ Add ingredient</button></div></div>
           {form.type !== "STANDALONE" && <p className="product-muted">Inheriting replaces the current list with a copy you can edit. Component quantities scale their ingredients.</p>}
           {!form.ingredients.length && <div className="product-state"><FiBox size={28} /><p>No ingredients added. You can continue without them.</p></div>}
-          {form.ingredients.map((item, index) => <div className="product-step" key={index}><div className="product-ingredient-row"><label>Ingredient name *<input value={item.name} onChange={(e) => changeRow("ingredients", index, "name", e.target.value)} /></label><label>Quantity *<input type="number" min="0" step="any" value={item.quantity} onChange={(e) => changeRow("ingredients", index, "quantity", e.target.value)} /></label><label>Unit *<input list="product-units" value={item.unit} onChange={(e) => changeRow("ingredients", index, "unit", e.target.value)} /></label><button type="button" onClick={() => remove("ingredients", index)}>Remove</button></div><label>Note<input value={item.note} onChange={(e) => changeRow("ingredients", index, "note", e.target.value)} /></label></div>)}
-          <datalist id="product-units">{["g", "kg", "ml", "l", "piece"].map((unit) => <option key={unit} value={unit} />)}</datalist>
+          {form.ingredients.map((item, index) => <div className="product-step" key={index}><div className="product-ingredient-row"><label>Ingredient name *<input value={item.name} onChange={(e) => changeRow("ingredients", index, "name", e.target.value)} /></label><label>Quantity *<input type="number" min="0" step="any" value={item.quantity} onChange={(e) => changeRow("ingredients", index, "quantity", e.target.value)} /></label><ProductUnitInput value={item.unit} onChange={(value) => changeRow("ingredients", index, "unit", value)} /><button type="button" onClick={() => remove("ingredients", index)}>Remove</button></div><label>Note<input value={item.note} onChange={(e) => changeRow("ingredients", index, "note", e.target.value)} /></label></div>)}
         </>}
         {step === 3 && <>
           <div className="product-section-heading"><label className="product-check"><input type="checkbox" checked={form.recipeEnabled} onChange={(e) => set("recipeEnabled", e.target.checked)} />Enable recipe</label>{form.type === "ADAPTED" && <button type="button" disabled={!base?.recipe?.enabled} onClick={copyRecipe}>Inherit base recipe</button>}</div>
@@ -108,12 +110,13 @@ export function ProductForm({ product, scope, onSaved, onCancel, onBusyChange })
             <button type="button" onClick={() => set("steps", [...form.steps, { name: "", description: "", durationMinutes: 0 }])}>+ Add step</button><label className="product-recipe-note">Recipe note<textarea rows={2} value={form.recipeNote} onChange={(e) => set("recipeNote", e.target.value)} /></label></> : <p className="product-state">No recipe required. Continue to pricing.</p>}
         </>}
         {step === 4 && <>
-          <ProductCostingPanel costing={form.costing} onChange={(value) => set("costing", value)} />
+          <label>Currency *<select value={form.currency} onChange={(event) => set("currency", event.target.value)}>{CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} - {currency.name}</option>)}</select><small>Applies to all costs and the selling price. Changing currency does not convert amounts.</small></label>
+          <ProductCostingPanel currency={form.currency} costing={form.costing} onChange={(value) => set("costing", value)} />
           <div className="product-pricing-method"><strong>Fixed Price</strong><p>One basic selling price for this product.</p></div>
           <label className="product-check"><input type="checkbox" checked={form.pricingEnabled} onChange={(e) => set("pricingEnabled", e.target.checked)} />Set pricing now</label>
           {!form.pricingEnabled && <p className="product-muted">You may save a draft without pricing. Set a selling price before submitting.</p>}
-          {form.pricingEnabled && <><div className="product-grid product-pricing-fields"><label>Selling price *<input type="number" min="0" step="any" value={form.sellingPrice} onChange={(e) => set("sellingPrice", e.target.value)} /></label><label>Currency<input readOnly value="VND" /></label></div><label>Pricing note<textarea rows={3} value={form.pricingNote} onChange={(e) => set("pricingNote", e.target.value)} /></label></>}
-          {base?.pricing && <p className="product-muted">Base product selling price: {Number(base.pricing.sellingPrice).toLocaleString("vi-VN")} VND. Set your own price independently.</p>}
+          {form.pricingEnabled && <><div className="product-grid product-pricing-fields"><label>Selling price *<input type="number" min="0" step="any" value={form.sellingPrice} onChange={(e) => set("sellingPrice", e.target.value)} /></label><label>Currency<input readOnly value={form.currency} /></label></div><label>Pricing note<textarea rows={3} value={form.pricingNote} onChange={(e) => set("pricingNote", e.target.value)} /></label></>}
+          {base?.pricing && <p className="product-muted">Base product selling price: {productMoney(base.pricing.sellingPrice, base.pricing.currency)}. Set your own price independently.</p>}
           {form.type === "MASTER" && <p className="product-muted">The combo price is independent of the sum of component prices.</p>}
         </>}
         {step === 5 && <><ProductSummary form={form} references={references} /><div className="product-review-flow"><span>Draft</span><span>→</span><span>Pending Review</span><span>→</span><span>Approved</span></div><p className="product-muted">Approved products can be used to create Propositions.</p></>}

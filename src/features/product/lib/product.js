@@ -1,10 +1,12 @@
+import { CURRENCIES } from "../../../constants/currencies.js";
+
 export const PRODUCT_TYPES = { STANDALONE: "Standalone", ADAPTED: "Adapted", MASTER: "Master (Combo)" };
 export const PRODUCT_STATUSES = { DRAFT: "Draft", PENDING_REVIEW: "Pending Review", APPROVED: "Approved", REJECTED: "Rejected" };
 export const PRODUCT_STEPS = ["Product Type", "Definition", "Ingredients", "Recipe", "Pricing", "Submit"];
 export const canEditProduct = (product) => ["DRAFT", "REJECTED"].includes(product?.status);
 export const canManageProducts = (roles) => (roles ?? []).some((role) => ["ENTERPRISE_ADMIN", "ENTERPRISE_PRODUCT_MANAGER"].includes(role));
 export const productDate = (value) => value ? new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
-export const productMoney = (value) => `${Number(value).toLocaleString("vi-VN")} VND`;
+export const productMoney = (value, currency = "VND") => `${Number(value).toLocaleString("vi-VN")} ${currency}`;
 export const COST_FIELDS = { ingredientCost: "Ingredient cost", packagingCost: "Packaging cost", laborCost: "Labor cost", operationCost: "Operation cost", marketingFee: "Marketing fee" };
 export function calculateProductCost(costing) {
   const totalCost = Object.keys(COST_FIELDS).reduce((total, key) => total + Number(costing[key] || 0), 0);
@@ -26,6 +28,7 @@ export function productFormState(product) {
     recipeEnabled: product?.recipe?.enabled ?? false, recipeName: product?.recipe?.name ?? "",
     preparationMinutes: product?.recipe?.preparationMinutes ?? 0, cookingMinutes: product?.recipe?.cookingMinutes ?? 0,
     recipeNote: product?.recipe?.note ?? "", steps: [...(product?.recipe?.steps ?? [])].sort((a, b) => a.order - b.order).map((step) => ({ ...step, description: step.description ?? "" })),
+    currency: product?.pricing?.currency ?? product?.costing?.currency ?? "VND",
     pricingEnabled: Boolean(product?.pricing), sellingPrice: product?.pricing?.sellingPrice ?? "", costPrice: product?.pricing?.costPrice ?? "", pricingNote: product?.pricing?.note ?? "",
     costing: { ingredientCost: product?.costing?.ingredientCost ?? product?.pricing?.costPrice ?? 0, packagingCost: product?.costing?.packagingCost ?? 0, laborCost: product?.costing?.laborCost ?? 0, operationCost: product?.costing?.operationCost ?? 0, marketingFee: product?.costing?.marketingFee ?? 0, targetMargin: product?.costing?.targetMargin ?? 0, tax: product?.costing?.tax ?? 0 },
   };
@@ -62,6 +65,7 @@ export function validateProductStep(form, step, requirePricing = false) {
     if (form.steps.some((step) => !step.name.trim() || !whole(step.durationMinutes))) throw new Error("Each recipe step requires a name and a whole, non-negative duration.");
   }
   if (step === 4) {
+    if (!CURRENCIES.some((item) => item.code === form.currency)) throw new Error("Select a valid currency.");
     if (Object.values(form.costing).some((value) => !nonnegative(value))) throw new Error("Costs and percentages must be non-negative numbers.");
     if (Number(form.costing.targetMargin) >= 100 || Number(form.costing.tax) > 100) throw new Error("Target margin must be below 100%; tax cannot exceed 100%.");
     if (requirePricing && !form.pricingEnabled) throw new Error("Selling price is required before submitting.");
@@ -72,11 +76,11 @@ export function buildProductPayload(form, product, requirePricing = false) {
   for (let step = 0; step < 5; step++) validateProductStep(form, step, requirePricing);
   const payload = {
     name: form.name.trim(), code: form.code.trim().toUpperCase(), category: form.category.trim(), imageUrl: form.imageUrl.trim() || null, description: form.description.trim(),
-    costing: Object.fromEntries(Object.entries(form.costing).map(([key, value]) => [key, Number(value)])),
+    costing: { ...Object.fromEntries(Object.entries(form.costing).map(([key, value]) => [key, Number(value)])), currency: form.currency },
     componentProducts: form.type === "MASTER" ? form.componentProducts.map((item) => ({ productId: item.productId, quantity: Number(item.quantity) })) : [],
     ingredients: form.ingredients.map((item) => ({ ingredientId: item.ingredientId?.trim() || null, name: item.name.trim(), quantity: Number(item.quantity), unit: item.unit.trim(), note: item.note.trim() })),
     recipe: { enabled: form.recipeEnabled, name: form.recipeName.trim(), preparationMinutes: form.recipeEnabled ? Number(form.preparationMinutes) : 0, cookingMinutes: form.recipeEnabled ? Number(form.cookingMinutes) : 0, note: form.recipeNote.trim(), steps: form.recipeEnabled ? form.steps.map((step, index) => ({ order: index + 1, name: step.name.trim(), description: step.description.trim(), durationMinutes: Number(step.durationMinutes) })) : [] },
-    pricing: form.pricingEnabled ? { sellingPrice: Number(form.sellingPrice), costPrice: calculateProductCost(form.costing).totalCost, currency: "VND", note: form.pricingNote.trim() } : null,
+    pricing: form.pricingEnabled ? { sellingPrice: Number(form.sellingPrice), costPrice: calculateProductCost(form.costing).totalCost, currency: form.currency, note: form.pricingNote.trim() } : null,
   };
   if (product) {
     if (product.revision == null) throw new Error("Product revision is missing. Reload before saving.");

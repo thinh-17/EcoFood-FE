@@ -10,7 +10,7 @@ import { HomePage } from "../../features/home/pages/HomePage/HomePage.jsx";
 
 import { ModulePage } from "../../features/modules/pages/ModulePage/ModulePage.jsx";
 import { ProductListPage } from "../../features/product/pages/ProductListPage.jsx";
-import { PropositionPage } from "../../features/proposition/pages/PropositionPage.jsx";
+// import { PropositionPage } from "../../features/proposition/pages/PropositionPage.jsx";
 
 import { TenantOnboardingPage } from "../../features/tenant/pages/TenantOnboardingPage/TenantOnboardingPage.jsx";
 import { TenantListPage } from "../../features/tenant/pages/TenantListPage/TenantListPage.jsx";
@@ -90,7 +90,7 @@ export function AppRouter() {
           element={<Navigate to={ROUTES.PRODUCTS} replace />}
         />
         <Route path="product-library/products" element={<ProductListPage />} />
-        <Route path="product-library/propositions" element={<PropositionPage />} />
+        {/*<Route path="product-library/propositions" element={<PropositionPage />} />*/}
 
         <Route element={<RequireUsersAccess />}>
           <Route path="users" element={<UserListPage />} />
