@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildProductPayload, calculateProductCost, canEditProduct, canManageProducts, inheritIngredients, productFormState, productFromProcess, validateProductStep } from "./product.js";
+import { buildProductPayload, calculateProductCost, canEditProduct, canManageProducts, inheritIngredients, productFormState, productFromProcess, productMoney, validateProductStep } from "./product.js";
 const id1 = "0123456789abcdef01234567";
 const id2 = "0123456789abcdef01234568";
 const draft = (extra = {}) => ({ ...productFormState(), name: " Chicken ", code: " ch-01 ", category: " Meals ", ...extra });
@@ -54,6 +54,16 @@ test("updates preserve revision zero and omit immutable type and source", () => 
   const result = buildProductPayload(draft(), { revision: 0 });
   assert.equal(result.expectedRevision, 0); assert.equal("type" in result, false); assert.equal("sourceProductId" in result, false);
   assert.throws(() => buildProductPayload(draft(), {}), /revision/);
+});
+test("selected currency survives draft, pricing and edit round trips", () => {
+  const form = draft({ currency: "USD" });
+  assert.equal(buildProductPayload(form).costing.currency, "USD");
+  const payload = buildProductPayload({ ...form, pricingEnabled: true, sellingPrice: "12.50" });
+  assert.equal(payload.pricing.currency, "USD");
+  assert.equal(productFormState(payload).currency, "USD");
+  assert.equal(productFormState({ costing: payload.costing }).currency, "USD");
+  assert.equal(productMoney(12.5, "USD"), "12,5 USD");
+  assert.throws(() => buildProductPayload({ ...form, currency: "invalid" }), /valid currency/);
 });
 test("optional steps may be skipped and editing respects status", () => {
   validateProductStep(draft(), 2); validateProductStep(draft(), 3);

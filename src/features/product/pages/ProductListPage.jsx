@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CorePageHeader } from "@thinh-17/fe-core";
-import { FiChevronLeft, FiChevronRight, FiFilter, FiMoreHorizontal, FiPlus, FiSearch } from "react-icons/fi";
+import { CorePageHeader, CoreTable } from "@thinh-17/fe-core";
+import { FiFilter, FiMoreHorizontal, FiPlus, FiSearch } from "react-icons/fi";
 import { useAuthStore } from "../../auth/store/authStore.js";
 import { useCurrentRoles } from "../../auth/hooks/useCurrentRoles.js";
 import { useDebouncedValue } from "../../../hooks/useDebouncedValue.js";
@@ -11,6 +11,8 @@ import { ProductForm } from "./ProductForm.jsx";
 import { ProductDetail } from "./ProductDetail.jsx";
 import { ProductStatus } from "./ProductStatus.jsx";
 import "./ProductListPage.css";
+
+const PAGE_SIZE = 20;
 
 export function ProductListPage() {
   const scope = useAuthStore((state) => state.tenantId);
@@ -29,17 +31,24 @@ function ProductDirectory({ scope }) {
   const [selectedId, setSelectedId] = useState(null);
   const [notice, setNotice] = useState("");
   // Debounce the search and page together so a new term always starts at page zero.
-  const params = useDebouncedValue(JSON.stringify({ page, size: 10, search: search.trim() || undefined, type: type || undefined, status: status || undefined }), 300);
+  const params = useDebouncedValue(JSON.stringify({ page, size: PAGE_SIZE, search: search.trim() || undefined, type: type || undefined, status: status || undefined }), 300);
   const query = useQuery({ queryKey: ["products", scope, "list", params], queryFn: ({ signal }) => listProducts(JSON.parse(params), signal) });
   const data = query.data;
   const rows = data?.content ?? [];
-  const currentPage = data?.number ?? 0;
-  const totalPages = data?.totalPages ?? 0;
+  const currentPage = data?.number ?? data?.page ?? page;
   const total = data?.totalElements ?? 0;
-  const pendingFilters = params !== JSON.stringify({ page, size: 10, search: search.trim() || undefined, type: type || undefined, status: status || undefined });
+  const pendingFilters = params !== JSON.stringify({ page, size: PAGE_SIZE, search: search.trim() || undefined, type: type || undefined, status: status || undefined });
   const busy = query.isFetching || pendingFilters;
-  const pageNumbers = Array.from({ length: Math.min(5, totalPages) }, (_, index) => Math.max(0, Math.min(currentPage - 2, totalPages - 5)) + index);
-  function openProduct(id) { setSelectedId(id); setNotice(""); }
+  const columns = useMemo(() => [
+    { accessorKey: "code", header: "Product code", cell: ({ row }) => <span className="product-id" title={row.original.id}>{row.original.code || row.original.id}</span> },
+    { accessorKey: "name", header: "Product name", cell: ({ row }) => <button className="product-name" onClick={() => { setSelectedId(row.original.id); setNotice(""); }}>{row.original.name}</button> },
+    { accessorKey: "type", header: "Product type", cell: ({ getValue }) => <span className={`product-type product-type--${getValue()?.toLowerCase()}`}>{PRODUCT_TYPES[getValue()] ?? getValue()}</span> },
+    { accessorKey: "category", header: "Category", cell: ({ getValue }) => getValue() || "—" },
+    { accessorKey: "version", header: "Version" },
+    { accessorKey: "status", header: "Status", cell: ({ getValue }) => <ProductStatus status={getValue()} /> },
+    { accessorKey: "approvedAt", header: "Approved date", cell: ({ getValue }) => productDate(getValue()) },
+    { id: "actions", header: "Actions", cell: ({ row }) => <button className="product-more" aria-label={`View details and actions for ${row.original.name}`} title="Details and actions" onClick={() => { setSelectedId(row.original.id); setNotice(""); }}><FiMoreHorizontal /></button> },
+  ], []);
   if (creating) return <section className="product-page product-surface">
     <CorePageHeader title="Create Product" description="Define your product, calculate costs and submit for review." />
     <ProductForm scope={scope} onCancel={() => setCreating(false)} onSaved={(product) => { setCreating(false); setNotice(product.status === "PENDING_REVIEW" ? "Product submitted for review." : "Product draft saved."); }} />
@@ -64,21 +73,18 @@ function ProductDirectory({ scope }) {
     </div>}
     {notice && <div className="product-notice" role="status">{notice}<button aria-label="Dismiss notification" onClick={() => setNotice("")}>×</button></div>}
     {query.isError && <div className="product-error" role="alert">{productError(query.error)} <button onClick={() => query.refetch()}>Retry</button></div>}
-    <div className="product-table-wrap" aria-busy={busy}>
-      <table className="product-table"><thead><tr><th>Product code</th><th>Product name</th><th>Product type</th><th>Category</th><th>Version</th><th>Status</th><th>Approved date</th><th>Actions</th></tr></thead>
-        <tbody>{!query.isError && rows.map((product) => <tr key={product.id}>
-          <td><span className="product-id" title={product.id}>{product.code || product.id}</span></td>
-          <td><button className="product-name" onClick={() => openProduct(product.id)}>{product.name}</button></td>
-          <td><span className={`product-type product-type--${product.type?.toLowerCase()}`}>{PRODUCT_TYPES[product.type] ?? product.type}</span></td>
-          <td>{product.category || "—"}</td><td>{product.version}</td><td><ProductStatus status={product.status} /></td><td>{productDate(product.approvedAt)}</td>
-          <td><button className="product-more" aria-label={`View details and actions for ${product.name}`} title="Details and actions" onClick={() => openProduct(product.id)}><FiMoreHorizontal /></button></td>
-        </tr>)}</tbody>
-      </table>
-      {query.isPending && <div className="product-state" role="status">Loading products...</div>}
-      {!query.isPending && !query.isError && !rows.length && <div className="product-state"><strong>No products found</strong><p>{search || type || status ? "Try another search or clear your filters." : "Create your first product to start building your catalog."}</p></div>}
-    </div>
-    <footer className="product-footer"><span>{busy ? "Loading products..." : query.isError ? "Unable to load products" : `Showing ${rows.length ? currentPage * 10 + 1 : 0} - ${currentPage * 10 + rows.length} of ${total} products`}</span>
-      <nav className="product-pagination" aria-label="Product pagination"><button aria-label="Previous page" disabled={busy || query.isError || currentPage === 0} onClick={() => setPage(currentPage - 1)}><FiChevronLeft /></button>{pageNumbers.map((number) => <button key={number} aria-label={`Page ${number + 1}`} aria-current={number === currentPage ? "page" : undefined} disabled={busy || query.isError} onClick={() => setPage(number)}>{number + 1}</button>)}<button aria-label="Next page" disabled={busy || query.isError || currentPage + 1 >= totalPages} onClick={() => setPage(currentPage + 1)}><FiChevronRight /></button></nav>
-    </footer>
+    <fieldset className="product-directory-table" disabled={busy || query.isError} aria-busy={busy}>
+      <CoreTable
+        columns={columns}
+        data={query.isError ? [] : rows}
+        loading={busy}
+        page={currentPage}
+        pageSize={data?.size ?? PAGE_SIZE}
+        totalElements={total}
+        onPageChange={(nextPage) => { if (!busy && !query.isError) setPage(nextPage); }}
+        emptyTitle={query.isError ? "Unable to load products" : "No products found"}
+        emptyDescription={query.isError ? "Retry to load the product list." : search || type || status ? "Try another search or clear your filters." : "Create your first product to start building your catalog."}
+      />
+    </fieldset>
   </section>;
 }
