@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CurrencySelect } from "../../../components/CurrencySelect.jsx";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { CoreButton } from "@thinh-17/fe-core";
 import { useDebouncedValue } from "../../../hooks/useDebouncedValue.js";
@@ -211,18 +212,8 @@ export function PropositionForm({ proposition, options, onCancel, onSaved }) {
             onChange={set("name")}
           />
           <label>
-            Currency
-            <select
-              value={form.currency}
-              onChange={(e) => set("currency")(e.target.value)}
-            >
-              {!options.availableCurrencies.includes(form.currency) && (
-                <option>{form.currency}</option>
-              )}
-              {options.availableCurrencies.map((code) => (
-                <option key={code}>{code}</option>
-              ))}
-            </select>
+            Currency *
+            <CurrencySelect required value={form.currency} onChange={set("currency")} />
           </label>
         </div>
         <label>

@@ -135,7 +135,7 @@ export function PropositionDirectory({ scope }) {
     edit: "Edit Proposition",
     detail: "Proposition details",
     plan: plan ? "Edit Draft Plan" : "Create Plan",
-    settings: "Enterprise currencies",
+    settings: "Default Proposition currency",
   }[view];
   return (
     <section className="prop-page">
@@ -164,7 +164,7 @@ export function PropositionDirectory({ scope }) {
           onCancel={() => setView("list")}
           onSaved={() => {
             reload();
-            setNotice("Enterprise currencies saved.");
+            setNotice("Default Proposition currency saved.");
             setView("list");
           }}
         />
@@ -245,7 +245,7 @@ export function PropositionDirectory({ scope }) {
                   variant="secondary"
                   onClick={() => setView("settings")}
                 >
-                  Currencies
+                  Default currency
                 </CoreButton>
                 <CoreButton onClick={() => setView("create")}>
                   Create Proposition

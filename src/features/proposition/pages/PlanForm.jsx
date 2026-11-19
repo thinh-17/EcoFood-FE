@@ -12,6 +12,7 @@ import {
 } from "../lib/proposition.js";
 import { ChoiceList, Field } from "./PropositionFields.jsx";
 import { COUNTRIES } from "../../../constants/countries.js";
+import { CurrencySelect } from "../../../components/CurrencySelect.jsx";
 export function PlanForm({ proposition: p, plan, onCancel, onSaved }) {
   const [form, setForm] = useState(() => planFormState(plan, p)),
     [validation, setValidation] = useState("");
@@ -251,20 +252,11 @@ export function PlanForm({ proposition: p, plan, onCancel, onSaved }) {
         )}
         {form.marketEnabled && (
           <>
+            <p className="prop-muted">Changing currency does not convert amounts. Review the prices and confirm the preview again.</p>
             <div className="prop-grid">
               <label>
-                Currency
-                <select
-                  value={form.currency}
-                  onChange={(e) => set("currency")(e.target.value)}
-                >
-                  {!p.availableCurrencies.includes(form.currency) && (
-                    <option>{form.currency}</option>
-                  )}
-                  {p.availableCurrencies.map((code) => (
-                    <option key={code}>{code}</option>
-                  ))}
-                </select>
+                Currency *
+                <CurrencySelect required value={form.currency} onChange={set("currency")} />
               </label>
               <Field
                 label="Sale price *"

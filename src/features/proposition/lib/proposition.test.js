@@ -79,6 +79,7 @@ test("Draft Plan allows empty market; entered amounts stay decimal strings", () 
     revision: 7,
     definition: { currency: "USD" },
     availableCurrencies: ["USD"],
+    eligibleTenants: [{ id: "partner", country: "SOUTH" }],
   };
   const form = {
     ...planFormState(null, p),
@@ -88,10 +89,12 @@ test("Draft Plan allows empty market; entered amounts stay decimal strings", () 
   };
   assert.equal(planPayload(form, p).marketConfiguration, null);
   const payload = planPayload(
-    { ...form, marketEnabled: true, salePrice: "25.10" },
+    { ...form, marketEnabled: true, marketConfirmed: true, salePrice: "25.10", currency: "THB" },
     p,
   );
   assert.equal(payload.marketConfiguration.salePrice, "25.10");
+  assert.equal(payload.marketConfiguration.currency, "THB");
+  assert.equal(planFormState({ marketConfiguration: payload.marketConfiguration }, p).currency, "THB");
   assert.equal(payload.expectedRevision, 7);
   assert.equal("status" in payload, false);
 });

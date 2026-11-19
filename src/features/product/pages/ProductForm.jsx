@@ -1,4 +1,4 @@
-import { CURRENCIES } from "../../../constants/currencies.js";
+import { CurrencySelect } from "../../../components/CurrencySelect.jsx";
 import { ProductUnitInput } from "./ProductUnitInput.jsx";
 import { ProductCategoryInput } from "./ProductCategoryInput.jsx";
 import { useState } from "react";
@@ -110,7 +110,7 @@ export function ProductForm({ product, scope, onSaved, onCancel, onBusyChange })
             <button type="button" onClick={() => set("steps", [...form.steps, { name: "", description: "", durationMinutes: 0 }])}>+ Add step</button><label className="product-recipe-note">Recipe note<textarea rows={2} value={form.recipeNote} onChange={(e) => set("recipeNote", e.target.value)} /></label></> : <p className="product-state">No recipe required. Continue to pricing.</p>}
         </>}
         {step === 4 && <>
-          <label>Currency *<select value={form.currency} onChange={(event) => set("currency", event.target.value)}>{CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} - {currency.name}</option>)}</select><small>Applies to all costs and the selling price. Changing currency does not convert amounts.</small></label>
+          <label>Currency *<CurrencySelect value={form.currency} onChange={(value) => set("currency", value)} /><small>Applies to all costs and the selling price. Changing currency does not convert amounts.</small></label>
           <ProductCostingPanel currency={form.currency} costing={form.costing} onChange={(value) => set("costing", value)} />
           <div className="product-pricing-method"><strong>Fixed Price</strong><p>One basic selling price for this product.</p></div>
           <label className="product-check"><input type="checkbox" checked={form.pricingEnabled} onChange={(e) => set("pricingEnabled", e.target.checked)} />Set pricing now</label>

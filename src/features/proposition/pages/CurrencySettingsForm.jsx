@@ -5,8 +5,8 @@ import {
   getCurrencySettings,
   saveCurrencySettings,
 } from "../api/proposition.api.js";
-import { csv, errorMessage } from "../lib/proposition.js";
-import { Field } from "./PropositionFields.jsx";
+import { errorMessage } from "../lib/proposition.js";
+import { CurrencySelect } from "../../../components/CurrencySelect.jsx";
 export function CurrencySettingsForm({ scope, onCancel, onSaved }) {
   const query = useQuery({
     queryKey: ["propositions", scope, "settings"],
@@ -31,10 +31,7 @@ export function CurrencySettingsForm({ scope, onCancel, onSaved }) {
   );
 }
 function Editor({ settings, onCancel, onSaved }) {
-  const [available, setAvailable] = useState(
-      settings.availableCurrencies.join(", "),
-    ),
-    [fallback, setFallback] = useState(settings.defaultCurrency);
+  const [fallback, setFallback] = useState(settings.defaultCurrency);
   const mutation = useMutation({
     mutationFn: saveCurrencySettings,
     onSuccess: onSaved,
@@ -46,30 +43,19 @@ function Editor({ settings, onCancel, onSaved }) {
         event.preventDefault();
         mutation.mutate({
           expectedRevision: settings.revision,
-          availableCurrencies: csv(available).map((code) => code.toUpperCase()),
-          defaultCurrency: fallback.toUpperCase(),
+          availableCurrencies: settings.availableCurrencies,
+          defaultCurrency: fallback,
         });
       }}
     >
       <fieldset disabled={mutation.isPending}>
         <p className="prop-muted">
-          Currency settings apply to this Enterprise's Proposition/Plan pricing.
-          Existing approved Plan prices are preserved.
+          Choose the default currency for new Propositions. Each Proposition and Plan
+          can select its own currency. Existing Propositions and Plans are not changed.
         </p>
-        <Field
-          label="Available currencies *"
-          required
-          placeholder="USD, VND, EUR"
-          value={available}
-          onChange={setAvailable}
-        />
-        <Field
-          label="Default currency *"
-          required
-          maxLength={3}
-          value={fallback}
-          onChange={setFallback}
-        />
+        <label>Default Proposition currency *
+          <CurrencySelect required value={fallback} onChange={setFallback} />
+        </label>
       </fieldset>
       {mutation.isError && (
         <p role="alert" className="prop-error">
