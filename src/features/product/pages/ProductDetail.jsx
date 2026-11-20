@@ -21,6 +21,7 @@ export function ProductDetail({ id, scope, onClose, onNotice }) {
     onSuccess: (product, variables) => {
       client.setQueryData(["products", scope, "detail", id], product);
       client.invalidateQueries({ queryKey: ["products", scope] });
+      if (variables.action === "versions") client.invalidateQueries({ queryKey: ["propositions"] });
       setEditing(false); setRejecting(false); setReason(""); setSelectedVersion(null);
       onNotice(variables.action === "versions" ? "New draft version created." : "Product updated successfully.");
     },
@@ -60,7 +61,7 @@ export function ProductDetail({ id, scope, onClose, onNotice }) {
       {!historical && canEditProduct(product) && <button disabled={mutation.isPending} onClick={() => { mutation.reset(); setEditing(true); }}>Edit product</button>}
       {!historical && product.status === "DRAFT" && <button className="product-primary" disabled={mutation.isPending || !product.pricing} title={!product.pricing ? "Add pricing before submitting" : undefined} onClick={() => act("submit")}>Submit for review</button>}
       {!historical && product.status === "PENDING_REVIEW" && <><button disabled={mutation.isPending || rejecting} onClick={() => setRejecting(true)}>Reject</button><button className="product-primary" disabled={mutation.isPending || rejecting} onClick={() => act("approve")}>Approve</button></>}
-      {!historical && product.status === "APPROVED" && <button className="product-primary" disabled={mutation.isPending} onClick={() => act("versions")}>Create new version</button>}
+      {!historical && product.status === "APPROVED" && <><button className="product-primary" disabled={mutation.isPending} onClick={() => act("versions")}>Create new version</button><small>Creating a new version moves the previous version and its Propositions to Pending Review.</small></>}
       {mutation.isPending && <span role="status">Updating...</span>}
     </div>
   </div>;
