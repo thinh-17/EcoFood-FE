@@ -16,6 +16,7 @@ import {
   statusLabel,
 } from "../lib/proposition.js";
 import { MetricsTable } from "./PropositionFields.jsx";
+import { PlanSaleOrchestrator } from "../../orchestrator/pages/PlanSaleOrchestrator.jsx";
 
 const MESSAGES = {
   submitProposition:
@@ -376,6 +377,7 @@ export function PropositionDetail({
                 </CoreButton>
               )}
             </div>
+            <PlanSaleOrchestrator proposition={p} plan={plan} />
           </article>
         ))}
         {confirmation && (
