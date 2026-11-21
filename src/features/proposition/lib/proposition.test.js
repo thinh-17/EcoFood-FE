@@ -8,7 +8,43 @@ import {
   propositionPayload,
   planFormState,
   planPayload,
+  partnerCountries,
 } from "./proposition.js";
+
+test("country ordering is explicit, unique and independent of input order", () => {
+  assert.deepEqual(
+    partnerCountries(
+      ["vn", "us", "other", "missing"],
+      [
+        { id: "vn", country: "VN" },
+        { id: "us", country: "US" },
+        { id: "other", country: "VN" },
+      ],
+    ),
+    ["US", "VN"],
+  );
+});
+test("decimal parsing preserves trailing-zero precision and rejects malformed amounts", () => {
+  assert.equal(marketPreview({ salePrice: "1.230000" }).totalPrice, "1.23");
+  assert.equal(
+    marketPreview({ currency: "JPY", salePrice: "1.0000" }).totalPrice,
+    "1",
+  );
+  for (const salePrice of [
+    "",
+    ".1",
+    "1.",
+    "1.2.3",
+    "1e2",
+    " 1",
+    "+1",
+    "1\n",
+    "０１",
+    "0." + "0".repeat(100000) + "1",
+    "0".repeat(100000) + "x",
+  ])
+    assert.throws(() => marketPreview({ salePrice }));
+});
 test("only Product Library role sections can use Propositions", () => {
   for (const actor of ["ECO", "ENTERPRISE", "MASTER", "TENANT"])
     assert.equal(canUsePropositions([`${actor}_PRODUCT_MANAGER`]), true);
@@ -89,12 +125,22 @@ test("Draft Plan allows empty market; entered amounts stay decimal strings", () 
   };
   assert.equal(planPayload(form, p).marketConfiguration, null);
   const payload = planPayload(
-    { ...form, marketEnabled: true, marketConfirmed: true, salePrice: "25.10", currency: "THB" },
+    {
+      ...form,
+      marketEnabled: true,
+      marketConfirmed: true,
+      salePrice: "25.10",
+      currency: "THB",
+    },
     p,
   );
   assert.equal(payload.marketConfiguration.salePrice, "25.10");
   assert.equal(payload.marketConfiguration.currency, "THB");
-  assert.equal(planFormState({ marketConfiguration: payload.marketConfiguration }, p).currency, "THB");
+  assert.equal(
+    planFormState({ marketConfiguration: payload.marketConfiguration }, p)
+      .currency,
+    "THB",
+  );
   assert.equal(payload.expectedRevision, 7);
   assert.equal("status" in payload, false);
 });

@@ -460,7 +460,6 @@ function SaleJsonPreview({ config, currency }) {
           : "The schema saved with this Sale version."}
       </p>
       <pre
-        tabIndex={0}
         aria-label={
           mode === "payload" ? "Payload JSON preview" : "Schema JSON preview"
         }

@@ -29,7 +29,10 @@ export function partnerCountries(ids, partners) {
         .map((id) => partners.find((p) => p.id === id)?.country)
         .filter(Boolean),
     ),
-  ].sort();
+  ].sort((a, b) => {
+    if (a === b) return 0;
+    return a < b ? -1 : 1;
+  });
 }
 export const localDate = (value) =>
   value
@@ -47,15 +50,34 @@ export const currencyDigits = (currency = "USD") =>
   new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions()
     .maximumFractionDigits;
 function minor(value, digits) {
-  const match = /^(\d+)(?:\.(\d+))?$/.exec(String(value ?? "0"));
-  if (!match || (match[2]?.replace(/0+$/, "").length ?? 0) > digits)
+  const amount = String(value ?? "0");
+  const dot = amount.indexOf(".");
+  const whole = dot < 0 ? amount : amount.slice(0, dot);
+  const fraction = dot < 0 ? "" : amount.slice(dot + 1);
+  let significantDecimals = fraction.length;
+  while (significantDecimals > 0 && fraction[significantDecimals - 1] === "0")
+    significantDecimals--;
+  if (
+    !whole ||
+    (dot >= 0 && !fraction) ||
+    !decimalDigits(whole) ||
+    !decimalDigits(fraction) ||
+    significantDecimals > digits
+  )
     throw new Error(
       `Enter a non-negative amount with at most ${digits} decimals.`,
     );
   return (
-    BigInt(match[1]) * 10n ** BigInt(digits) +
-    BigInt((match[2] ?? "").slice(0, digits).padEnd(digits, "0") || "0")
+    BigInt(whole) * 10n ** BigInt(digits) +
+    BigInt(fraction.slice(0, digits).padEnd(digits, "0") || "0")
   );
+}
+function decimalDigits(value) {
+  for (let index = 0; index < value.length; index++) {
+    const code = value.charCodeAt(index);
+    if (code < 48 || code > 57) return false;
+  }
+  return true;
 }
 function decimal(value, digits) {
   const scale = 10n ** BigInt(digits);
