@@ -1,3 +1,4 @@
+
 name: Frontend CI
 
 on:
@@ -10,30 +11,30 @@ permissions:
   packages: read
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: npm
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@thinh-17'
 
       - name: Install dependencies
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
         run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Lint
         run: npm run lint
 
-      # VITE_* values are baked into the JS bundle at build time, not read at
-      # container runtime — must be set here, before `vite build` runs.
+      # VITE_* values are baked into the JS bundle at build time.
       - name: Build
         env:
           VITE_API_BASE_URL: https://api.ecofood.dpdns.org
@@ -42,12 +43,14 @@ jobs:
         run: npm run build
 
       - name: Build Docker image (not pushed)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           push: false
           load: true
           tags: frontend:pr-${{ github.event.pull_request.number }}
+          secrets: |
+            npm_token=${{ secrets.GITHUB_TOKEN }}
 
       - name: Trivy security scan
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0

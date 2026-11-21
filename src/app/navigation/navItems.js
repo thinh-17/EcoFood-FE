@@ -55,7 +55,10 @@ export const navItems = [
     id: "product-library",
     label: "Product Library",
     icon: FiPackage,
-    to: ROUTES.PRODUCT_LIBRARY,
+    children: [
+      { id: "products", label: "Products", icon: FiPackage, to: ROUTES.PRODUCTS },
+      { id: "propositions", label: "Propositions", icon: FiLayers, to: ROUTES.PROPOSITIONS },
+    ],
   },
 
   {

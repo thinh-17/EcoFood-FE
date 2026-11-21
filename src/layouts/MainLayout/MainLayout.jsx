@@ -33,6 +33,7 @@ export function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
 
   const [expandedGroups, setExpandedGroups] = useState({
+    "product-library": true,
     partner: true,
     "users-group": true,
   });

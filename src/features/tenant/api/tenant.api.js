@@ -61,9 +61,10 @@ export async function getRootTenant() {
 // omitted entirely means "no search yet" (the first call, before the user
 // has typed anything); once they've typed, pass whatever string they typed,
 // including "" if they clear the box, per TenantService.listTenantDirectory.
-export async function getTenantDirectory({ page = 0, size = 20, sort, search } = {}) {
+export async function getTenantDirectory({ page = 0, size = 20, sort, search } = {}, signal) {
   const response = await apiClient.get("/api/v1/tenants/directory", {
     params: { page, size, sort, search },
+    signal,
   });
   return unwrapData(response);
 }
