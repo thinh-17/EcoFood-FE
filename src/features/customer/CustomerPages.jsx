@@ -62,7 +62,7 @@ export function ReceiptPage() {
       e.preventDefault(); let value = /^[A-Za-z0-9_-]{43}$/.test(pasted.trim()) ? pasted.trim() : "";
       if (!value) { try { value = receiptToken(new URL(pasted.trim(), window.location.origin).hash); } catch { /* Show validation error below. */ } }
       if (value) { setError(""); setToken(value); setPasted(""); } else setError("Link hoặc mã receipt không hợp lệ.");
-    }}><label>Link hoặc mã từ QR Invoice<input required maxLength={2048} autoComplete="off" spellCheck={false} value={pasted} onChange={(e) => setPasted(e.target.value)} /></label><button>Xem Invoice</button></form>}
+    }}><label>Link hoặc mã từ QR Invoice<input required maxLength={2048} autoComplete="off" spellCheck={false} value={pasted} onChange={(e) => setPasted(e.target.value)} /></label><button type="submit">Xem Invoice</button></form>}
     {error && <p role="alert" className="customer-error">{error}</p>}
     {!receipt && !error && <p role="status">Đang tải hóa đơn…</p>}
     {receipt && <><InvoiceContent invoice={receipt} />
@@ -107,7 +107,7 @@ function ProfileEditor({ profile, save, busy }) {
     <p>Email: {profile.email}</p><p>Username: {profile.username}</p>
     <label>Tên<input required maxLength={100} value={firstName} onChange={(e) => setFirstName(e.target.value)} /></label>
     <label>Họ<input required maxLength={100} value={lastName} onChange={(e) => setLastName(e.target.value)} /></label>
-    <button disabled={busy}>Lưu hồ sơ</button><small>Email, username và mật khẩu không thay đổi tại form này.</small>
+    <button type="submit" disabled={busy}>Lưu hồ sơ</button><small>Email, username và mật khẩu không thay đổi tại form này.</small>
   </form>;
 }
 function date(value) { return value ? new Date(value).toLocaleString("vi-VN") : "Chưa xác định"; }

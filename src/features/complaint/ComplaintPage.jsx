@@ -83,12 +83,12 @@ function CreateForm({ initialInvoice, busy, save, cancel }) {
     </>}
     <label>Tiêu đề<input required maxLength={200} value={subject} onChange={(e) => change(setSubject, e.target.value)} /></label>
     <label>Nội dung<textarea required maxLength={10000} rows={5} value={description} onChange={(e) => change(setDescription, e.target.value)} /></label>
-    <div className="complaint-toolbar"><button disabled={busy || (type === "TENANT" && !invoiceId)}>Gửi Complaint</button><button type="button" onClick={cancel}>Hủy</button></div>
+    <div className="complaint-toolbar"><button type="submit" disabled={busy || (type === "TENANT" && !invoiceId)}>Gửi Complaint</button><button type="button" onClick={cancel}>Hủy</button></div>
   </form>;
 }
 function ReplyForm({ busy, send }) {
   const [note, setNote] = useState("");
-  return <form className="complaint-form" onSubmit={(e) => { e.preventDefault(); send(note); }}><label>Bổ sung thông tin<textarea required maxLength={4000} value={note} onChange={(e) => setNote(e.target.value)} /></label><button disabled={busy}>Gửi bổ sung</button></form>;
+  return <form className="complaint-form" onSubmit={(e) => { e.preventDefault(); send(note); }}><label>Bổ sung thông tin<textarea required maxLength={4000} value={note} onChange={(e) => setNote(e.target.value)} /></label><button type="submit" disabled={busy}>Gửi bổ sung</button></form>;
 }
 function AdminActions({ c, assign, busy, send }) {
   const token = useAuthStore((s) => s.internalAccessToken);

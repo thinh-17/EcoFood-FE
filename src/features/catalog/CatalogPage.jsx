@@ -94,7 +94,7 @@ function Editor({ draft, scope, busy, save, cancel }) {
     <label>Giới hạn dòng/request<input required type="number" min={1} max={100} value={form.policy.maxPageSize} onChange={(e) => field("policy", { ...form.policy, maxPageSize: e.target.value })} /></label>
     <label>Nhãn Catalog<input maxLength={500} value={label} onChange={(e) => setLabel(e.target.value)} /></label><label>Mô tả Catalog<textarea maxLength={500} value={description} onChange={(e) => setDescription(e.target.value)} /></label>
     {(options.error || plans.error) && <p role="alert">{catalogError(options.error || plans.error)}</p>}
-    <div className="catalog-toolbar"><button disabled={busy || !form.selections.length || !form.partnerIds.length}>Save Draft</button><button type="button" onClick={cancel}>Hủy</button></div>
+    <div className="catalog-toolbar"><button type="submit" disabled={busy || !form.selections.length || !form.partnerIds.length}>Save Draft</button><button type="button" onClick={cancel}>Hủy</button></div>
   </form>;
 }
 function GrantAccess({ publication, scope, changed }) {
@@ -116,7 +116,7 @@ function GrantAccess({ publication, scope, changed }) {
     {(partner?.entries || []).map((item) => <label className="catalog-check" key={item.planId}><input type="checkbox" checked={plans.includes(item.planId)} onChange={() => choose(plans.includes(item.planId) ? plans.filter((id) => id !== item.planId) : [...plans, item.planId])} />{item.name} · Plan v{item.planVersion}</label>)}
     <label>Credential hết hạn<input required type="datetime-local" max={localTime(publication.policy.expiresAt)} value={expires} onChange={(e) => setExpires(e.target.value)} /></label>
     {(options.error || error) && <p role="alert">{error || catalogError(options.error)}</p>}
-    <button disabled={busy || !partnerId || !plans.length}>Cấp credential mới</button>
+    <button type="submit" disabled={busy || !partnerId || !plans.length}>Cấp credential mới</button>
   </form>;
 }
 function date(value) { return value ? new Date(value).toLocaleString("vi-VN") : "—"; }
