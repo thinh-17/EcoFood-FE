@@ -16,6 +16,9 @@ import {
 import { ROUTES } from "../../constants/routes.js";
 
 export const navItems = [
+  { id: "catalog-publications", label: "Publish External API", icon: FiLayers, to: "/catalog-publications" },
+  { id: "complaints", label: "Customer Care", icon: FiUserCheck, to: "/complaints" },
+  { id: "notifications", label: "Notifications", icon: FiUserCheck, to: ROUTES.NOTIFICATIONS },
   {
     id: "home",
     label: "Home",

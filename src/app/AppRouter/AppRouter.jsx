@@ -1,6 +1,7 @@
 import "./AppRouter.css";
+import { lazy, Suspense } from "react";
 
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { ROUTES } from "../../constants/routes.js";
 
@@ -11,6 +12,7 @@ import { HomePage } from "../../features/home/pages/HomePage/HomePage.jsx";
 import { ModulePage } from "../../features/modules/pages/ModulePage/ModulePage.jsx";
 import { ProductListPage } from "../../features/product/pages/ProductListPage.jsx";
 import { PropositionPage } from "../../features/proposition/pages/PropositionPage.jsx";
+import { NotificationPage } from "../../features/notification/NotificationPage.jsx";
 
 import { TenantOnboardingPage } from "../../features/tenant/pages/TenantOnboardingPage/TenantOnboardingPage.jsx";
 import { TenantListPage } from "../../features/tenant/pages/TenantListPage/TenantListPage.jsx";
@@ -28,10 +30,23 @@ import { RequireRolesAndPermissionsAccess } from "../../features/auth/components
 import { RequireUsersAccess } from "../../features/auth/components/RequireUsersAccess.jsx";
 import { CallbackPage } from "../../features/auth/pages/CallbackPage.jsx";
 import { AuthHandoffPage } from "../../features/auth/pages/AuthHandoffPage.jsx";
+import { CustomerLoginPage, CustomerCallbackPage, CustomerPortalPage, ReceiptPage } from "../../features/customer/CustomerPages.jsx";
+import { CustomerCarePage, ComplaintManagementPage } from "../../features/complaint/ComplaintPage.jsx";
+import { CatalogPage } from "../../features/catalog/CatalogPage.jsx";
+
+const BusinessDashboardPage = lazy(() => import("../../features/dashboard/pages/BusinessDashboardPage.jsx")
+  .then((module) => ({ default: module.BusinessDashboardPage })));
 
 export function AppRouter() {
+  const location = useLocation();
   return (
     <Routes>
+      <Route path="receipt" element={<ReceiptPage />} />
+      <Route path="customer/login" element={<CustomerLoginPage />} />
+      <Route path="customer/callback" element={<CustomerCallbackPage />} />
+      <Route path="customer" element={<CustomerPortalPage />} />
+      <Route path="customer/complaints" element={<CustomerCarePage />} />
+      <Route path="customer/invoices/:invoiceId" element={<CustomerPortalPage />} />
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/auth-handoff" element={<AuthHandoffPage />} />
 
@@ -43,6 +58,9 @@ export function AppRouter() {
         }
       >
         <Route index element={<HomePage />} />
+        <Route path="notifications" element={<NotificationPage />} />
+        <Route path="complaints" element={<ComplaintManagementPage />} />
+        <Route path="catalog-publications" element={<CatalogPage />} />
 
         <Route
           path="account"
@@ -77,12 +95,7 @@ export function AppRouter() {
 
         <Route
           path="manager"
-          element={
-            <ModulePage
-              title="Manager"
-              description="Manage operations and monitor activity."
-            />
-          }
+          element={<Suspense fallback={<p role="status">Đang tải Dashboard…</p>}><BusinessDashboardPage /></Suspense>}
         />
 
         <Route
@@ -109,12 +122,7 @@ export function AppRouter() {
 
         <Route
           path="dashboard"
-          element={
-            <Navigate
-              to={ROUTES.MANAGER}
-              replace
-            />
-          }
+          element={<Navigate to={{ pathname: ROUTES.MANAGER, search: location.search, hash: location.hash }} replace />}
         />
       </Route>
 
