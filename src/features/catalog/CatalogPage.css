@@ -1,0 +1,22 @@
+.catalog-page { max-width: 1240px; margin: auto; padding: 20px; color: #243b31; }
+.catalog-page button { display: inline-flex; align-items: center; gap: 6px; padding: 9px 13px; border: 1px solid #c5d8ca; border-radius: 5px; background: #edf5ef; color: #245a3b; cursor: pointer; }
+.catalog-page button:disabled { opacity: .5; cursor: default; }
+.catalog-page label { display: grid; gap: 6px; }
+.catalog-page input, .catalog-page select, .catalog-page textarea { border: 1px solid #aabcaf; border-radius: 5px; padding: 9px; color: inherit; background: #fff; max-width: 100%; }
+.catalog-page .catalog-check { display: flex; align-items: center; gap: 9px; margin: 10px 0; }
+.catalog-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 16px 0; }
+.catalog-panel { margin: 18px 0; padding: 20px; background: #fff; border-radius: 8px; overflow-wrap: anywhere; }
+.catalog-table { overflow-x: auto; }
+.catalog-table table { width: 100%; min-width: 760px; border-collapse: collapse; }
+.catalog-table th, .catalog-table td { padding: 10px; text-align: left; border-bottom: 1px solid #e1e9e3; vertical-align: top; }
+.catalog-table th, .catalog-table td { overflow-wrap: normal; }
+.catalog-table small { display: block; margin-top: 6px; }
+.catalog-editor { display: grid; gap: 14px; }
+.catalog-editor fieldset { border: 1px solid #d6e2da; padding: 14px; min-width: 0; }
+.catalog-secret, .catalog-integration { background: #f2f7f3; padding: 16px; margin: 16px 0; border-radius: 5px; }
+.catalog-secret textarea { width: 100%; min-height: 90px; font-family: monospace; }
+.catalog-page code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.catalog-audit { padding-left: 24px; }
+.catalog-audit li { margin: 16px 0; }
+.catalog-page [role=alert] { color: #9b2935; padding: 10px 0; }
+@media (max-width: 640px) { .catalog-page { padding: 10px; } .catalog-panel { padding: 12px; } .catalog-toolbar label { width: 100%; } }

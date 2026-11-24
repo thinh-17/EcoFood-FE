@@ -1,0 +1,22 @@
+.notification-page { padding: 24px; color: #24344a; }
+.notification-page button { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 8px 12px; cursor: pointer; margin: 3px; }
+.notification-page button:disabled { opacity: .5; cursor: default; }
+.notification-page button:focus-visible, .notification-page input:focus-visible, .notification-page select:focus-visible, .notification-page textarea:focus-visible { outline: 2px solid #147d64; outline-offset: 2px; }
+.notification-tabs { display: flex; gap: 8px; margin: 18px 0; flex-wrap: wrap; }
+.notification-tabs [aria-selected="true"] { background: #147d64; color: white; border-color: #147d64; }
+.notification-filters { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+.notification-page label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.notification-page input, .notification-page select, .notification-page textarea { border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; color: inherit; background: white; font: inherit; }
+.notification-table { overflow-x: auto; margin-top: 16px; border: 1px solid #dce4eb; border-radius: 8px; background: white; }
+.notification-table table { width: 100%; min-width: 680px; border-collapse: collapse; text-align: left; }
+.notification-table th, .notification-table td { border-bottom: 1px solid #e4eaf0; padding: 12px; overflow-wrap: anywhere; }
+.notification-table th { background: #f4f7f9; }
+.notification-table p { padding: 12px; }
+.notification-editor, .notification-detail { background: white; border: 1px solid #dce4eb; border-radius: 8px; padding: 20px; margin: 18px 0; }
+.notification-editor { display: grid; gap: 14px; max-width: 900px; }
+.notification-editor select[multiple] { min-height: 85px; }
+.notification-editor .notification-check { flex-direction: row; align-items: center; }
+.notification-detail pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+.notification-error { color: #9e2430; background: #fff1f1; padding: 12px; border: 1px solid #edc3c6; border-radius: 6px; }
+.notification-pagination { display: flex; gap: 12px; align-items: center; margin-top: 12px; }
+@media (max-width: 650px) { .notification-page { padding: 12px; } .notification-filters label { width: 100%; } }

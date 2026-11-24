@@ -2,12 +2,16 @@ export const ROUTES = {
   HOME: "/",
 
   ACCOUNT: "/account",
+  CUSTOMER: "/customer",
+  CUSTOMER_LOGIN: "/customer/login",
+  CUSTOMER_RECEIPT: "/receipt",
 
   TENANT: "/partner/tenants",
   TENANT_DETAIL: "/partner/tenants/:id",
   TENANT_ONBOARDING: "/partner/tenants/onboarding",
 
   MANAGER: "/manager",
+  NOTIFICATIONS: "/notifications",
   PRODUCT_LIBRARY: "/product-library",
   PRODUCTS: "/product-library/products",
   PRODUCT_NEW: "/product-library/products/new",
@@ -24,6 +28,6 @@ export const ROUTES = {
   DATA_ACCESS_RULE_NEW: "/users/data-access-rules/new",
   DATA_ACCESS_RULE_DETAIL: "/users/data-access-rules/:id",
 
-  // Legacy URL: redirects to Manager
+  // UC-018 Business Dashboard
   DASHBOARD: "/dashboard",
 };

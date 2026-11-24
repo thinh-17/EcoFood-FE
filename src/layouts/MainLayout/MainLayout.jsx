@@ -23,6 +23,7 @@ import { useActiveTenant } from
   "../../features/tenant/context/TenantProvider.jsx";
 import { useAuthStore } from "../../features/auth/store/authStore.js";
 import { useCurrentRoles } from "../../features/auth/hooks/useCurrentRoles.js";
+import { decodeJwt } from "../../features/auth/lib/jwt.js";
 import { TenantSwitcher } from "../../features/tenant/components/TenantSwitcher.jsx";
 
 export function MainLayout() {
@@ -48,9 +49,13 @@ export function MainLayout() {
   const logout = useAuthStore((s) => s.logout);
 
   const roles = useCurrentRoles();
+  const token = useAuthStore((s) => s.internalAccessToken);
+  const permissions = useMemo(() => {
+    try { return decodeJwt(token).permissions || []; } catch { return []; }
+  }, [token]);
   const visibleNavItems = useMemo(
-    () => filterNavItems(navItems, roles),
-    [roles]
+    () => filterNavItems(navItems, roles, permissions),
+    [roles, permissions]
   );
 
   const allLinks = visibleNavItems.flatMap((item) =>
