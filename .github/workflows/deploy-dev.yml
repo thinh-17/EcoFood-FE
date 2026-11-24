@@ -84,8 +84,110 @@ jobs:
         run: |
           docker push ghcr.io/${{ github.repository_owner }}/frontend:${{ steps.version.outputs.version }}
 
-  deploy:
+  automation-test:
+    name: Playwright Automation Testing
     needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      # Checkout repository Automation Test
+      - name: Checkout Automation Test Repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: luongngochuy1903/EcoFood-Auto
+          ref: main
+          path: automation-tests
+          persist-credentials: false
+
+      # Setup Node.js
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: automation-tests/package-lock.json
+
+      # Install Playwright dependencies
+      - name: Install dependencies
+        working-directory: automation-tests
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: automation-tests
+        run: npx playwright install --with-deps chromium
+
+      # Login to GitHub Container Registry
+      - name: Login to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Pull Docker Image from GHCR
+      - name: Pull Docker Image
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/frontend:${{ needs.build.outputs.version }}
+
+      # Start Frontend Test Container
+      - name: Start Test Container
+        run: |
+          docker run -d \
+            --name ecofood-fe-test \
+            -p 127.0.0.1:8080:80 \
+            ghcr.io/${{ github.repository_owner }}/frontend:${{ needs.build.outputs.version }}
+
+      # Wait until Frontend is ready
+      - name: Wait for Frontend
+        run: |
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8080/ > /dev/null; then
+              echo "Frontend is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "Frontend failed to start"
+          docker logs ecofood-fe-test
+          exit 1
+
+      # Run Playwright Automation Tests
+      - name: Run Playwright E2E Tests
+        working-directory: automation-tests
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:8080
+        run: |
+          npx playwright test --config=playwright.config.ts
+
+      # Upload test report
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: |
+            automation-tests/playwright-report/
+            automation-tests/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      # Show logs if tests fail
+      - name: Show Container Logs on Failure
+        if: failure()
+        run: docker logs ecofood-fe-test || true
+
+      # Cleanup
+      - name: Cleanup Test Container
+        if: always()
+        run: docker rm -f ecofood-fe-test || true
+
+  deploy:
+    needs: [build, automation-test]
     runs-on: ubuntu-latest
     environment: dev
 
