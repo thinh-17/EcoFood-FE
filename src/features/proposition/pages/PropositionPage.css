@@ -99,20 +99,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
 }
-.prop-page .prop-choices {
-  border: 1px solid var(--fnb-line, #dce5df);
-  border-radius: 8px;
-  padding: 14px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  min-width: 0;
-}
-.prop-choices legend {
-  font-size: 14px;
-  padding: 0 5px;
-}
-.prop-page .prop-choices label,
 .prop-page .prop-check {
   display: flex;
   align-items: center;
@@ -260,6 +246,151 @@
 }
 .prop-add-year {
   margin-top: 12px;
+}
+.prop-wizard {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  margin: 20px 0;
+  border: 1px solid var(--fnb-line, #dce5df);
+  border-radius: 12px;
+  background: white;
+  overflow: hidden;
+  min-height: 460px;
+}
+.prop-stepper {
+  border-right: 1px solid var(--fnb-line, #dce5df);
+  background: #f8faf9;
+  padding: 24px 16px;
+  min-width: 0;
+}
+.prop-stepper ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.prop-stepper li {
+  position: relative;
+  padding-bottom: 17px;
+}
+.prop-stepper li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  width: 1px;
+  background: #dce3ed;
+  height: 18px;
+  left: 13px;
+  bottom: 0;
+}
+.prop-stepper button.prop-step-button {
+  background: none;
+  padding: 0;
+  justify-content: start;
+  font-size: 12px;
+  text-align: left;
+  width: 100%;
+  min-height: 0;
+  gap: 10px;
+}
+.prop-stepper button.prop-step-button span {
+  display: inline-flex;
+  flex: 0 0 27px;
+  width: 27px;
+  height: 27px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--fnb-line, #dce5df);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--fnb-muted, #718078);
+  font-weight: 700;
+}
+.prop-stepper li.is-current button.prop-step-button {
+  color: var(--prop-accent);
+  font-weight: 700;
+}
+.prop-stepper li.is-current button.prop-step-button span,
+.prop-stepper li.is-complete button.prop-step-button span {
+  color: #fff;
+  background: var(--prop-accent);
+  border-color: var(--prop-accent);
+}
+.prop-stepper p {
+  color: var(--fnb-muted, #718078);
+  font-size: 12px;
+  line-height: 1.7;
+  margin-top: 24px;
+}
+.prop-wizard-content {
+  padding: 24px;
+  min-width: 0;
+}
+.prop-wizard-heading {
+  margin-bottom: 24px;
+}
+.prop-wizard-heading small {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--prop-accent);
+  font-weight: 700;
+}
+.prop-wizard-heading h2 {
+  margin: 6px 0;
+  font-size: 23px;
+}
+.prop-wizard-heading p {
+  margin: 0;
+  color: var(--fnb-muted, #718078);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.prop-wizard-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.prop-wizard-fields h2:not(:first-child),
+.prop-wizard-fields h3:not(:first-child) {
+  margin-top: 6px;
+  padding-top: 20px;
+  border-top: 1px solid var(--fnb-line, #dce5df);
+}
+.prop-wizard-actions {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--fnb-line, #dce5df);
+  justify-content: flex-end;
+}
+@media (max-width: 800px) {
+  .prop-wizard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .prop-stepper {
+    border-right: 0;
+    border-bottom: 1px solid var(--fnb-line, #dce5df);
+    padding: 12px;
+  }
+  .prop-stepper ol {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+  }
+  .prop-stepper li {
+    padding-bottom: 0;
+  }
+  .prop-stepper li::after,
+  .prop-stepper p {
+    display: none;
+  }
+  .prop-stepper button.prop-step-button {
+    white-space: nowrap;
+    font-size: 11px;
+  }
+  .prop-wizard-content {
+    padding: 18px 12px;
+  }
 }
 @media (max-width: 800px) {
   .prop-page {

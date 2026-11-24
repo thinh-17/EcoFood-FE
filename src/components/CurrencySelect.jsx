@@ -1,8 +1,10 @@
+import { CoreSelect } from "@thinh-17/fe-core";
 import { CURRENCIES } from "../constants/currencies.js";
 
-export function CurrencySelect({ value, onChange, ...props }) {
-  return <select {...props} value={value} onChange={(event) => onChange(event.target.value)}>
-    {value && !CURRENCIES.some(({ code }) => code === value) && <option value={value}>{value}</option>}
-    {CURRENCIES.map(({ code, name }) => <option key={code} value={code}>{code} - {name}</option>)}
-  </select>;
+export function CurrencySelect({ value, onChange }) {
+  const options = [
+    ...(value && !CURRENCIES.some(({ code }) => code === value) ? [{ value, label: value }] : []),
+    ...CURRENCIES.map(({ code, name }) => ({ value: code, label: `${code} - ${name}` })),
+  ];
+  return <CoreSelect searchable value={value} onChange={onChange} options={options} />;
 }

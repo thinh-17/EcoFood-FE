@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
+import { CoreSelect } from "@thinh-17/fe-core";
 import {
   TYPES,
   TRANSACTION_FIELDS,
@@ -56,17 +57,12 @@ export function SaleSchemaBuilder({
               </label>
               <label>
                 Type
-                <select
+                <CoreSelect
                   disabled={locked || fixedGroup}
                   value={value.type}
-                  onChange={(e) =>
-                    update(index, changeType(value, e.target.value))
-                  }
-                >
-                  {TYPES.map((t) => (
-                    <option key={t}>{t}</option>
-                  ))}
-                </select>
+                  onChange={(value_) => update(index, changeType(value, value_))}
+                  options={TYPES.map((t) => ({ value: t, label: t }))}
+                />
               </label>
               <label className="sale-check">
                 <input
@@ -150,13 +146,14 @@ function Rules({ value, onChange, disabled, path, depth, lockedItem = false }) {
         {value.type === "STRING" && (
           <label>
             Format
-            <select
+            <CoreSelect
               value={value.format ?? ""}
-              onChange={(e) => set("format", e.target.value || null)}
-            >
-              <option value="">None</option>
-              <option value="EMAIL">Email</option>
-            </select>
+              onChange={(value_) => set("format", value_ || null)}
+              options={[
+                { value: "", label: "None" },
+                { value: "EMAIL", label: "Email" },
+              ]}
+            />
           </label>
         )}
       </div>
@@ -173,17 +170,14 @@ function Rules({ value, onChange, disabled, path, depth, lockedItem = false }) {
         <div className="sale-array">
           <label>
             Array item type
-            <select
+            <CoreSelect
               disabled={lockedItem}
               value={value.items?.type ?? "STRING"}
-              onChange={(e) =>
-                set("items", changeType(value.items ?? {}, e.target.value))
+              onChange={(value_) =>
+                set("items", changeType(value.items ?? {}, value_))
               }
-            >
-              {TYPES.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
+              options={TYPES.map((t) => ({ value: t, label: t }))}
+            />
           </label>
           {depth < 8 && (
             <Rules

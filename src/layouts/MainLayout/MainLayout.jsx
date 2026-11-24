@@ -13,7 +13,7 @@ import {
   FiLayers,
 } from "react-icons/fi";
 
-import { useDisclosure } from "@thinh-17/fe-core";
+import { CoreSelect, useDisclosure } from "@thinh-17/fe-core";
 
 import { navItems } from "../../app/navigation/navItems.js";
 import { filterNavItems } from "../../app/navigation/navAccess.js";
@@ -288,33 +288,30 @@ export function MainLayout() {
             <label className="eco-tenant-selector">
               <FiLayers size={17} aria-hidden="true" />
 
-              <select
+              <CoreSelect
                 aria-label="Active tenant"
                 value={tenantId}
                 disabled={tenantsQuery.isLoading}
-                onChange={(event) =>
-                  switchTenant(event.target.value)
-                }
-              >
-                {!tenantId && (
-                  <option value="">
-                    {tenantsQuery.isLoading
-                      ? "Loading tenants..."
-                      : tenantsQuery.isError
-                        ? "Failed to load tenants"
-                        : "Select tenant"}
-                  </option>
-                )}
-
-                {tenants.map((tenant) => (
-                  <option
-                    key={tenant.id}
-                    value={tenant.id}
-                  >
-                    {tenant.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => switchTenant(value)}
+                options={[
+                  ...(!tenantId
+                    ? [
+                        {
+                          value: "",
+                          label: tenantsQuery.isLoading
+                            ? "Loading tenants..."
+                            : tenantsQuery.isError
+                              ? "Failed to load tenants"
+                              : "Select tenant",
+                        },
+                      ]
+                    : []),
+                  ...tenants.map((tenant) => ({
+                    value: tenant.id,
+                    label: tenant.name,
+                  })),
+                ]}
+              />
             </label>
 
             <div

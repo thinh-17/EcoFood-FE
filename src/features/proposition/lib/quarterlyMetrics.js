@@ -34,7 +34,7 @@ const periodIndex = (row) => Number(row.year) * 4 + Number(row.quarter) - 1;
 const period = (index) => ({
   year: Math.floor(index / 4),
   quarter: (index % 4) + 1,
-  revenue: "",
+  revenue: "0",
 });
 
 // Retain legacy indicators when converting saved monthly rows to quarters.

@@ -2,6 +2,7 @@ import {
   quarterlyRevenueRows,
   quarterlyRevenueTotal,
 } from "./quarterlyMetrics.js";
+import { calculateProductCost } from "../../product/lib/product.js";
 
 export const canUsePropositions = (roles) =>
   (roles ?? []).some((role) =>
@@ -82,23 +83,6 @@ function decimalDigits(value) {
 function decimal(value, digits) {
   const scale = 10n ** BigInt(digits);
   return `${value / scale}${digits ? `.${(value % scale).toString().padStart(digits, "0")}` : ""}`;
-}
-export function marketPreview({
-  currency = "USD",
-  salePrice,
-  taxRate,
-  surcharge,
-}) {
-  const digits = currencyDigits(currency),
-    price = minor(salePrice, digits),
-    extra = minor(surcharge || "0", digits),
-    rate = minor(taxRate || "0", 4);
-  if (rate > 1000000n) throw new Error("Tax must be between 0 and 100%.");
-  const tax = (price * rate + 500000n) / 1000000n;
-  return {
-    taxAmount: decimal(tax, digits),
-    totalPrice: decimal(price + tax + extra, digits),
-  };
 }
 export function money(value, currency = "USD") {
   if (value == null || value === "") return "—";
@@ -236,74 +220,159 @@ export function propositionPayload(form, existing) {
         definition,
       };
 }
-export function planFormState(plan, p) {
+const planPositive = (value) =>
+  value !== "" && Number.isFinite(Number(value)) && Number(value) > 0;
+const planWhole = (value) =>
+  value !== "" &&
+  Number.isFinite(Number(value)) &&
+  Number(value) >= 0 &&
+  Number.isInteger(Number(value));
+// A Plan starts life as a full clone of its Proposition's approved source
+// product — name, description, category, image, ingredients and recipe are
+// all editable from there, just like a Product's own Definition/Ingredients/
+// Recipe steps. The Plan's own costing is never cloned from the Product (the
+// Product no longer has one): a brand-new Plan always starts at zero cost.
+function cloneFromSource(p) {
+  const source = p.sourceProcess?.definition?.processElementAttribute?.[0];
   return {
-    name: plan?.name ?? "",
-    code: plan?.code ?? "",
-    description: plan?.description ?? "",
+    name: source?.productName ?? "",
+    description: source?.description ?? "",
+    category: source?.category ?? "",
+    imageUrl: source?.imagesURL ?? "",
+    ingredients: source?.ingredients ?? [],
+    recipe:
+      source?.recipe ??
+      {
+        enabled: false,
+        name: "",
+        steps: [],
+        preparationMinutes: 0,
+        cookingMinutes: 0,
+        note: "",
+      },
+  };
+}
+export function planFormState(plan, p) {
+  const base = plan ?? cloneFromSource(p);
+  const costing = plan?.costing;
+  return {
+    name: base.name ?? "",
+    description: base.description ?? "",
+    category: base.category ?? "",
+    imageUrl: base.imageUrl ?? "",
+    ingredients: (base.ingredients ?? []).map((item) => ({
+      ...item,
+      name: item.name ?? item.ingredientId ?? "",
+      note: item.note ?? "",
+    })),
+    recipeEnabled: base.recipe?.enabled ?? false,
+    recipeName: base.recipe?.name ?? "",
+    preparationMinutes: base.recipe?.preparationMinutes ?? 0,
+    cookingMinutes: base.recipe?.cookingMinutes ?? 0,
+    recipeNote: base.recipe?.note ?? "",
+    steps: [...(base.recipe?.steps ?? [])]
+      .sort((a, b) => a.order - b.order)
+      .map((step) => ({ ...step, description: step.description ?? "" })),
     regionIds: [...(plan?.regionIds ?? [])],
     tenantIds: [...(plan?.tenantIds ?? [])],
     startDate: localDate(plan?.startDate ?? p.definition.startDate),
     endDate: localDate(plan?.endDate ?? p.definition.endDate),
-    productOverrides: { ...(plan?.productOverrides ?? {}) },
-    marketEnabled: Boolean(plan?.marketConfiguration),
-    marketConfirmed: false,
     currency:
-      plan?.marketConfiguration?.currency ??
+      costing?.currency ??
       (p.availableCurrencies.includes(p.definition.currency)
         ? p.definition.currency
         : (p.availableCurrencies[0] ?? "USD")),
-    salePrice: plan?.marketConfiguration?.salePrice ?? "",
-    taxRate: plan?.marketConfiguration?.taxRate ?? "0",
-    surcharge: plan?.marketConfiguration?.surcharge ?? "0",
+    costing: {
+      ingredientCost: costing?.ingredientCost ?? 0,
+      packagingCost: costing?.packagingCost ?? 0,
+      laborCost: costing?.laborCost ?? 0,
+      operationCost: costing?.operationCost ?? 0,
+      marketingFee: costing?.marketingFee ?? 0,
+      targetMargin: costing?.targetMargin ?? 0,
+      tax: costing?.tax ?? 0,
+    },
+    sellingPrice: costing?.sellingPrice ?? "",
+    pricingNote: costing?.note ?? "",
   };
 }
 export function planPayload(form, p) {
+  if (!form.name.trim() || form.regionIds.length !== 1 || !form.tenantIds.length)
+    throw new Error("Plan name and a Country of Sale are required.");
+  if (form.imageUrl.trim()) {
+    let valid = false;
+    try {
+      const url = new URL(form.imageUrl.trim());
+      valid = ["http:", "https:"].includes(url.protocol) && Boolean(url.hostname);
+    } catch {
+      /* Report a field error below. */
+    }
+    if (!valid) throw new Error("Plan image must be an HTTP(S) URL.");
+  }
   if (
-    !form.name.trim() ||
-    form.regionIds.length !== 1 ||
-    !form.tenantIds.length
-  )
-    throw new Error(
-      "Plan name, one Country of Sale and distribution Sub-Tenants are required.",
-    );
-  if (
-    form.tenantIds.some(
-      (id) =>
-        !p.eligibleTenants.some(
-          (t) => t.id === id && t.country === form.regionIds[0],
-        ),
+    form.ingredients.some(
+      (item) => !item.name.trim() || !item.unit.trim() || !planPositive(item.quantity),
     )
   )
-    throw new Error(
-      "Every selected Sub-Tenant must belong to the Country of Sale.",
-    );
-  if (form.marketEnabled) {
-    if (form.salePrice === "") throw new Error("Enter a sale price.");
-    marketPreview(form);
-    if (!form.marketConfirmed)
+    throw new Error("Each ingredient requires a name, positive quantity and unit.");
+  const keys = form.ingredients.map(
+    (item) => item.ingredientId?.trim() || item.name.trim().toLowerCase(),
+  );
+  if (new Set(keys).size !== keys.length)
+    throw new Error("Ingredients must be unique.");
+  if (form.recipeEnabled) {
+    if (!form.steps.length)
+      throw new Error("Add at least one recipe step or disable the recipe.");
+    if (!planWhole(form.preparationMinutes) || !planWhole(form.cookingMinutes))
       throw new Error(
-        "Confirm the market configuration preview before saving.",
+        "Preparation and cooking times must be whole, non-negative minutes.",
+      );
+    if (form.steps.some((step) => !step.name.trim() || !planWhole(step.durationMinutes)))
+      throw new Error(
+        "Each recipe step requires a name and a whole, non-negative duration.",
       );
   }
   const result = {
     expectedRevision: p.revision,
     name: form.name.trim(),
-    code: form.code.trim(),
     description: form.description.trim(),
+    category: form.category.trim(),
+    imageUrl: form.imageUrl.trim() || null,
+    ingredients: form.ingredients.map((item) => ({
+      ingredientId: item.ingredientId?.trim() || null,
+      name: item.name.trim(),
+      quantity: Number(item.quantity),
+      unit: item.unit.trim(),
+      note: item.note.trim(),
+    })),
+    recipe: {
+      enabled: form.recipeEnabled,
+      name: form.recipeName.trim(),
+      preparationMinutes: form.recipeEnabled ? Number(form.preparationMinutes) : 0,
+      cookingMinutes: form.recipeEnabled ? Number(form.cookingMinutes) : 0,
+      note: form.recipeNote.trim(),
+      steps: form.recipeEnabled
+        ? form.steps.map((step, index) => ({
+            order: index + 1,
+            name: step.name.trim(),
+            description: step.description.trim(),
+            durationMinutes: Number(step.durationMinutes),
+          }))
+        : [],
+    },
+    costing: { ...form.costing, currency: form.currency },
+    pricing:
+      form.sellingPrice === ""
+        ? null
+        : {
+            sellingPrice: Number(form.sellingPrice),
+            costPrice: calculateProductCost(form.costing).totalCost,
+            currency: form.currency,
+            note: form.pricingNote.trim() || null,
+          },
     regionIds: form.regionIds,
     tenantIds: form.tenantIds,
-    productOverrides: form.productOverrides,
     startDate: utcDate(form.startDate),
     endDate: utcDate(form.endDate),
-    marketConfiguration: form.marketEnabled
-      ? {
-          currency: form.currency,
-          salePrice: String(form.salePrice),
-          taxRate: String(form.taxRate || "0"),
-          surcharge: String(form.surcharge || "0"),
-        }
-      : null,
   };
   if (result.startDate && result.endDate && result.startDate >= result.endDate)
     throw new Error("End date must be after start date.");

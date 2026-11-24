@@ -63,10 +63,6 @@ export const getCurrencySettings = async (signal) =>
 export const saveCurrencySettings = async (body) =>
   unwrapData(await apiClient.put(`${base}/settings`, body));
 
-export const submitProposition = async (id, expectedRevision) =>
-  unwrapData(await apiClient.post(`${path(id)}/submit`, { expectedRevision }));
-export const approveProposition = async (id, expectedRevision) =>
-  unwrapData(await apiClient.post(`${path(id)}/approve`, { expectedRevision }));
 export const submitPlan = async (id, planId, expectedRevision) =>
   unwrapData(
     await apiClient.post(

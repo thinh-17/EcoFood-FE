@@ -11,8 +11,8 @@ import { propositionFormState, propositionPayload } from "./proposition.js";
 test("three years starts at the creation calendar quarter and crosses years", () => {
   const rows = quarterlyRevenueRows([], "2026-11-17T12:00:00Z");
   assert.equal(rows.length, 12);
-  assert.deepEqual(rows[0], { year: 2026, quarter: 4, revenue: "" });
-  assert.deepEqual(rows.at(-1), { year: 2029, quarter: 3, revenue: "" });
+  assert.deepEqual(rows[0], { year: 2026, quarter: 4, revenue: "0" });
+  assert.deepEqual(rows.at(-1), { year: 2029, quarter: 3, revenue: "0" });
   assert.equal(
     rows.some((row) => row.year === 2026 && row.quarter < 4),
     false,
@@ -46,7 +46,7 @@ test("adding a year preserves values and survives saving and reopening", () => {
   assert.deepEqual(reopened.expectMetrics.at(-1), {
     year: 2030,
     quarter: 3,
-    revenue: "",
+    revenue: "0",
   });
   reopened.expectMetrics = reopened.expectMetrics.map((row) => ({
     ...row,
@@ -68,11 +68,11 @@ test("legacy months are aggregated without losing precision or indicators", () =
     {
       quarter: 1,
       year: 2026,
-      revenue: "",
+      revenue: "0",
       profit: "0.30",
       totalSalesVolume: "5",
     },
-    { quarter: 2, year: 2026, revenue: "", platformCost: "1.23" },
+    { quarter: 2, year: 2026, revenue: "0", platformCost: "1.23" },
   ]);
 });
 
@@ -101,10 +101,28 @@ test("partner revenue uses the same creation quarter and exact totals", () => {
   };
   const form = propositionFormState(p);
   assert.equal(form.partnerMetrics[0].expectMetrics.length, 12);
+
+  // Fresh rows now default to "0", not blank — a real (zero) total wins
+  // over the legacy flat expectRevenue fallback.
   assert.equal(
     propositionPayload(form, p).definition.partnerMetrics[0].expectRevenue,
+    "0",
+  );
+
+  // Blanking every row again falls back to the legacy flat field, same as
+  // propositionFormState always did for genuinely-empty quarterly data.
+  const blanked = {
+    ...form,
+    partnerMetrics: form.partnerMetrics.map((m) => ({
+      ...m,
+      expectMetrics: m.expectMetrics.map((row) => ({ ...row, revenue: "" })),
+    })),
+  };
+  assert.equal(
+    propositionPayload(blanked, p).definition.partnerMetrics[0].expectRevenue,
     "123",
   );
+
   form.partnerMetrics[0].expectMetrics[0].revenue = "2.10";
   form.partnerMetrics[0].expectMetrics[1].revenue = "0.20";
   assert.equal(

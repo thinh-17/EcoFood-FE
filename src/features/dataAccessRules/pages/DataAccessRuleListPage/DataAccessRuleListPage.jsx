@@ -1,12 +1,10 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CoreButton, CoreCard, CoreModal, CorePageHeader, CoreTable, useDisclosure } from "@thinh-17/fe-core";
+import { CoreButton, CoreCard, CorePageHeader, CoreTable } from "@thinh-17/fe-core";
 
 import { ROUTES } from "../../../../constants/routes.js";
-import { useDataAccessRuleDetail } from "../../hooks/useDataAccessRuleDetail.js";
 import { useDataAccessRuleDirectory } from "../../hooks/useDataAccessRuleDirectory.js";
-import { DataAccessRuleDetailForm } from "./DataAccessRuleDetailForm.jsx";
 import "./DataAccessRuleListPage.css";
 
 const PAGE_SIZE = 20;
@@ -25,7 +23,6 @@ export function DataAccessRuleListPage() {
   const [sort, setSort] = useState({ field: "updatedAt", direction: "desc" });
   const [search, setSearch] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
-  const [selectedRuleId, setSelectedRuleId] = useState(null);
 
   const { data, isLoading, isError, error } = useDataAccessRuleDirectory({
     page,
@@ -34,9 +31,6 @@ export function DataAccessRuleListPage() {
     search,
     hasSearched,
   });
-
-  const detailModal = useDisclosure(false);
-  const { data: ruleDetail, isLoading: isDetailLoading, isError: isDetailError } = useDataAccessRuleDetail(selectedRuleId);
 
   const columns = useMemo(() => COLUMNS, []);
 
@@ -52,8 +46,7 @@ export function DataAccessRuleListPage() {
   }
 
   function handleRowClick(rule) {
-    setSelectedRuleId(rule.id);
-    detailModal.open();
+    navigate(`${ROUTES.DATA_ACCESS_RULES}/${rule.id}`);
   }
 
   return (
@@ -95,21 +88,6 @@ export function DataAccessRuleListPage() {
           emptyDescription="Create one to start scoping which users can see which tenant data."
         />
       </CoreCard>
-
-      <CoreModal isOpen={detailModal.isOpen} onClose={detailModal.close} title="Edit Data Access Rule" size="lg">
-        {isDetailLoading && <p>Loading…</p>}
-
-        {isDetailError && <p className="data-access-rule-list__error">Failed to load rule detail.</p>}
-
-        {ruleDetail && (
-          <DataAccessRuleDetailForm
-            key={ruleDetail.id}
-            rule={ruleDetail}
-            onCancel={detailModal.close}
-            onSaved={detailModal.close}
-          />
-        )}
-      </CoreModal>
     </div>
   );
 }

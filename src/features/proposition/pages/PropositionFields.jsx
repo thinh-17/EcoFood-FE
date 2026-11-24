@@ -1,38 +1,9 @@
+import { CoreButton } from "@thinh-17/fe-core";
 import { money } from "../lib/proposition.js";
 import {
   appendRevenueYear,
   normalizeQuarterlyMetrics,
 } from "../lib/quarterlyMetrics.js";
-export function ChoiceList({ label, items, value, onChange }) {
-  return (
-    <fieldset className="prop-choices">
-      <legend>{label}</legend>
-      {items.length ? (
-        items.map((item) => (
-          <label key={item.id}>
-            <input
-              type="checkbox"
-              checked={value.includes(item.id)}
-              onChange={(event) =>
-                onChange(
-                  event.target.checked
-                    ? [...value, item.id]
-                    : value.filter((id) => id !== item.id),
-                )
-              }
-            />
-            {item.name ?? item.id}
-          </label>
-        ))
-      ) : (
-        <p className="prop-muted">
-          No eligible Sub-Tenants. Check the Enterprise Tenant Directory and
-          selected Country of Sale.
-        </p>
-      )}
-    </fieldset>
-  );
-}
 const METRICS = {
   totalSalesVolume: "Sales volume",
   profit: "Profit",
@@ -102,14 +73,15 @@ export function MetricsEditor({
         </table>
       </div>
       {canAddYear && (
-        <button
-          type="button"
+        <CoreButton
+          variant="secondary"
+          size="sm"
           className="prop-add-year"
           disabled={value.at(-1)?.year >= 9999}
           onClick={() => onChange(appendRevenueYear(value))}
         >
           + Add year (4 quarters)
-        </button>
+        </CoreButton>
       )}
     </div>
   );
@@ -157,9 +129,17 @@ export function MetricsTable({ value, currency }) {
     </div>
   );
 }
-export function Field({ label, value, onChange, type = "text", ...props }) {
+export function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+  labelClassName,
+  error,
+  ...props
+}) {
   return (
-    <label>
+    <label className={labelClassName}>
       {label}
       <input
         type={type}
@@ -167,6 +147,7 @@ export function Field({ label, value, onChange, type = "text", ...props }) {
         onChange={(event) => onChange(event.target.value)}
         {...props}
       />
+      {error}
     </label>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   keepPreviousData,
   useQuery,
@@ -22,12 +23,10 @@ import {
   canUsePropositions,
   errorMessage,
   showDate,
-  statusLabel,
 } from "../lib/proposition.js";
 import { PropositionForm } from "./PropositionForm.jsx";
 import { PropositionDetail } from "./PropositionDetail.jsx";
 import { PlanForm } from "./PlanForm.jsx";
-import { CurrencySettingsForm } from "./CurrencySettingsForm.jsx";
 import "./PropositionPage.css";
 
 const PAGE_SIZE = 20;
@@ -60,13 +59,6 @@ const COLUMNS = [
   },
   { id: "plans", accessorFn: (row) => row.plans.length, header: "Plans" },
   {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ getValue }) => (
-      <span className="prop-status">{statusLabel(getValue())}</span>
-    ),
-  },
-  {
     accessorKey: "updatedAt",
     header: "Updated",
     cell: ({ getValue }) => showDate(getValue()),
@@ -90,7 +82,13 @@ export function PropositionPage() {
 }
 export function PropositionDirectory({ scope }) {
   const client = useQueryClient();
-  const [view, setView] = useState("list"),
+  const location = useLocation();
+  // Reached from a Product's "Create Proposition" button (see
+  // ProductDetail.jsx) carrying the APPROVED ProductProcess to source from —
+  // read once on mount so Create opens straight into PropositionForm with
+  // that product already chosen, skipping the search/select UI entirely.
+  const [createSource] = useState(location.state?.createFromSource ?? null);
+  const [view, setView] = useState(createSource ? "create" : "list"),
     [id, setId] = useState(null),
     [plan, setPlan] = useState(null),
     [notice, setNotice] = useState("");
@@ -135,7 +133,6 @@ export function PropositionDirectory({ scope }) {
     edit: "Edit Proposition",
     detail: "Proposition details",
     plan: plan ? "Edit Draft Plan" : "Create Plan",
-    settings: "Default Proposition currency",
   }[view];
   return (
     <section className="prop-page">
@@ -146,32 +143,24 @@ export function PropositionDirectory({ scope }) {
       {notice && (
         <div className="prop-notice" role="status">
           {notice}
-          <button
+          <CoreButton
+            variant="ghost"
+            size="sm"
             aria-label="Dismiss notification"
             onClick={() => setNotice("")}
           >
             ×
-          </button>
+          </CoreButton>
         </div>
       )}
       {options.isPending && <p role="status">Loading permissions...</p>}
       {options.isError && (
         <ErrorState error={options.error} retry={options.refetch} />
       )}
-      {view === "settings" && (
-        <CurrencySettingsForm
-          scope={scope}
-          onCancel={() => setView("list")}
-          onSaved={() => {
-            reload();
-            setNotice("Default Proposition currency saved.");
-            setView("list");
-          }}
-        />
-      )}
       {view === "create" && options.data?.canCreate && (
         <PropositionForm
           options={{ ...options.data, scope }}
+          presetSource={createSource}
           onCancel={() => setView("list")}
           onSaved={saved}
         />
@@ -239,19 +228,6 @@ export function PropositionDirectory({ scope }) {
                 setPage(0);
               }}
             />
-            {options.data?.canCreate && (
-              <div className="prop-actions">
-                <CoreButton
-                  variant="secondary"
-                  onClick={() => setView("settings")}
-                >
-                  Default currency
-                </CoreButton>
-                <CoreButton onClick={() => setView("create")}>
-                  Create Proposition
-                </CoreButton>
-              </div>
-            )}
           </div>
           {list.isError && (
             <ErrorState error={list.error} retry={list.refetch} />
@@ -276,7 +252,10 @@ export function PropositionDirectory({ scope }) {
 function ErrorState({ error, retry }) {
   return (
     <p className="prop-error" role="alert">
-      {errorMessage(error)} <button onClick={() => retry()}>Retry</button>
+      {errorMessage(error)}{" "}
+      <CoreButton variant="ghost" size="sm" onClick={() => retry()}>
+        Retry
+      </CoreButton>
     </p>
   );
 }

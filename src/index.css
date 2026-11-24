@@ -14,6 +14,8 @@
   --fnb-paper: #fff;
   --fnb-canvas: #f5f6f6;
   --fnb-line: #e9eded;
+  --fnb-error: #c0442b;
+  --fnb-error-soft: #fdeceb;
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { min-width: 320px; }
@@ -22,3 +24,23 @@ button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
 :focus-visible { outline: 2px solid var(--fnb-accent); outline-offset: 3px; }
+
+/* Shared "live" required-field validation marker — applied to a field's
+   wrapping label/div once it's been touched (blurred) and is still empty,
+   across every multi-step wizard (Tenant Onboarding, Proposition, Product,
+   Plan). Targets plain inputs/selects/textareas as well as CoreSelect's and
+   CoreMultiSelect's trigger buttons, since those render a button, not a
+   native form control. */
+.fe-field-invalid input,
+.fe-field-invalid select,
+.fe-field-invalid textarea,
+.fe-field-invalid .fe-select__trigger,
+.fe-field-invalid .fe-multiselect__trigger {
+  border-color: var(--fnb-error) !important;
+}
+.fe-field-error {
+  display: block;
+  color: var(--fnb-error);
+  font-size: 11px;
+  margin-top: 4px;
+}

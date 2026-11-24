@@ -10,15 +10,22 @@ import { HomePage } from "../../features/home/pages/HomePage/HomePage.jsx";
 
 import { ModulePage } from "../../features/modules/pages/ModulePage/ModulePage.jsx";
 import { ProductListPage } from "../../features/product/pages/ProductListPage.jsx";
+import { ProductCreatePage } from "../../features/product/pages/ProductCreatePage.jsx";
+import { ProductDetailPage } from "../../features/product/pages/ProductDetailPage.jsx";
 import { PropositionPage } from "../../features/proposition/pages/PropositionPage.jsx";
 
 import { TenantOnboardingPage } from "../../features/tenant/pages/TenantOnboardingPage/TenantOnboardingPage.jsx";
 import { TenantListPage } from "../../features/tenant/pages/TenantListPage/TenantListPage.jsx";
+import { TenantDetailPage } from "../../features/tenant/pages/TenantListPage/TenantDetailPage.jsx";
 import { UserListPage } from "../../features/user/pages/UserListPage/UserListPage.jsx";
+import { UserDetailPage } from "../../features/user/pages/UserListPage/UserDetailPage.jsx";
 import { RoleListPage } from "../../features/role/pages/RoleListPage/RoleListPage.jsx";
+import { RoleDetailPage } from "../../features/role/pages/RoleListPage/RoleDetailPage.jsx";
 import { PermissionListPage } from "../../features/permission/pages/PermissionListPage/PermissionListPage.jsx";
+import { PermissionDetailPage } from "../../features/permission/pages/PermissionListPage/PermissionDetailPage.jsx";
 import { DataAccessRuleListPage } from "../../features/dataAccessRules/pages/DataAccessRuleListPage/DataAccessRuleListPage.jsx";
 import { DataAccessRuleDetailPage } from "../../features/dataAccessRules/pages/DataAccessRuleDetailPage/DataAccessRuleDetailPage.jsx";
+import { DataAccessRuleEditPage } from "../../features/dataAccessRules/pages/DataAccessRuleListPage/DataAccessRuleEditPage.jsx";
 
 import { RequireAuth } from "../../features/auth/components/RequireAuth.jsx";
 import { RequirePartnerAccess } from "../../features/auth/components/RequirePartnerAccess.jsx";
@@ -66,6 +73,7 @@ export function AppRouter() {
           />
 
           <Route path="partner/tenants" element={<TenantListPage />} />
+          <Route path="partner/tenants/:id" element={<TenantDetailPage />} />
 
           <Route element={<RequireTenantOnboardingAccess />}>
             <Route
@@ -90,20 +98,26 @@ export function AppRouter() {
           element={<Navigate to={ROUTES.PRODUCTS} replace />}
         />
         <Route path="product-library/products" element={<ProductListPage />} />
+        <Route path="product-library/products/new" element={<ProductCreatePage />} />
+        <Route path="product-library/products/:id" element={<ProductDetailPage />} />
         <Route path="product-library/propositions" element={<PropositionPage />} />
 
         <Route element={<RequireUsersAccess />}>
           <Route path="users" element={<UserListPage />} />
+          <Route path="users/:id" element={<UserDetailPage />} />
 
           <Route element={<RequireRolesAndPermissionsAccess />}>
             <Route path="users/roles" element={<RoleListPage />} />
+            <Route path="users/roles/:id" element={<RoleDetailPage />} />
 
             <Route path="users/permissions" element={<PermissionListPage />} />
+            <Route path="users/permissions/:id" element={<PermissionDetailPage />} />
           </Route>
 
           <Route element={<RequireDataAccessRulesAccess />}>
             <Route path="users/data-access-rules" element={<DataAccessRuleListPage />} />
             <Route path="users/data-access-rules/new" element={<DataAccessRuleDetailPage />} />
+            <Route path="users/data-access-rules/:id" element={<DataAccessRuleEditPage />} />
           </Route>
         </Route>
 

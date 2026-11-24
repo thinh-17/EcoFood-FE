@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   canUsePropositions,
-  marketPreview,
   money,
   propositionFormState,
   propositionPayload,
@@ -24,27 +23,6 @@ test("country ordering is explicit, unique and independent of input order", () =
     ["US", "VN"],
   );
 });
-test("decimal parsing preserves trailing-zero precision and rejects malformed amounts", () => {
-  assert.equal(marketPreview({ salePrice: "1.230000" }).totalPrice, "1.23");
-  assert.equal(
-    marketPreview({ currency: "JPY", salePrice: "1.0000" }).totalPrice,
-    "1",
-  );
-  for (const salePrice of [
-    "",
-    ".1",
-    "1.",
-    "1.2.3",
-    "1e2",
-    " 1",
-    "+1",
-    "1\n",
-    "０１",
-    "0." + "0".repeat(100000) + "1",
-    "0".repeat(100000) + "x",
-  ])
-    assert.throws(() => marketPreview({ salePrice }));
-});
 test("only Product Library role sections can use Propositions", () => {
   for (const actor of ["ECO", "ENTERPRISE", "MASTER", "TENANT"])
     assert.equal(canUsePropositions([`${actor}_PRODUCT_MANAGER`]), true);
@@ -55,39 +33,9 @@ test("only Product Library role sections can use Propositions", () => {
   ])
     assert.equal(canUsePropositions([role]), false);
 });
-test("exact decimal market preview and currency-specific rounding", () => {
-  assert.deepEqual(
-    marketPreview({ salePrice: "0.10", taxRate: "5", surcharge: "0.20" }),
-    { taxAmount: "0.01", totalPrice: "0.31" },
-  );
-  assert.equal(
-    marketPreview({ currency: "KWD", salePrice: "1.123", taxRate: "0" })
-      .totalPrice,
-    "1.123",
-  );
-  assert.equal(
-    marketPreview({
-      currency: "VND",
-      salePrice: "25000",
-      taxRate: "8",
-      surcharge: "1000",
-    }).totalPrice,
-    "28000",
-  );
-  assert.equal(
-    marketPreview({ salePrice: "999999999999999.99" }).totalPrice,
-    "999999999999999.99",
-  );
+test("money formats decimal precision per currency", () => {
   assert.equal(money("999999999999999.99"), "USD 999,999,999,999,999.99");
-});
-test("negative money, invalid precision and invalid tax are rejected", () => {
-  for (const input of [
-    { salePrice: "-1" },
-    { salePrice: "1.001" },
-    { currency: "JPY", salePrice: "1.1" },
-    { salePrice: "1", taxRate: "100.001" },
-  ])
-    assert.throws(() => marketPreview(input));
+  assert.equal(money(null), "—");
 });
 test("create references one approved process; update preserves source and revision", () => {
   const form = {
@@ -110,37 +58,75 @@ test("create references one approved process; update preserves source and revisi
   assert.equal("productProcessId" in updated, false);
   assert.throws(() => propositionPayload({ ...form, source: null }));
 });
-test("Draft Plan allows empty market; entered amounts stay decimal strings", () => {
-  const p = {
-    revision: 7,
-    definition: { currency: "USD" },
-    availableCurrencies: ["USD"],
-    eligibleTenants: [{ id: "partner", country: "SOUTH" }],
-  };
+const planProposition = () => ({
+  revision: 7,
+  definition: { currency: "USD", startDate: null, endDate: null },
+  availableCurrencies: ["USD"],
+  eligibleTenants: [{ id: "partner", country: "SOUTH" }],
+  sourceProcess: {
+    definition: {
+      processElementAttribute: [
+        {
+          productName: "Boiled Chicken",
+          description: "Original description",
+          category: "Meals",
+          imagesURL: "https://example.com/chicken.png",
+          ingredients: [],
+          recipe: { enabled: false, name: "", steps: [], preparationMinutes: 0, cookingMinutes: 0, note: "" },
+        },
+      ],
+    },
+  },
+});
+test("a brand new Plan clones the source product's definition and starts at zero cost", () => {
+  const p = planProposition();
+  const form = planFormState(null, p);
+  assert.equal(form.name, "Boiled Chicken");
+  assert.equal(form.category, "Meals");
+  assert.equal(form.imageUrl, "https://example.com/chicken.png");
+  assert.equal(form.sellingPrice, "");
+  assert.equal(form.costing.ingredientCost, 0);
+});
+test("Draft Plan allows empty pricing; a selling price auto-derives its cost basis", () => {
+  const p = planProposition();
   const form = {
     ...planFormState(null, p),
     name: "South",
     regionIds: ["SOUTH"],
     tenantIds: ["partner"],
   };
-  assert.equal(planPayload(form, p).marketConfiguration, null);
-  const payload = planPayload(
-    {
-      ...form,
-      marketEnabled: true,
-      marketConfirmed: true,
-      salePrice: "25.10",
-      currency: "THB",
-    },
-    p,
-  );
-  assert.equal(payload.marketConfiguration.salePrice, "25.10");
-  assert.equal(payload.marketConfiguration.currency, "THB");
-  assert.equal(
-    planFormState({ marketConfiguration: payload.marketConfiguration }, p)
-      .currency,
-    "THB",
-  );
+  assert.equal(planPayload(form, p).pricing, null);
+  const costing = { ...form.costing, ingredientCost: 50000, packagingCost: 5000, laborCost: 10000, operationCost: 3000, marketingFee: 2000, targetMargin: 30, tax: 10 };
+  const payload = planPayload({ ...form, costing, currency: "THB", sellingPrice: "120000" }, p);
+  assert.equal(payload.pricing.sellingPrice, 120000);
+  assert.equal(payload.pricing.costPrice, 70000);
+  assert.equal(payload.pricing.currency, "THB");
+  assert.equal(payload.costing.currency, "THB");
   assert.equal(payload.expectedRevision, 7);
   assert.equal("status" in payload, false);
+});
+test("an existing Plan's own saved costing/content round-trips through form state", () => {
+  const p = planProposition();
+  const plan = {
+    name: "Existing Plan",
+    description: "Already saved",
+    category: "Drinks",
+    imageUrl: "",
+    ingredients: [{ ingredientId: "ing-1", name: "Water", quantity: 500, unit: "ml", note: "" }],
+    recipe: { enabled: false, name: "", steps: [], preparationMinutes: 0, cookingMinutes: 0, note: "" },
+    costing: {
+      ingredientCost: 1000, packagingCost: 100, laborCost: 200, operationCost: 50, marketingFee: 50,
+      targetMargin: 20, tax: 5, totalCost: 1400, basePrice: 1750, sellingPrice: 2000, currency: "VND", note: "Promo",
+    },
+    regionIds: ["SOUTH"],
+    tenantIds: ["partner"],
+    startDate: null,
+    endDate: null,
+  };
+  const form = planFormState(plan, p);
+  assert.equal(form.name, "Existing Plan");
+  assert.equal(form.currency, "VND");
+  assert.equal(form.sellingPrice, 2000);
+  assert.equal(form.pricingNote, "Promo");
+  assert.equal(form.ingredients[0].name, "Water");
 });

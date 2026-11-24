@@ -56,8 +56,7 @@ export function PlanSaleEditor({ row, proposition, plan, onSaved, onReload }) {
     [confirm, setConfirm] = useState(false);
   const editable = !row || viewing?.status === "DRAFT";
   const config = editable ? configuration : viewing.configuration;
-  const currency =
-    plan.marketConfiguration?.currency ?? proposition.definition.currency;
+  const currency = plan.costing?.currency ?? proposition.definition.currency;
   const set = (key, value) => {
     setConfiguration((c) => ({ ...c, [key]: value }));
     setDirty(true);

@@ -6,8 +6,6 @@ import {
   submitPlan,
   removePlan,
   versionPlan,
-  submitProposition,
-  approveProposition,
 } from "../api/proposition.api.js";
 import {
   errorMessage,
@@ -19,14 +17,9 @@ import { MetricsTable } from "./PropositionFields.jsx";
 import { PlanSaleOrchestrator } from "../../orchestrator/pages/PlanSaleOrchestrator.jsx";
 
 const MESSAGES = {
-  submitProposition:
-    "Submit this Proposition for review? Its definition becomes read-only.",
-  approveProposition:
-    "Approve this Proposition? Approved Plans can operate within their effective dates.",
   submitPlan:
     "Submit this Plan for review? Its configuration becomes read-only.",
-  approvePlan:
-    "Approve this Plan? It can operate only when the Proposition is also approved.",
+  approvePlan: "Approve this Plan? It can operate once approved and within its effective dates.",
   removePlan: "Remove this Draft Plan?",
   versionPlan:
     "Create a new Draft version? The existing approved version stays available until its approved replacement takes effect.",
@@ -43,10 +36,6 @@ export function PropositionDetail({
   const [confirmation, setConfirmation] = useState(null);
   const mutation = useMutation({
     mutationFn: ({ action, plan }) => {
-      if (action === "submitProposition")
-        return submitProposition(p.id, p.revision);
-      if (action === "approveProposition")
-        return approveProposition(p.id, p.revision);
       return { submitPlan, approvePlan, removePlan, versionPlan }[action](
         p.id,
         plan.id,
@@ -79,22 +68,6 @@ export function PropositionDetail({
         {p.canEdit && (
           <CoreButton onClick={onEdit}>Edit Proposition</CoreButton>
         )}
-        {p.canSubmit && (
-          <CoreButton
-            disabled={mutation.isPending}
-            onClick={() => confirm("submitProposition")}
-          >
-            Submit Proposition for Review
-          </CoreButton>
-        )}
-        {p.canApprove && (
-          <CoreButton
-            disabled={mutation.isPending}
-            onClick={() => confirm("approveProposition")}
-          >
-            Approve Proposition
-          </CoreButton>
-        )}
       </div>
       <section className="prop-panel">
         <div className="prop-section-heading">
@@ -104,7 +77,6 @@ export function PropositionDetail({
               {p.enterpriseName} · Revision {p.revision}
             </p>
           </div>
-          <span className="prop-status">{statusLabel(p.status)}</span>
         </div>
         <p>{d.description || "No description."}</p>
         <dl className="prop-facts">
@@ -151,11 +123,6 @@ export function PropositionDetail({
             <dd>{d.allowedOverrides.join(", ") || "None"}</dd>
           </div>
         </dl>
-        {p.approvedAt && (
-          <p className="prop-muted">
-            Proposition approved {showDate(p.approvedAt)} · {p.approvedBy}
-          </p>
-        )}
         <details>
           <summary>Approved source definition</summary>
           <dl className="prop-facts">
@@ -214,8 +181,9 @@ export function PropositionDetail({
           <div>
             <h2>Plans & market configuration</h2>
             <p className="prop-muted">
-              Propositions and Plans are reviewed separately: Draft → Pending
-              Review → Approved. Both must be approved for a Plan to operate.
+              Plans are reviewed independently: Draft → Pending Review →
+              Approved. A Plan operates once it's Approved and within its
+              effective dates.
             </p>
           </div>
           {p.canManagePlans && (
@@ -263,68 +231,60 @@ export function PropositionDetail({
             </dl>
             {plan.status === "APPROVED" && !plan.active && (
               <p className="prop-notice">
-                {p.status !== "APPROVED"
-                  ? "Plan approved — waiting for Proposition approval before it can operate."
-                  : "This Plan is outside its effective period or has been replaced by a newer approved version."}
+                This Plan is outside its effective period or has been replaced
+                by a newer approved version.
               </p>
             )}
             <p className="prop-muted">
               Version {plan.version}
               {plan.previousVersionId && " · Revision of an earlier Plan"}
             </p>
-            {plan.productOverrides && (
-              <dl className="prop-facts">
-                {Object.entries(plan.productOverrides)
-                  .filter(([, value]) => value != null)
-                  .map(([key, value]) => (
-                    <div key={key}>
-                      <dt>Product {key}</dt>
-                      <dd>
-                        {key === "recipe" ? (
-                          <>
-                            <strong>{value.name || "Plan recipe"}</strong>
-                            <ol>
-                              {(value.steps ?? []).map((s) => (
-                                <li key={s.order}>
-                                  {s.name} · {s.durationMinutes} min
-                                  {s.description && " — " + s.description}
-                                </li>
-                              ))}
-                            </ol>
-                          </>
-                        ) : (
-                          value || "(empty)"
-                        )}
-                      </dd>
-                    </div>
-                  ))}
-              </dl>
-            )}
-            {plan.marketConfiguration ? (
-              <div className="prop-preview">
-                {[
-                  ["Sale price", "salePrice"],
-                  ["Tax amount", "taxAmount"],
-                  ["Additional fees", "surcharge"],
-                  ["Total price", "totalPrice"],
-                ].map(([label, key]) => (
-                  <div key={key}>
-                    {label}
-                    <strong>
-                      {money(
-                        plan.marketConfiguration[key],
-                        plan.marketConfiguration.currency,
-                      )}
-                    </strong>
-                  </div>
-                ))}
+            <dl className="prop-facts">
+              <div>
+                <dt>Category</dt>
+                <dd>{plan.category || "—"}</dd>
+              </div>
+              <div>
+                <dt>Ingredients</dt>
+                <dd>{plan.ingredients?.length ?? 0}</dd>
+              </div>
+              {plan.recipe?.enabled && (
                 <div>
-                  Tax rate<strong>{plan.marketConfiguration.taxRate}%</strong>
+                  <dt>Recipe</dt>
+                  <dd>
+                    <strong>{plan.recipe.name || "Plan recipe"}</strong>
+                    <ol>
+                      {(plan.recipe.steps ?? []).map((s) => (
+                        <li key={s.order}>
+                          {s.name} · {s.durationMinutes} min
+                          {s.description && " — " + s.description}
+                        </li>
+                      ))}
+                    </ol>
+                  </dd>
+                </div>
+              )}
+            </dl>
+            {plan.costing?.sellingPrice != null ? (
+              <div className="prop-preview">
+                <div>
+                  Total cost
+                  <strong>{money(plan.costing.totalCost, plan.costing.currency)}</strong>
+                </div>
+                <div>
+                  Selling price
+                  <strong>{money(plan.costing.sellingPrice, plan.costing.currency)}</strong>
+                </div>
+                <div>
+                  Target margin / tax
+                  <strong>
+                    {plan.costing.targetMargin}% / {plan.costing.tax}%
+                  </strong>
                 </div>
               </div>
             ) : (
               <p className="prop-muted">
-                Market pricing has not been configured.
+                Selling price has not been configured.
               </p>
             )}
             {plan.approvedAt && (
@@ -411,7 +371,9 @@ export function PropositionDetail({
           <p role="alert" className="prop-error">
             {errorMessage(mutation.error)}
             {mutation.error?.response?.status === 409 && (
-              <button
+              <CoreButton
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   onReload();
                   setConfirmation(null);
@@ -419,7 +381,7 @@ export function PropositionDetail({
                 }}
               >
                 Reload latest revision
-              </button>
+              </CoreButton>
             )}
           </p>
         )}
