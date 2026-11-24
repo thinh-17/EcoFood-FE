@@ -33,6 +33,7 @@ import { AuthHandoffPage } from "../../features/auth/pages/AuthHandoffPage.jsx";
 import { CustomerLoginPage, CustomerCallbackPage, CustomerPortalPage, ReceiptPage } from "../../features/customer/CustomerPages.jsx";
 import { CustomerCarePage, ComplaintManagementPage } from "../../features/complaint/ComplaintPage.jsx";
 import { CatalogPage } from "../../features/catalog/CatalogPage.jsx";
+import { AuditLogPage } from "../../features/audit/pages/AuditLogPage.jsx";
 
 const BusinessDashboardPage = lazy(() => import("../../features/dashboard/pages/BusinessDashboardPage.jsx")
   .then((module) => ({ default: module.BusinessDashboardPage })));
@@ -59,6 +60,7 @@ export function AppRouter() {
       >
         <Route index element={<HomePage />} />
         <Route path="notifications" element={<NotificationPage />} />
+        <Route path="audit-log" element={<AuditLogPage />} />
         <Route path="complaints" element={<ComplaintManagementPage />} />
         <Route path="catalog-publications" element={<CatalogPage />} />
 
