@@ -7,12 +7,12 @@ test("Product actions require an Enterprise Admin or Product Manager role", () =
   assert.equal(canManageProducts(["ENTERPRISE_PRODUCT_MANAGER"]), true);
   for (const role of ["ENTERPRISE_PARTNERSHIP_MANAGER", "ENTERPRISE_DASHBOARD_MANAGER", "TENANT_ADMIN", "CUSTOMER"]) assert.equal(canManageProducts([role]), false);
 });
-test("ECO/Tenant Product Managers can view the directory but not manage it", () => {
-  for (const role of ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_PRODUCT_MANAGER", "ENTERPRISE_ADMIN"])
+test("ECO/Tenant Admin/Product Managers can view the directory but not manage it", () => {
+  for (const role of ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_ADMIN", "TENANT_PRODUCT_MANAGER", "ENTERPRISE_ADMIN"])
     assert.equal(canViewProducts([role]), true);
-  for (const role of ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_PRODUCT_MANAGER"])
+  for (const role of ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_ADMIN", "TENANT_PRODUCT_MANAGER"])
     assert.equal(canManageProducts([role]), false);
-  for (const role of ["MASTER_ADMIN", "MASTER_PRODUCT_MANAGER", "TENANT_ADMIN", "CUSTOMER"])
+  for (const role of ["MASTER_ADMIN", "MASTER_PRODUCT_MANAGER", "CUSTOMER"])
     assert.equal(canViewProducts([role]), false);
 });
 test("standalone draft includes definition and optional sections", () => {

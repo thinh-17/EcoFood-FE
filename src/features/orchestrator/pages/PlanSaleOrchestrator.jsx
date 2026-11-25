@@ -61,6 +61,11 @@ const FIELD_LISTS = {
     title: "Item Plan",
     blurb: "The item's own planId/quantity/actualPrice fields.",
     editableFields: [],
+    // planId/quantity must stay fixed, but actualPrice's Required toggle
+    // genuinely changes submit-transaction behavior (turning it on means a
+    // submitted item must always supply its own actualPrice, no fallback to
+    // the Plan's own defined selling price), so it stays changeable.
+    requiredEditableKeys: ["actualPrice"],
     creatable: false,
     removable: false,
   },
@@ -155,20 +160,23 @@ function SaleOrchestratorForm({ row, proposition, plans, onSaved, onCancel }) {
         <span>Plans</span>
         <PlanMultiPicker value={planIds} plans={plans} onChange={setPlanIds} />
       </label>
-      {Object.entries(FIELD_LISTS).map(([list, { title, blurb, editableFields, creatable, removable }]) => (
-        <CoreExpansionPanel key={list} title={title} defaultExpanded={list === "planItems"}>
-          <p className="sale-muted">{blurb}</p>
-          <SaleConfigurationFieldTable
-            fields={fieldLists[list]}
-            editableFields={editableFields}
-            onChange={editableFields.length ? (fields) => updateList(list, () => fields) : undefined}
-            onRemove={
-              removable ? (index) => updateList(list, (fields) => fields.filter((_, i) => i !== index)) : undefined
-            }
-            onCreate={creatable ? () => updateList(list, (fields) => [...fields, field()]) : undefined}
-          />
-        </CoreExpansionPanel>
-      ))}
+      {Object.entries(FIELD_LISTS).map(
+        ([list, { title, blurb, editableFields, requiredEditableKeys, creatable, removable }]) => (
+          <CoreExpansionPanel key={list} title={title} defaultExpanded={list === "planItems"}>
+            <p className="sale-muted">{blurb}</p>
+            <SaleConfigurationFieldTable
+              fields={fieldLists[list]}
+              editableFields={editableFields}
+              requiredEditableKeys={requiredEditableKeys}
+              onChange={(fields) => updateList(list, () => fields)}
+              onRemove={
+                removable ? (index) => updateList(list, (fields) => fields.filter((_, i) => i !== index)) : undefined
+              }
+              onCreate={creatable ? () => updateList(list, (fields) => [...fields, field()]) : undefined}
+            />
+          </CoreExpansionPanel>
+        ),
+      )}
       <PayloadPreview
         payload={samplePayload(
           planIds,

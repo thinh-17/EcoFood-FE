@@ -8,8 +8,21 @@ import { DATA_TYPES } from "../lib/planSale.js";
 // become real inputs for this list — e.g. ["required"] for Invoice Holder
 // (only its Required toggle is interactive) or every column for Additional
 // Info (fully inline-editable, including adding/removing rows).
-export function SaleConfigurationFieldTable({ fields, editableFields = [], onChange, onRemove, onCreate }) {
+// `requiredEditableKeys` additionally opens up just the Required toggle for
+// specific rows by key, even when "required" isn't in editableFields — Item
+// Plan's planId/quantity must stay fixed, but actualPrice's Required flag
+// genuinely changes submit-transaction behavior (BatchSalePlanResolver's
+// fallback-to-Plan-price rule), so it needs to stay changeable.
+export function SaleConfigurationFieldTable({
+  fields,
+  editableFields = [],
+  requiredEditableKeys = [],
+  onChange,
+  onRemove,
+  onCreate,
+}) {
   const canEdit = (column) => !!onChange && editableFields.includes(column);
+  const canEditRequired = (field) => canEdit("required") || (!!onChange && requiredEditableKeys.includes(field.key));
 
   function update(index, patch) {
     onChange(fields.map((f, i) => (i === index ? { ...f, ...patch } : f)));
@@ -84,8 +97,8 @@ export function SaleConfigurationFieldTable({ fields, editableFields = [], onCha
           )}
           <CoreToggle
             checked={f.required}
-            disabled={!canEdit("required")}
-            onChange={canEdit("required") ? (checked) => update(index, { required: checked }) : undefined}
+            disabled={!canEditRequired(f)}
+            onChange={canEditRequired(f) ? (checked) => update(index, { required: checked }) : undefined}
           />
           {onRemove && (
             <button

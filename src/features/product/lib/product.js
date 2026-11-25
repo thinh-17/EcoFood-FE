@@ -5,12 +5,15 @@ export const canEditProduct = (product) => ["DRAFT", "REJECTED"].includes(produc
 export const canManageProducts = (roles) => (roles ?? []).some((role) => ["ENTERPRISE_ADMIN", "ENTERPRISE_PRODUCT_MANAGER"].includes(role));
 // Wider than canManageProducts — matches the backend's ProductAuthorization.currentRead():
 // Enterprise roles still manage (create/edit/submit/approve/reject) their own Products;
-// ECO (platform-wide) and Tenant Product Managers can only ever read — across every
-// Enterprise for ECO, a scoped set of Enterprises for Tenant. No Master Tenant role:
-// that role group is never actually granted to anyone in this system.
+// ECO (platform-wide) and Tenant Admin/Product Manager can only ever read — across every
+// Enterprise for ECO, a scoped set of Enterprises for Tenant (their own tenant tree, plus
+// every Enterprise owning a Proposition their tenant is a distribution partner on). No
+// Master Tenant role: that role group is never actually granted to anyone in this system.
 export const canViewProducts = (roles) =>
   canManageProducts(roles) ||
-  (roles ?? []).some((role) => ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_PRODUCT_MANAGER"].includes(role));
+  (roles ?? []).some((role) =>
+    ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_ADMIN", "TENANT_PRODUCT_MANAGER"].includes(role),
+  );
 export const productDate = (value) => value ? new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
 export const productMoney = (value, currency = "VND") => `${Number(value).toLocaleString("vi-VN")} ${currency}`;
 export const COST_FIELDS = { ingredientCost: "Ingredient cost", packagingCost: "Packaging cost", laborCost: "Labor cost", operationCost: "Operation cost", marketingFee: "Marketing fee" };
