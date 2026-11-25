@@ -86,7 +86,7 @@ test("a brand new Plan clones the source product's definition, binds its version
   assert.equal(form.category, "Meals");
   assert.equal(form.imageUrl, "https://example.com/chicken.png");
   assert.equal(form.sellingPrice, "");
-  assert.equal(form.costing.ingredientCost, 0);
+  assert.equal("ingredientCost" in form.costing, false);
 });
 test("Draft Plan allows empty pricing; a selling price auto-derives its cost basis", () => {
   const p = planProposition();
@@ -100,7 +100,8 @@ test("Draft Plan allows empty pricing; a selling price auto-derives its cost bas
   const costing = { ...form.costing, ingredientCost: 50000, packagingCost: 5000, laborCost: 10000, operationCost: 3000, marketingFee: 2000, targetMargin: 30, tax: 10 };
   const payload = planPayload({ ...form, costing, currency: "THB", sellingPrice: "120000" }, p);
   assert.equal(payload.pricing.sellingPrice, 120000);
-  assert.equal(payload.pricing.costPrice, 70000);
+  assert.equal(payload.pricing.costPrice, 20000);
+  assert.equal("ingredientCost" in payload.costing, false);
   assert.equal(payload.pricing.currency, "THB");
   assert.equal(payload.costing.currency, "THB");
   assert.equal(payload.expectedRevision, 7);

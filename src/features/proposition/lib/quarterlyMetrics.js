@@ -6,16 +6,17 @@ const VALUES = [
   "platformCost",
 ];
 
-function addAmounts(values) {
+function addAmounts(values, allowNegative = false) {
   const amounts = values
     .filter((value) => value !== "" && value != null)
     .map(String);
   if (!amounts.length) return null;
   const parsed = amounts.map((value) => {
-    const match = /^(\d+)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/.exec(value);
+    const negative = allowNegative && value.startsWith("-");
+    const match = /^(\d+)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/.exec(negative ? value.slice(1) : value);
     if (!match || Math.abs(Number(match[3] ?? 0)) > 1000) return null;
     return {
-      units: BigInt(match[1] + (match[2] ?? "")),
+      units: (negative ? -1n : 1n) * BigInt(match[1] + (match[2] ?? "")),
       scale: (match[2]?.length ?? 0) - Number(match[3] ?? 0),
     };
   });
@@ -27,7 +28,8 @@ function addAmounts(values) {
     0n,
   );
   const scale = 10n ** BigInt(digits);
-  return `${sum / scale}${digits ? `.${String(sum % scale).padStart(digits, "0")}` : ""}`;
+  const absolute = sum < 0n ? -sum : sum;
+  return `${sum < 0n ? "-" : ""}${absolute / scale}${digits ? `.${String(absolute % scale).padStart(digits, "0")}` : ""}`;
 }
 
 const periodIndex = (row) => Number(row.year) * 4 + Number(row.quarter) - 1;
@@ -52,7 +54,7 @@ export function normalizeQuarterlyMetrics(rows = []) {
     .map(([index, entries]) => {
       const result = period(index);
       for (const key of VALUES) {
-        const total = addAmounts(entries.map((row) => row[key]));
+        const total = addAmounts(entries.map((row) => row[key]), key === "profit");
         if (total != null) result[key] = total;
       }
       return result;
@@ -81,3 +83,13 @@ export function appendRevenueYear(rows) {
 
 export const quarterlyRevenueTotal = (rows) =>
   addAmounts(rows.map((row) => row.revenue));
+
+// Current revenue comes from recorded sales; never mix currencies or use the manual legacy value.
+export function propositionRevenueTotal(proposition) {
+  const currency = proposition.definition?.currency;
+  if (!currency) return null;
+  const rows = (proposition.actualMetrics ?? []).filter(
+    (row) => (row.currency ?? currency) === currency,
+  );
+  return quarterlyRevenueTotal(rows) ?? "0";
+}

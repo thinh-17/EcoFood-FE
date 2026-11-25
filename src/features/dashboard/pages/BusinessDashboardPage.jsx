@@ -65,19 +65,19 @@ function DashboardWorkspace({ scope }) {
         {chosen.period === "MONTHLY" && <label key="month">Tháng<select value={chosen.month} onChange={(e) => change("month", Number(e.target.value))}>{Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>}
         {chosen.period === "QUARTERLY" && <label key="quarter">Quý<select value={chosen.quarter} onChange={(e) => change("quarter", Number(e.target.value))}>{Array.from({ length: 4 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>}
       </div>
-      {!chosen.currency && <p role="status">Chưa có Currency xác minh được từ Expected hoặc ActualMetrics. Không tự chọn Currency mặc định.</p>}
+      {!chosen.currency && <p role="status">Chưa có tiền tệ từ số liệu kỳ vọng hoặc thực tế.</p>}
       {ready && summary.isPending && <p role="status">Đang tải KPI…</p>}
       {summary.data && !summary.isError && <>
         <p className="business-period">{periodLabel(summary.data.selection)} · {chosen.currency} · Kỳ Actual: Asia/Ho_Chi_Minh</p>
         <div className="business-cards">{Object.entries(KPI_NAMES).map(([name, label]) => <KpiCard key={name} name={name} label={label} metric={summary.data.metrics[name]} />)}</div>
-        {summary.data.metrics.totalSalesVolume.actualStatus === "NO_RECORDED_TRANSACTIONS" && <p role="status">Chưa có giao dịch được ghi nhận trong ActualMetrics của kỳ này. Giao dịch mới có thể đang chờ xử lý KPI.</p>}
+        {summary.data.metrics.totalSalesVolume.actualStatus === "NO_RECORDED_TRANSACTIONS" && <p role="status">Chưa có giao dịch được ghi nhận cho bộ lọc và kỳ đang chọn.</p>}
         <label className="business-kpi-select">Chỉ số biểu đồ<select value={kpi} onChange={(e) => setKpi(e.target.value)}>{Object.entries(KPI_NAMES).map(([name, label]) => <option key={name} value={name}>{label}</option>)}</select></label>
         <div className="business-charts">
           <article><h2>Expected vs Actual</h2><ChartNotice metric={summary.data.metrics[kpi]} /><div className="business-chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={single}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" /><YAxis /><Tooltip content={<KpiTooltip kpi={kpi} />} /><Legend /><Bar dataKey="actual" name="Actual" fill="#177967" isAnimationActive={false} /><Bar dataKey="expected" name="Expected" fill="#7181a0" isAnimationActive={false} /></BarChart></ResponsiveContainer></div></article>
           <article><h2>Xu hướng {chosen.year}</h2>{trends.isPending && <p>Đang tải xu hướng…</p>}<div className="business-chart"><ResponsiveContainer width="100%" height="100%"><LineChart data={chartData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" /><YAxis /><Tooltip content={<KpiTooltip kpi={kpi} />} /><Legend /><Line type="linear" dataKey="actual" name="Actual" stroke="#177967" connectNulls={false} isAnimationActive={false} /><Line type="linear" dataKey="expected" name="Expected" stroke="#7181a0" connectNulls={false} isAnimationActive={false} /></LineChart></ResponsiveContainer></div></article>
         </div>
         {comparison.data && <BreakdownTable comparison={comparison.data} kpi={kpi} options={options.data} />}
-        <p className="business-sync">Cập nhật projection gần nhất: {summary.data.lastUpdatedAt ? new Date(summary.data.lastUpdatedAt).toLocaleString("vi-VN") : "Chưa có"}. Dashboard không tự xử lý lại KPI.</p>
+        <p className="business-sync">Cập nhật số liệu gần nhất: {summary.data.lastUpdatedAt ? new Date(summary.data.lastUpdatedAt).toLocaleString("vi-VN") : "Chưa có"}.</p>
         <p className="business-sync">Expected lấy từ cấu hình hiện tại. Không chia Expected quý thành tháng; không quy đổi tiền tệ. Chi phí cao hơn ngân sách không được coi là thành tích.</p>
       </>}
     </>}

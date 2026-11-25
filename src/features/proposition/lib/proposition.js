@@ -282,7 +282,6 @@ export function planFormState(plan, p, sourceProcess) {
         ? p.definition.currency
         : (p.availableCurrencies[0] ?? "USD")),
     costing: {
-      ingredientCost: costing?.ingredientCost ?? 0,
       packagingCost: costing?.packagingCost ?? 0,
       laborCost: costing?.laborCost ?? 0,
       operationCost: costing?.operationCost ?? 0,
@@ -361,7 +360,15 @@ export function planPayload(form, p) {
           }))
         : [],
     },
-    costing: { ...form.costing, currency: form.currency },
+    costing: {
+      packagingCost: form.costing.packagingCost,
+      laborCost: form.costing.laborCost,
+      operationCost: form.costing.operationCost,
+      marketingFee: form.costing.marketingFee,
+      targetMargin: form.costing.targetMargin,
+      tax: form.costing.tax,
+      currency: form.currency,
+    },
     pricing:
       form.sellingPrice === ""
         ? null
