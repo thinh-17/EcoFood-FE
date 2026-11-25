@@ -46,11 +46,6 @@ const COLUMNS = [
   },
   { accessorKey: "enterpriseName", header: "Enterprise" },
   {
-    accessorKey: "productVersion",
-    header: "Product version",
-    cell: ({ getValue }) => `v${getValue()}`,
-  },
-  {
     id: "regions",
     accessorFn: (row) => row.definition.regionIds.join(", "),
     header: "Regions",
@@ -246,8 +241,14 @@ export function PropositionDirectory({ scope }) {
                   key={`${id}:${saleOrchestrator?.id ?? "new"}`}
                   proposition={detail.data}
                   id={saleOrchestrator?.id ?? null}
+                  // A Tenant declared as a distribution partner on the
+                  // Proposition itself (definition.distributionPartnerIds)
+                  // gets every Plan in it, not only ones that separately
+                  // list it in their own tenantIds — matches the backend's
+                  // PlanSaleAccess.currentForProposition().
                   plans={
-                    isEnterpriseSaleOrchestratorActor(roles)
+                    isEnterpriseSaleOrchestratorActor(roles) ||
+                    (detail.data.definition.distributionPartnerIds ?? []).includes(tenant)
                       ? detail.data.plans
                       : detail.data.plans.filter((p) => (p.tenantIds ?? []).includes(tenant))
                   }
