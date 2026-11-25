@@ -61,6 +61,11 @@ const FIELD_LISTS = {
     title: "Item Plan",
     blurb: "The item's own planId/quantity/actualPrice fields.",
     editableFields: [],
+    // planId/quantity must stay fixed, but actualPrice's Required toggle
+    // genuinely changes submit-transaction behavior (turning it on means a
+    // submitted item must always supply its own actualPrice, no fallback to
+    // the Plan's own defined selling price), so it stays changeable.
+    requiredEditableKeys: ["actualPrice"],
     creatable: false,
     removable: false,
   },
@@ -92,6 +97,10 @@ function SaleOrchestratorForm({ row, proposition, plans, onSaved, onCancel }) {
   const [error, setError] = useState("");
   const { touched, touch, touchAll } = useTouched();
   const nameInvalid = touched.name && !name.trim();
+  // "Same Proposition" is enough to VIEW any Sale Orchestrator on it, but
+  // editing stays limited to the Tenant that created it (or the Enterprise)
+  // — see PlanSaleOrchestratorServiceImpl.response()'s canEdit.
+  const readOnly = !!row && row.canEdit === false;
   const mutation = useMutation({
     mutationFn: () => saveSaleOrchestrator(proposition.id, row, { name, description, planIds, ...fieldLists }),
     onSuccess: (saved) => onSaved(saved),
@@ -124,6 +133,12 @@ function SaleOrchestratorForm({ row, proposition, plans, onSaved, onCancel }) {
           </p>
         </div>
       </div>
+      {readOnly && (
+        <p className="sale-muted" role="status">
+          Viewing another Tenant's Sale Orchestrator — only the Tenant that
+          created it (or your Enterprise) can edit it.
+        </p>
+      )}
       {error && (
         <p role="alert" className="sale-error">
           {error}
@@ -136,6 +151,7 @@ function SaleOrchestratorForm({ row, proposition, plans, onSaved, onCancel }) {
           value={name}
           maxLength={200}
           required
+          disabled={readOnly}
           onChange={(event) => setName(event.target.value)}
           onBlur={touch("name")}
         />
@@ -148,44 +164,62 @@ function SaleOrchestratorForm({ row, proposition, plans, onSaved, onCancel }) {
           value={description}
           maxLength={2000}
           rows={3}
+          disabled={readOnly}
           onChange={(event) => setDescription(event.target.value)}
         />
       </label>
       <label className="sale-field">
         <span>Plans</span>
-        <PlanMultiPicker value={planIds} plans={plans} onChange={setPlanIds} />
-      </label>
-      {Object.entries(FIELD_LISTS).map(([list, { title, blurb, editableFields, creatable, removable }]) => (
-        <CoreExpansionPanel key={list} title={title} defaultExpanded={list === "planItems"}>
-          <p className="sale-muted">{blurb}</p>
-          <SaleConfigurationFieldTable
-            fields={fieldLists[list]}
-            editableFields={editableFields}
-            onChange={editableFields.length ? (fields) => updateList(list, () => fields) : undefined}
-            onRemove={
-              removable ? (index) => updateList(list, (fields) => fields.filter((_, i) => i !== index)) : undefined
-            }
-            onCreate={creatable ? () => updateList(list, (fields) => [...fields, field()]) : undefined}
-          />
-        </CoreExpansionPanel>
-      ))}
-      <PayloadPreview
-        payload={samplePayload(
-          planIds,
-          fieldLists.planItems,
-          fieldLists.additionalInfoFields,
-          fieldLists.invoiceHolder,
+        {readOnly ? (
+          <p className="sale-muted">
+            {plans.filter((p) => planIds.includes(p.id)).map((p) => p.name).join(", ") || "—"}
+          </p>
+        ) : (
+          <PlanMultiPicker value={planIds} plans={plans} onChange={setPlanIds} />
         )}
-      />
+      </label>
+      {Object.entries(FIELD_LISTS).map(
+        ([list, { title, blurb, editableFields, requiredEditableKeys, creatable, removable }]) => (
+          <CoreExpansionPanel key={list} title={title} defaultExpanded={list === "planItems"}>
+            <p className="sale-muted">{blurb}</p>
+            <SaleConfigurationFieldTable
+              fields={fieldLists[list]}
+              editableFields={readOnly ? [] : editableFields}
+              requiredEditableKeys={readOnly ? [] : requiredEditableKeys}
+              onChange={readOnly ? undefined : (fields) => updateList(list, () => fields)}
+              onRemove={
+                readOnly || !removable
+                  ? undefined
+                  : (index) => updateList(list, (fields) => fields.filter((_, i) => i !== index))
+              }
+              onCreate={
+                readOnly || !creatable ? undefined : () => updateList(list, (fields) => [...fields, field()])
+              }
+            />
+          </CoreExpansionPanel>
+        ),
+      )}
+      {!readOnly && (
+        <PayloadPreview
+          payload={samplePayload(
+            planIds,
+            fieldLists.planItems,
+            fieldLists.additionalInfoFields,
+            fieldLists.invoiceHolder,
+          )}
+        />
+      )}
       <div className="sale-form-actions">
-        <CoreButton
-          type="submit"
-          disabled={mutation.isPending || !planIds.length || !name.trim()}
-        >
-          {mutation.isPending ? "Saving…" : "Save"}
-        </CoreButton>
+        {!readOnly && (
+          <CoreButton
+            type="submit"
+            disabled={mutation.isPending || !planIds.length || !name.trim()}
+          >
+            {mutation.isPending ? "Saving…" : "Save"}
+          </CoreButton>
+        )}
         <CoreButton type="button" variant="secondary" onClick={onCancel}>
-          Cancel
+          {readOnly ? "Close" : "Cancel"}
         </CoreButton>
       </div>
     </form>
