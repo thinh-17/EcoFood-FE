@@ -10,17 +10,14 @@ import {
   FiChevronDown,
   FiChevronsLeft,
   FiChevronsRight,
-  FiLayers,
 } from "react-icons/fi";
 
-import { CoreSelect, useDisclosure } from "@thinh-17/fe-core";
+import { useDisclosure } from "@thinh-17/fe-core";
 
 import { navItems } from "../../app/navigation/navItems.js";
 import { filterNavItems } from "../../app/navigation/navAccess.js";
 import { ROUTES } from "../../constants/routes.js";
 
-import { useActiveTenant } from
-  "../../features/tenant/context/TenantProvider.jsx";
 import { useAuthStore } from "../../features/auth/store/authStore.js";
 import { useCurrentRoles } from "../../features/auth/hooks/useCurrentRoles.js";
 import { decodeJwt } from "../../features/auth/lib/jwt.js";
@@ -39,12 +36,6 @@ export function MainLayout() {
     "users-group": true,
   });
 
-  const {
-    tenantId,
-    tenants,
-    tenantsQuery,
-    switchTenant,
-  } = useActiveTenant();
 
   const logout = useAuthStore((s) => s.logout);
 
@@ -290,35 +281,6 @@ export function MainLayout() {
           </div>
 
           <div className="eco-topbar__right">
-            <label className="eco-tenant-selector">
-              <FiLayers size={17} aria-hidden="true" />
-
-              <CoreSelect
-                aria-label="Active tenant"
-                value={tenantId}
-                disabled={tenantsQuery.isLoading}
-                onChange={(value) => switchTenant(value)}
-                options={[
-                  ...(!tenantId
-                    ? [
-                        {
-                          value: "",
-                          label: tenantsQuery.isLoading
-                            ? "Loading tenants..."
-                            : tenantsQuery.isError
-                              ? "Failed to load tenants"
-                              : "Select tenant",
-                        },
-                      ]
-                    : []),
-                  ...tenants.map((tenant) => ({
-                    value: tenant.id,
-                    label: tenant.name,
-                  })),
-                ]}
-              />
-            </label>
-
             <div
               className="eco-user-avatar"
               title="Demo account"
