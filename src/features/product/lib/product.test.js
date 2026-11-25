@@ -54,9 +54,9 @@ test("optional steps may be skipped and editing respects status", () => {
   validateProductStep(draft(), 2); validateProductStep(draft(), 3);
   assert.equal(canEditProduct({ status: "REJECTED" }), true); assert.equal(canEditProduct({ status: "APPROVED" }), false);
 });
-test("cost calculation sums all inputs and applies target margin and tax", () => {
+test("cost calculation excludes retired ingredient input and applies margin and tax", () => {
   const costing = { ingredientCost: 50000, packagingCost: 5000, laborCost: 10000, operationCost: 3000, marketingFee: 2000, targetMargin: 30, tax: 10 };
-  assert.deepEqual(calculateProductCost(costing), { totalCost: 70000, basePrice: 110000 });
+  assert.deepEqual(calculateProductCost(costing), { totalCost: 20000, basePrice: 31428.57 });
 });
 test("historical process projects its own attributes rather than latest product fields", () => {
   const value = productFromProcess({ version: 2, name: "Latest" }, { version: 1, revision: 3, status: "APPROVED", definition: { processElementAttribute: [{ productName: "Original", code: "P1", category: "Meals", ingredients: [] }] }, costing: { processElementAttribute: [{ totalCost: 70000, sellingPrice: 100000, currency: "VND" }] } });

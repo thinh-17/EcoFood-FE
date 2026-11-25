@@ -1,6 +1,7 @@
 ﻿import { useState } from "react";
 import { CoreButton, CoreTabs, CoreTable } from "@thinh-17/fe-core";
 import { errorMessage, money, showDate } from "../lib/proposition.js";
+import { propositionRevenueTotal } from "../lib/quarterlyMetrics.js";
 import { usePlanDirectory } from "../hooks/usePlanDirectory.js";
 import { MetricsTable } from "./PropositionFields.jsx";
 import { PlanStatus } from "./PlanStatus.jsx";
@@ -11,7 +12,7 @@ import { useSaleOrchestratorDirectory } from "../../orchestrator/hooks/useSaleOr
 
 const OVERVIEW_TABS = [
   { id: "overview", label: "Overview" },
-  { id: "revenue", label: "Expected Quarterly Revenue" },
+  { id: "revenue", label: "Expected Revenue" },
   { id: "actual", label: "Actual Metrics" },
 ];
 const TABS = [
@@ -92,7 +93,7 @@ function OverviewPanel({ proposition: p, tenantName }) {
         <div className="prop-stat">
           <span className="prop-stat-label">Current revenue</span>
           <span className="prop-stat-value">
-            {money(d.currentRevenue, d.currency)}
+            {money(propositionRevenueTotal(p), d.currency)}
           </span>
         </div>
         <div className="prop-stat">
@@ -122,7 +123,7 @@ function RevenuePanel({ proposition: p, tenantName }) {
   const d = p.definition;
   return (
     <section className="prop-panel">
-      <h2>Expected quarterly revenue</h2>
+      <h2>Expected Revenue</h2>
       <p>
         Expected revenue:{" "}
         <strong>{money(d.expectRevenue, d.currency)}</strong>
@@ -153,23 +154,22 @@ function RevenuePanel({ proposition: p, tenantName }) {
   );
 }
 
-// Same schema and table (MetricsTable) as the Expected tab, but sourced
-// from p.actualMetrics — real sales accumulated by the submit-transaction
-// flow (see BatchTransactionService.recordActualMetrics), zero-seeded for
-// this Proposition's own expectMetrics periods at creation so this never
-// starts as a blank table. No per-partner breakdown exists for actuals
-// (unlike expectMetrics' partnerMetrics) — a submitted sale isn't attributed
-// to a specific distribution partner today.
+// Tenant-scoped monthly actuals are rolled up to quarters without mixing currencies.
 function ActualMetricsPanel({ proposition: p }) {
   const d = p.definition;
+  const currencies = [...new Set([d.currency, ...(p.actualMetrics ?? []).map((row) => row.currency)].filter(Boolean))];
+  const [selectedCurrency, setSelectedCurrency] = useState(d.currency ?? currencies[0] ?? "");
+  const rows = (p.actualMetrics ?? []).filter((row) => (row.currency ?? d.currency) === selectedCurrency);
   return (
     <section className="prop-panel">
       <h2>Actual metrics</h2>
       <p className="prop-muted">
-        Accumulated from Plan sales actually submitted for this Proposition,
-        one row per calendar quarter.
+        Accumulated from accepted Plan sales and grouped by calendar quarter.
       </p>
-      <MetricsTable value={p.actualMetrics} currency={d.currency} />
+      {currencies.length > 1 && <label>Currency <select value={selectedCurrency} onChange={(event) => setSelectedCurrency(event.target.value)}>
+        {currencies.map((currency) => <option key={currency} value={currency}>{currency}</option>)}
+      </select></label>}
+      <MetricsTable value={rows} currency={selectedCurrency} />
     </section>
   );
 }

@@ -13,7 +13,7 @@ export const canViewProducts = (roles) =>
   (roles ?? []).some((role) => ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_PRODUCT_MANAGER"].includes(role));
 export const productDate = (value) => value ? new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
 export const productMoney = (value, currency = "VND") => `${Number(value).toLocaleString("vi-VN")} ${currency}`;
-export const COST_FIELDS = { ingredientCost: "Ingredient cost", packagingCost: "Packaging cost", laborCost: "Labor cost", operationCost: "Operation cost", marketingFee: "Marketing fee" };
+export const COST_FIELDS = { packagingCost: "Packaging cost", laborCost: "Labor cost", operationCost: "Operation cost", marketingFee: "Marketing fee" };
 export function calculateProductCost(costing) {
   const totalCost = Object.keys(COST_FIELDS).reduce((total, key) => total + Number(costing[key] || 0), 0);
   const margin = Number(costing.targetMargin || 0);
