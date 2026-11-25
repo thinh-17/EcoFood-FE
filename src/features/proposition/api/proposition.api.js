@@ -12,6 +12,21 @@ export const approvedProcesses = async (params, signal) =>
   );
 export const getProposition = async (id, signal) =>
   unwrapData(await apiClient.get(path(id), { signal }));
+// GET /api/v1/propositions/{id}/plans/directory — one row per Plan visible
+// to the caller, same page/size/sort/search convention as every other
+// directory endpoint in this platform (e.g. getTenantDirectory). Backs the
+// "Plans & Market Configuration" tab, fetched only once that tab is opened.
+export const getPlanDirectory = async (
+  id,
+  { page = 0, size = 20, sort, search } = {},
+  signal,
+) =>
+  unwrapData(
+    await apiClient.get(`${path(id)}/plans/directory`, {
+      params: { page, size, sort, search },
+      signal,
+    }),
+  );
 export const createProposition = async (body) =>
   unwrapData(await apiClient.post(base, body));
 export const updateProposition = async (id, body) =>
@@ -30,6 +45,13 @@ export const approvePlan = async (id, planId, expectedRevision) =>
     await apiClient.post(
       `${path(id)}/plans/${encodeURIComponent(planId)}/approve`,
       { expectedRevision },
+    ),
+  );
+export const rejectPlan = async (id, planId, expectedRevision, reason) =>
+  unwrapData(
+    await apiClient.post(
+      `${path(id)}/plans/${encodeURIComponent(planId)}/reject`,
+      { expectedRevision, reason },
     ),
   );
 export const removePlan = async (id, planId, expectedRevision) =>
@@ -63,10 +85,6 @@ export const getCurrencySettings = async (signal) =>
 export const saveCurrencySettings = async (body) =>
   unwrapData(await apiClient.put(`${base}/settings`, body));
 
-export const submitProposition = async (id, expectedRevision) =>
-  unwrapData(await apiClient.post(`${path(id)}/submit`, { expectedRevision }));
-export const approveProposition = async (id, expectedRevision) =>
-  unwrapData(await apiClient.post(`${path(id)}/approve`, { expectedRevision }));
 export const submitPlan = async (id, planId, expectedRevision) =>
   unwrapData(
     await apiClient.post(

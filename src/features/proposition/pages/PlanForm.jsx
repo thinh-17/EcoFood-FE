@@ -1,437 +1,401 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { CoreButton } from "@thinh-17/fe-core";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { CoreButton, CoreSelect } from "@thinh-17/fe-core";
 import { savePlan } from "../api/proposition.api.js";
+import { getProductProcesses } from "../../product/api/product.api.js";
+import { useTouched } from "../../../hooks/useTouched.js";
 import {
-  currencyDigits,
+  cloneFromSource,
   errorMessage,
-  marketPreview,
-  money,
   planFormState,
   planPayload,
 } from "../lib/proposition.js";
-import { ChoiceList, Field } from "./PropositionFields.jsx";
+import { Field } from "./PropositionFields.jsx";
+import { PlanSourceVersionPicker } from "./PlanSourceVersionPicker.jsx";
 import { COUNTRIES } from "../../../constants/countries.js";
 import { CurrencySelect } from "../../../components/CurrencySelect.jsx";
-export function PlanForm({ proposition: p, plan, onCancel, onSaved }) {
-  const [form, setForm] = useState(() => planFormState(plan, p)),
-    [validation, setValidation] = useState("");
-  const set = (key) => (value) =>
-    setForm((previous) => ({
-      ...previous,
-      [key]: value,
-      marketConfirmed: key === "marketConfirmed" ? value : false,
-    }));
+import { ProductUnitInput } from "../../product/pages/ProductUnitInput.jsx";
+import { ProductCategoryInput } from "../../product/pages/ProductCategoryInput.jsx";
+import { ProductCostingPanel } from "../../product/pages/ProductCostingPanel.jsx";
+
+const PLAN_STEPS = ["Definition", "Ingredients", "Recipe", "Costing"];
+const STEP_DESCRIPTIONS = [
+  "A clone of the approved source product for this Plan — every field below is editable.",
+  "Add ingredients, or skip this step.",
+  "Define preparation instructions, or skip for ready-to-sell plans.",
+  "Set the Plan's own cost and selling price. You can save a Draft without one; approval requires it.",
+];
+
+const isQuantityInvalid = (value) => !(value !== "" && Number.isFinite(Number(value)) && Number(value) > 0);
+const isDurationInvalid = (value) => !(value !== "" && Number.isFinite(Number(value)) && Number(value) >= 0 && Number.isInteger(Number(value)));
+
+export function PlanForm({
+  proposition: p,
+  plan,
+  onCancel,
+  onSaved,
+  onStepChange,
+  extraFooterActions,
+  submitAction,
+  readOnly = false,
+}) {
+  const [form, setForm] = useState(() => planFormState(plan, p));
+  const [step, setStep] = useState(0);
+  const [validation, setValidation] = useState("");
+  const { touched, touch, touchAll } = useTouched();
+  useEffect(() => { onStepChange?.(step); }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+  const set = (field, value) => setForm((current) => ({ ...current, [field]: value }));
+  const changeRow = (field, index, key, value) => set(field, form[field].map((row, i) => i === index ? { ...row, [key]: value } : row));
+  const remove = (field, index) => set(field, form[field].filter((_, i) => i !== index));
   const country = form.regionIds[0] ?? "";
-  const tenants = p.eligibleTenants.filter((t) => t.country === country);
+  // A Plan binds its own Product version — independently of its siblings
+  // and of the Proposition itself, which no longer pins one at all — so a
+  // future change to this specific version only ever affects this Plan.
+  const processes = useQuery({
+    queryKey: ["products", p.productId, "processes"],
+    queryFn: ({ signal }) => getProductProcesses(p.productId, signal),
+  });
+  const versions = processes.data ?? [];
+  const chooseVersion = (version) => {
+    const match = versions.find((x) => x.version === version);
+    setForm((current) => ({
+      ...current,
+      productVersion: version,
+      // Re-clone from whichever version is picked — that's the whole point
+      // of picking one, for a new Plan and an existing Draft/Rejected Plan
+      // alike. Just opening the editor never triggers this (no onChange
+      // fires on mount), so an untouched existing Plan's own saved content
+      // is left alone; only an explicit version switch replaces it.
+      ...(match ? cloneFromSource(match) : {}),
+    }));
+  };
+  // No Distribution Sub-Tenants picker anymore — every Proposition partner
+  // that operates in the chosen Country of Sale is automatically included
+  // (the backend requires every Plan tenant's country to match the Plan's
+  // own Country of Sale, so this can't include partners from other countries).
   const chooseCountry = (value) =>
     setForm((previous) => ({
       ...previous,
       regionIds: value ? [value] : [],
-      tenantIds: previous.tenantIds.filter((id) =>
-        p.eligibleTenants.some((t) => t.id === id && t.country === value),
-      ),
-      marketConfirmed: false,
+      tenantIds: value
+        ? p.eligibleTenants.filter((t) => t.country === value).map((t) => t.id)
+        : [],
     }));
   const mutation = useMutation({
     mutationFn: (body) => savePlan(p.id, plan?.id, body),
     onSuccess: onSaved,
   });
-  const labels = {
-    NAME: ["name", "Product name"],
-    DESCRIPTION: ["description", "Description"],
-    IMAGE_URL: ["imageUrl", "Image URL"],
-  };
-  let preview, previewError;
-  try {
-    if (form.marketEnabled && form.salePrice !== "")
-      preview = marketPreview(form);
-  } catch (error) {
-    previewError = error.message;
+  function goNext() {
+    touchAll(["productVersion", "name", "country"]);
+    if (step === 0 && (!form.productVersion || !form.name.trim() || !country)) {
+      setValidation("A source product version, Plan name and a Country of Sale are required.");
+      return;
+    }
+    setValidation("");
+    setStep(step + 1);
   }
+  function save() {
+    touchAll(["productVersion", "name", "country"]);
+    try {
+      const body = planPayload(form, p);
+      setValidation("");
+      mutation.mutate(body);
+    } catch (error) {
+      setValidation(error.message);
+    }
+  }
+  const busy = mutation.isPending;
   return (
-    <form
-      className="prop-form"
-      onSubmit={(event) => {
-        event.preventDefault();
-        try {
-          const body = planPayload(form, p);
-          setValidation("");
-          mutation.mutate(body);
-        } catch (error) {
-          setValidation(error.message);
-        }
-      }}
-    >
-      <fieldset disabled={mutation.isPending}>
-        <p className="prop-source">
-          {p.definition.name} · Approved product version {p.productVersion}
-        </p>
-        <div className="prop-grid">
-          <Field
-            label="Plan name *"
-            required
-            value={form.name}
-            onChange={set("name")}
-          />
-          <Field label="Plan code" value={form.code} onChange={set("code")} />
-        </div>
-        <label>
-          Description
-          <textarea
-            value={form.description}
-            onChange={(e) => set("description")(e.target.value)}
-          />
-        </label>
-        <div className="prop-grid">
-          <label>
-            Country of Sale *
-            <select
-              required
-              value={country}
-              onChange={(e) => chooseCountry(e.target.value)}
+    <div className="prop-wizard">
+      <aside className="prop-stepper" aria-label="Create Plan steps">
+        <ol>
+          {PLAN_STEPS.map((label, index) => (
+            <li
+              key={label}
+              className={step === index ? "is-current" : step > index ? "is-complete" : ""}
             >
-              <option value="">Select Country of Sale</option>
-              {p.definition.regionIds.map((id) => (
-                <option key={id} value={id}>
-                  {COUNTRIES.find((c) => c.code === id)?.name ?? id} ({id})
-                </option>
-              ))}
-            </select>
-          </label>
-          <ChoiceList
-            label="Distribution Sub-Tenants *"
-            items={tenants}
-            value={form.tenantIds}
-            onChange={set("tenantIds")}
-          />
-          <Field
-            label="Effective from"
-            type="datetime-local"
-            value={form.startDate}
-            onChange={set("startDate")}
-          />
-          <Field
-            label="Effective until"
-            type="datetime-local"
-            value={form.endDate}
-            onChange={set("endDate")}
-          />
-        </div>
-        <h2>Permitted product customization</h2>
-        {!p.definition.allowedOverrides.length && (
-          <p className="prop-muted">
-            The Enterprise has not enabled product overrides.
-          </p>
-        )}
-        {p.definition.allowedOverrides
-          .filter((field) => labels[field])
-          .map((field) => {
-            const [key, label] = labels[field];
-            return (
-              <div key={field}>
-                <label className="prop-check">
-                  <input
-                    type="checkbox"
-                    checked={form.productOverrides[key] != null}
-                    onChange={(e) => {
-                      const overrides = { ...form.productOverrides };
-                      if (e.target.checked) overrides[key] = "";
-                      else delete overrides[key];
-                      set("productOverrides")(overrides);
+              <CoreButton
+                variant="ghost"
+                size="sm"
+                className="prop-step-button"
+                disabled={busy || index > step}
+                aria-current={index === step ? "step" : undefined}
+                onClick={() => setStep(index)}
+              >
+                <span>{index + 1}</span>
+                {label}
+              </CoreButton>
+            </li>
+          ))}
+        </ol>
+        <p>Define the Plan, then save it as a Draft.</p>
+      </aside>
+      <div className="prop-wizard-content">
+        <header className="prop-wizard-heading">
+          <small>
+            STEP {step + 1} OF {PLAN_STEPS.length}
+          </small>
+          <h2>{PLAN_STEPS[step]}</h2>
+          <p>{STEP_DESCRIPTIONS[step]}</p>
+        </header>
+        <fieldset className="prop-wizard-fields" disabled={busy || readOnly}>
+          {step === 0 && (
+            <>
+              <div className="prop-grid">
+                <label
+                  className={touched.productVersion && !form.productVersion ? "fe-field-invalid" : ""}
+                >
+                  Source product version *
+                  <PlanSourceVersionPicker
+                    value={form.productVersion === "" ? null : form.productVersion}
+                    versions={versions}
+                    loading={processes.isPending}
+                    disabled={processes.isPending || processes.isError}
+                    onChange={(version) => {
+                      touch("productVersion")();
+                      chooseVersion(version);
                     }}
                   />
-                  Customize {label.toLowerCase()}
+                  {processes.isError && (
+                    <span className="fe-field-error">
+                      {errorMessage(processes.error)}
+                    </span>
+                  )}
+                  {touched.productVersion && !form.productVersion && (
+                    <span className="fe-field-error">
+                      A source product version is required.
+                    </span>
+                  )}
                 </label>
-                {form.productOverrides[key] != null && (
-                  <Field
-                    label={label}
-                    type={key === "imageUrl" ? "url" : "text"}
-                    required={key === "name"}
-                    value={form.productOverrides[key]}
-                    onChange={(value) =>
-                      set("productOverrides")({
-                        ...form.productOverrides,
-                        [key]: value,
-                      })
-                    }
-                  />
+                <Field
+                  label="Plan name *"
+                  required
+                  value={form.name}
+                  onChange={(value) => set("name", value)}
+                  onBlur={touch("name")}
+                  labelClassName={touched.name && !form.name.trim() ? "fe-field-invalid" : ""}
+                  error={
+                    touched.name &&
+                    !form.name.trim() && <span className="fe-field-error">Plan name is required.</span>
+                  }
+                />
+                {plan?.code && (
+                  <label>
+                    Plan code
+                    <input disabled value={plan.code} />
+                  </label>
                 )}
+                <label className={touched.country && !country ? "fe-field-invalid" : ""}>
+                  Country of Sale *
+                  <CoreSelect
+                    value={country}
+                    onChange={(value) => chooseCountry(value)}
+                    onBlur={touch("country")}
+                    options={[
+                      { value: "", label: "Select Country of Sale" },
+                      ...p.definition.regionIds.map((id) => ({
+                        value: id,
+                        label: `${COUNTRIES.find((c) => c.code === id)?.name ?? id} (${id})`,
+                      })),
+                    ]}
+                  />
+                  {touched.country && !country && (
+                    <span className="fe-field-error">Country of Sale is required.</span>
+                  )}
+                </label>
               </div>
-            );
-          })}
-        {p.definition.allowedOverrides.includes("RECIPE") && (
-          <>
-            <h3>Product Process recipe</h3>
-            <label className="prop-check">
-              <input
-                type="checkbox"
-                checked={form.productOverrides.recipe != null}
-                onChange={(e) => {
-                  const next = { ...form.productOverrides };
-                  if (e.target.checked)
-                    next.recipe = structuredClone(
-                      p.sourceProcess?.definition?.processElementAttribute?.[0]
-                        ?.recipe ?? {
-                        enabled: true,
-                        name: "",
-                        steps: [],
-                        preparationMinutes: 0,
-                        cookingMinutes: 0,
-                      },
+              <div className="prop-grid">
+                <ProductCategoryInput value={form.category} onChange={(value) => set("category", value)} />
+                <Field
+                  label="Plan image URL"
+                  type="url"
+                  value={form.imageUrl}
+                  onChange={(value) => set("imageUrl", value)}
+                />
+              </div>
+              <label>
+                Description
+                <textarea
+                  value={form.description}
+                  onChange={(e) => set("description", e.target.value)}
+                />
+              </label>
+            </>
+          )}
+          {step === 1 && (
+            <>
+              <div className="prop-section-heading">
+                <h3>Ingredients ({form.ingredients.length})</h3>
+                <CoreButton
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => set("ingredients", [...form.ingredients, { name: "", quantity: "", unit: "g", note: "" }])}
+                >
+                  + Add ingredient
+                </CoreButton>
+              </div>
+              {!form.ingredients.length && <p className="prop-muted">No ingredients added. You can continue without them.</p>}
+              {form.ingredients.map((item, index) => {
+                const nameInvalid = touched[`ingredient-name-${index}`] && !item.name.trim();
+                const quantityInvalid = touched[`ingredient-quantity-${index}`] && isQuantityInvalid(item.quantity);
+                return (
+                  <div className="prop-subcard" key={index}>
+                    <div className="prop-ingredient-row">
+                      <Field
+                        label="Ingredient name *"
+                        value={item.name}
+                        onChange={(value) => changeRow("ingredients", index, "name", value)}
+                        onBlur={touch(`ingredient-name-${index}`)}
+                        labelClassName={nameInvalid ? "fe-field-invalid" : ""}
+                        error={nameInvalid && <span className="fe-field-error">Ingredient name is required.</span>}
+                      />
+                      <Field
+                        label="Quantity *"
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={item.quantity}
+                        onChange={(value) => changeRow("ingredients", index, "quantity", value)}
+                        onBlur={touch(`ingredient-quantity-${index}`)}
+                        labelClassName={quantityInvalid ? "fe-field-invalid" : ""}
+                        error={quantityInvalid && <span className="fe-field-error">Quantity is required.</span>}
+                      />
+                      <ProductUnitInput value={item.unit} onChange={(value) => changeRow("ingredients", index, "unit", value)} />
+                      <CoreButton variant="secondary" size="sm" onClick={() => remove("ingredients", index)}>
+                        Remove
+                      </CoreButton>
+                    </div>
+                    <Field label="Note" value={item.note} onChange={(value) => changeRow("ingredients", index, "note", value)} />
+                  </div>
+                );
+              })}
+            </>
+          )}
+          {step === 2 && (
+            <>
+              <label className="prop-check">
+                <input type="checkbox" checked={form.recipeEnabled} onChange={(e) => set("recipeEnabled", e.target.checked)} />
+                Enable recipe
+              </label>
+              {form.recipeEnabled ? (
+                <>
+                  <Field label="Recipe name" value={form.recipeName} onChange={(value) => set("recipeName", value)} />
+                  <div className="prop-grid">
+                    <Field label="Preparation time (minutes)" type="number" min="0" step="1" value={form.preparationMinutes} onChange={(value) => set("preparationMinutes", value)} />
+                    <Field label="Cooking time (minutes)" type="number" min="0" step="1" value={form.cookingMinutes} onChange={(value) => set("cookingMinutes", value)} />
+                  </div>
+                  {form.steps.map((item, index) => {
+                    const stepNameInvalid = touched[`step-name-${index}`] && !item.name.trim();
+                    const durationInvalid = touched[`step-duration-${index}`] && isDurationInvalid(item.durationMinutes);
+                    return (
+                      <div className="prop-subcard" key={index}>
+                        <strong>Step {index + 1}</strong>
+                        <div className="prop-grid">
+                          <Field
+                            label="Step name *"
+                            value={item.name}
+                            onChange={(value) => changeRow("steps", index, "name", value)}
+                            onBlur={touch(`step-name-${index}`)}
+                            labelClassName={stepNameInvalid ? "fe-field-invalid" : ""}
+                            error={stepNameInvalid && <span className="fe-field-error">Step name is required.</span>}
+                          />
+                          <Field
+                            label="Duration (minutes) *"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={item.durationMinutes}
+                            onChange={(value) => changeRow("steps", index, "durationMinutes", value)}
+                            onBlur={touch(`step-duration-${index}`)}
+                            labelClassName={durationInvalid ? "fe-field-invalid" : ""}
+                            error={durationInvalid && <span className="fe-field-error">Duration (minutes) is required.</span>}
+                          />
+                        </div>
+                        <Field label="Instructions" value={item.description} onChange={(value) => changeRow("steps", index, "description", value)} />
+                        <CoreButton variant="secondary" size="sm" onClick={() => remove("steps", index)}>
+                          Remove step
+                        </CoreButton>
+                      </div>
                     );
-                  else delete next.recipe;
-                  set("productOverrides")(next);
-                }}
-              />
-              Customize Product Process for this Plan
-            </label>
-            {form.productOverrides.recipe && (
-              <RecipeEditor
-                value={form.productOverrides.recipe}
-                onChange={(recipe) =>
-                  set("productOverrides")({ ...form.productOverrides, recipe })
-                }
-              />
-            )}
-          </>
-        )}
-        <h2>Market configuration</h2>
-        <label className="prop-check">
-          <input
-            type="checkbox"
-            checked={form.marketEnabled}
-            onChange={(e) => set("marketEnabled")(e.target.checked)}
-          />
-          Set market pricing now
-        </label>
-        <p className="prop-muted">
-          Draft may omit pricing; approval requires it. Tax is a percentage: 8
-          means 8%. Prices are independent of Product pricing.
-        </p>
-        {p.plans.some(
-          (item) => item.marketConfiguration && item.id !== plan?.id,
-        ) && (
-          <label>
-            Use pricing from another Plan
-            <select
-              value=""
-              onChange={(e) => {
-                const market = p.plans.find(
-                  (item) => item.id === e.target.value,
-                )?.marketConfiguration;
-                if (market)
-                  setForm((previous) => ({
-                    ...previous,
-                    marketEnabled: true,
-                    currency: market.currency,
-                    salePrice: market.salePrice,
-                    taxRate: market.taxRate,
-                    surcharge: market.surcharge,
-                    marketConfirmed: false,
-                  }));
-              }}
-            >
-              <option value="">Select pricing template</option>
-              {p.plans
-                .filter(
-                  (item) =>
-                    item.marketConfiguration &&
-                    item.id !== plan?.id &&
-                    p.availableCurrencies.includes(
-                      item.marketConfiguration.currency,
-                    ),
-                )
-                .map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name} · {item.regionIds.join(", ")} · v{item.version}
-                  </option>
-                ))}
-            </select>
-          </label>
-        )}
-        {form.marketEnabled && (
-          <>
-            <p className="prop-muted">Changing currency does not convert amounts. Review the prices and confirm the preview again.</p>
-            <div className="prop-grid">
+                  })}
+                  <CoreButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => set("steps", [...form.steps, { name: "", description: "", durationMinutes: 0 }])}
+                  >
+                    + Add step
+                  </CoreButton>
+                  <Field label="Recipe note" value={form.recipeNote} onChange={(value) => set("recipeNote", value)} />
+                </>
+              ) : (
+                <p className="prop-muted">No recipe required. Continue to costing.</p>
+              )}
+            </>
+          )}
+          {step === 3 && (
+            <>
               <label>
                 Currency *
-                <CurrencySelect required value={form.currency} onChange={set("currency")} />
+                <CurrencySelect value={form.currency} onChange={(value) => set("currency", value)} />
+                <small>Applies to all costs and the selling price. Changing currency does not convert amounts.</small>
               </label>
-              <Field
-                label="Sale price *"
-                required
-                type="number"
-                min="0"
-                step={10 ** -currencyDigits(form.currency)}
-                value={form.salePrice}
-                onChange={set("salePrice")}
-              />
-              <Field
-                label="Tax (%)"
-                type="number"
-                min="0"
-                max="100"
-                step="0.0001"
-                value={form.taxRate}
-                onChange={set("taxRate")}
-              />
-              <Field
-                label="Additional fees"
-                type="number"
-                min="0"
-                step={10 ** -currencyDigits(form.currency)}
-                value={form.surcharge}
-                onChange={set("surcharge")}
-              />
-            </div>
-            {preview && (
-              <>
-                <div className="prop-preview">
-                  <div>
-                    Country<strong>{country || "Select a country"}</strong>
-                  </div>
-                  <div>
-                    Tax amount
-                    <strong>{money(preview.taxAmount, form.currency)}</strong>
-                  </div>
-                  <div>
-                    Total price
-                    <strong>{money(preview.totalPrice, form.currency)}</strong>
-                  </div>
+              <ProductCostingPanel currency={form.currency} costing={form.costing} onChange={(value) => set("costing", value)} showBasePrice={false} />
+              <div className="prop-subcard">
+                <strong>Selling price</strong>
+                <div className="prop-grid">
+                  <Field label="Selling price" type="number" min="0" step="any" value={form.sellingPrice} onChange={(value) => set("sellingPrice", value)} />
+                  <label>
+                    Currency
+                    <input disabled value={form.currency} />
+                  </label>
                 </div>
-                <label className="prop-check">
-                  <input
-                    type="checkbox"
-                    checked={form.marketConfirmed}
-                    onChange={(e) => set("marketConfirmed")(e.target.checked)}
-                  />
-                  Confirm market configuration preview
-                </label>
-              </>
-            )}
-            {previewError && <p className="prop-muted">{previewError}</p>}
-            <p className="prop-muted">
-              Total = sale price + rounded tax + additional fees. Confirm the
-              preview to save this configuration.
-            </p>
-          </>
+                <Field label="Pricing note" value={form.pricingNote} onChange={(value) => set("pricingNote", value)} />
+              </div>
+              <p className="prop-muted">You may save a draft without a selling price; it's required before submitting for review.</p>
+            </>
+          )}
+        </fieldset>
+        {(validation || mutation.isError) && (
+          <p role="alert" className="prop-error">
+            {validation || errorMessage(mutation.error)}
+            {mutation.error?.response?.status === 409 &&
+              " Close and reopen to load the latest revision."}
+          </p>
         )}
-      </fieldset>
-      {(validation || mutation.isError) && (
-        <p role="alert" className="prop-error">
-          {validation || errorMessage(mutation.error)}
-          {mutation.error?.response?.status === 409 &&
-            " Close and reopen to load the latest revision."}
-        </p>
-      )}
-      <div className="prop-actions">
-        <CoreButton
-          variant="secondary"
-          disabled={mutation.isPending}
-          onClick={onCancel}
-        >
-          Cancel
-        </CoreButton>
-        <CoreButton type="submit" loading={mutation.isPending}>
-          Save Draft Plan
-        </CoreButton>
+        <footer className="prop-actions prop-wizard-actions">
+          <CoreButton variant="secondary" disabled={busy} onClick={onCancel}>
+            {readOnly ? "Close" : "Cancel"}
+          </CoreButton>
+          {step > 0 && (
+            <CoreButton variant="secondary" disabled={busy} onClick={() => setStep(step - 1)}>
+              Back
+            </CoreButton>
+          )}
+          {extraFooterActions}
+          {!readOnly && step === 1 && (
+            <CoreButton variant="secondary" disabled={busy} onClick={() => { set("ingredients", []); setStep(2); }}>
+              Skip ingredients
+            </CoreButton>
+          )}
+          {!readOnly && step === 2 && (
+            <CoreButton variant="secondary" disabled={busy} onClick={() => { set("recipeEnabled", false); setStep(3); }}>
+              Skip recipe
+            </CoreButton>
+          )}
+          {!readOnly && step >= 1 && (
+            <CoreButton loading={busy} onClick={save}>
+              Save Plan
+            </CoreButton>
+          )}
+          {step < PLAN_STEPS.length - 1 ? (
+            <CoreButton disabled={busy} onClick={goNext}>
+              Next
+            </CoreButton>
+          ) : (
+            submitAction
+          )}
+        </footer>
       </div>
-    </form>
-  );
-}
-function RecipeEditor({ value, onChange }) {
-  const steps = value.steps ?? [];
-  const changeStep = (index, patch) =>
-    onChange({
-      ...value,
-      steps: steps.map((s, i) => (i === index ? { ...s, ...patch } : s)),
-    });
-  return (
-    <section className="prop-subcard">
-      <label className="prop-check">
-        <input
-          type="checkbox"
-          checked={value.enabled}
-          onChange={(e) => onChange({ ...value, enabled: e.target.checked })}
-        />
-        Enable recipe
-      </label>
-      <Field
-        label="Recipe name"
-        value={value.name ?? ""}
-        onChange={(name) => onChange({ ...value, name })}
-      />
-      <div className="prop-grid">
-        {["preparationMinutes", "cookingMinutes"].map((key) => (
-          <Field
-            key={key}
-            label={
-              key === "preparationMinutes"
-                ? "Preparation minutes"
-                : "Cooking minutes"
-            }
-            type="number"
-            min="0"
-            value={value[key] ?? 0}
-            onChange={(n) => onChange({ ...value, [key]: Number(n) })}
-          />
-        ))}
-      </div>
-      {steps.map((step, index) => (
-        <div className="prop-subcard" key={index}>
-          <Field
-            required
-            label={`Step ${index + 1} name`}
-            value={step.name}
-            onChange={(name) => changeStep(index, { name })}
-          />
-          <Field
-            label="Instructions"
-            value={step.description ?? ""}
-            onChange={(description) => changeStep(index, { description })}
-          />
-          <Field
-            label="Duration minutes"
-            type="number"
-            min="0"
-            value={step.durationMinutes}
-            onChange={(n) => changeStep(index, { durationMinutes: Number(n) })}
-          />
-          <button
-            type="button"
-            onClick={() =>
-              onChange({
-                ...value,
-                steps: steps
-                  .filter((_, i) => i !== index)
-                  .map((s, i) => ({ ...s, order: i + 1 })),
-              })
-            }
-          >
-            Remove step
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={() =>
-          onChange({
-            ...value,
-            steps: [
-              ...steps,
-              {
-                order: steps.length + 1,
-                name: "",
-                description: "",
-                durationMinutes: 0,
-              },
-            ],
-          })
-        }
-      >
-        Add process step
-      </button>
-    </section>
+    </div>
   );
 }

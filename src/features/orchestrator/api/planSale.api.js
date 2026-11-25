@@ -1,34 +1,41 @@
 import { apiClient, unwrapData } from "../../../services/apiClient.js";
-import { configurationForSave } from "../lib/planSale.js";
-export const planSalePath = (proposition, plan) =>
-  `/api/v1/propositions/${encodeURIComponent(proposition)}/plans/${encodeURIComponent(plan)}/sale-orchestrator`;
-export async function getPlanSale(proposition, plan, signal) {
-  const response = await apiClient.get(planSalePath(proposition, plan), {
-    signal,
-  });
-  return response.status === 204 ? null : unwrapData(response);
+import { requestForSave } from "../lib/planSale.js";
+
+export const saleOrchestratorsPath = (proposition) =>
+  `/api/v1/propositions/${encodeURIComponent(proposition)}/sale-orchestrators`;
+
+// GET .../sale-orchestrators/directory — one row per Sale Orchestrator (not
+// per Plan: one Orchestrator can cover many), same page/size/sort/search
+// convention as every other directory endpoint in this platform.
+export async function getSaleOrchestratorDirectory(
+  propositionId,
+  { page = 0, size = 20, sort, search } = {},
+  signal,
+) {
+  const response = await apiClient.get(
+    `${saleOrchestratorsPath(propositionId)}/directory`,
+    { params: { page, size, sort, search }, signal },
+  );
+  return unwrapData(response);
 }
-export async function savePlanSale(proposition, plan, row, configuration) {
-  configuration = configurationForSave(configuration);
-  const base = planSalePath(proposition, plan);
+
+export async function getSaleOrchestrator(propositionId, id, signal) {
+  const response = await apiClient.get(
+    `${saleOrchestratorsPath(propositionId)}/${encodeURIComponent(id)}`,
+    { signal },
+  );
+  return unwrapData(response);
+}
+
+// Create and update both use the same request shape — a Sale Orchestrator
+// has no version/status lifecycle, just a current, always-editable
+// configuration (name/description + the Plans it covers).
+export async function saveSaleOrchestrator(propositionId, row, value) {
+  const body = requestForSave(row, value);
+  const base = saleOrchestratorsPath(propositionId);
   return unwrapData(
     await (row
-      ? apiClient.put(`${base}/draft`, {
-          expectedRevision: row.revision,
-          configuration,
-        })
-      : apiClient.post(base, { configuration })),
-  );
-}
-export async function planSaleAction(
-  proposition,
-  plan,
-  action,
-  expectedRevision,
-) {
-  return unwrapData(
-    await apiClient.post(`${planSalePath(proposition, plan)}/${action}`, {
-      expectedRevision,
-    }),
+      ? apiClient.put(`${base}/${encodeURIComponent(row.id)}`, body)
+      : apiClient.post(base, body)),
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   keepPreviousData,
   useQuery,
@@ -22,12 +23,13 @@ import {
   canUsePropositions,
   errorMessage,
   showDate,
-  statusLabel,
 } from "../lib/proposition.js";
 import { PropositionForm } from "./PropositionForm.jsx";
 import { PropositionDetail } from "./PropositionDetail.jsx";
 import { PlanForm } from "./PlanForm.jsx";
-import { CurrencySettingsForm } from "./CurrencySettingsForm.jsx";
+import { PlanDetail } from "./PlanDetail.jsx";
+import { isEnterpriseSaleOrchestratorActor } from "../../orchestrator/lib/planSale.js";
+import { SaleOrchestratorEditor } from "../../orchestrator/pages/PlanSaleOrchestrator.jsx";
 import "./PropositionPage.css";
 
 const PAGE_SIZE = 20;
@@ -60,13 +62,6 @@ const COLUMNS = [
   },
   { id: "plans", accessorFn: (row) => row.plans.length, header: "Plans" },
   {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ getValue }) => (
-      <span className="prop-status">{statusLabel(getValue())}</span>
-    ),
-  },
-  {
     accessorKey: "updatedAt",
     header: "Updated",
     cell: ({ getValue }) => showDate(getValue()),
@@ -90,9 +85,18 @@ export function PropositionPage() {
 }
 export function PropositionDirectory({ scope }) {
   const client = useQueryClient();
-  const [view, setView] = useState("list"),
+  const location = useLocation();
+  const tenant = useAuthStore((state) => state.tenantId),
+    roles = useCurrentRoles();
+  // Reached from a Product's "Create Proposition" button (see
+  // ProductDetail.jsx) carrying the APPROVED ProductProcess to source from —
+  // read once on mount so Create opens straight into PropositionForm with
+  // that product already chosen, skipping the search/select UI entirely.
+  const [createSource] = useState(location.state?.createFromSource ?? null);
+  const [view, setView] = useState(createSource ? "create" : "list"),
     [id, setId] = useState(null),
     [plan, setPlan] = useState(null),
+    [saleOrchestrator, setSaleOrchestrator] = useState(null),
     [notice, setNotice] = useState("");
   const [search, setSearch] = useState(""),
     [page, setPage] = useState(0);
@@ -114,7 +118,7 @@ export function PropositionDirectory({ scope }) {
   const detail = useQuery({
     queryKey: ["propositions", scope, "detail", id],
     queryFn: ({ signal }) => getProposition(id, signal),
-    enabled: Boolean(id) && ["detail", "edit", "plan"].includes(view),
+    enabled: Boolean(id) && ["detail", "edit", "plan", "sale-orchestrator"].includes(view),
     refetchInterval: view === "detail" ? 30000 : false,
   });
   const reload = () =>
@@ -129,13 +133,18 @@ export function PropositionDirectory({ scope }) {
     setNotice("Proposition saved.");
     open(result.id);
   };
+  const saleOrchestratorSaved = () => {
+    client.invalidateQueries({ queryKey: ["propositions", id, "sale-orchestrators", "directory"] });
+    setNotice("Sale Orchestrator saved.");
+    setView("detail");
+  };
   const title = {
     list: "Propositions",
     create: "Create Proposition",
     edit: "Edit Proposition",
     detail: "Proposition details",
-    plan: plan ? "Edit Draft Plan" : "Create Plan",
-    settings: "Default Proposition currency",
+    plan: plan ? "Edit Plan" : "Create Plan",
+    "sale-orchestrator": saleOrchestrator ? "Edit Sale Orchestrator" : "Create Sale Orchestrator",
   }[view];
   return (
     <section className="prop-page">
@@ -146,37 +155,29 @@ export function PropositionDirectory({ scope }) {
       {notice && (
         <div className="prop-notice" role="status">
           {notice}
-          <button
+          <CoreButton
+            variant="ghost"
+            size="sm"
             aria-label="Dismiss notification"
             onClick={() => setNotice("")}
           >
             ×
-          </button>
+          </CoreButton>
         </div>
       )}
       {options.isPending && <p role="status">Loading permissions...</p>}
       {options.isError && (
         <ErrorState error={options.error} retry={options.refetch} />
       )}
-      {view === "settings" && (
-        <CurrencySettingsForm
-          scope={scope}
-          onCancel={() => setView("list")}
-          onSaved={() => {
-            reload();
-            setNotice("Default Proposition currency saved.");
-            setView("list");
-          }}
-        />
-      )}
       {view === "create" && options.data?.canCreate && (
         <PropositionForm
           options={{ ...options.data, scope }}
+          presetSource={createSource}
           onCancel={() => setView("list")}
           onSaved={saved}
         />
       )}
-      {["detail", "edit", "plan"].includes(view) && (
+      {["detail", "edit", "plan", "sale-orchestrator"].includes(view) && (
         <>
           {detail.isPending && <p role="status">Loading Proposition...</p>}
           {detail.isError && (
@@ -199,8 +200,10 @@ export function PropositionDirectory({ scope }) {
                     setPlan(value);
                     setView("plan");
                   }}
-                  onSaved={saved}
-                  onReload={reload}
+                  onSaleOrchestrator={(value) => {
+                    setSaleOrchestrator(value);
+                    setView("sale-orchestrator");
+                  }}
                 />
               )}
               {view === "edit" && options.data && (
@@ -212,13 +215,44 @@ export function PropositionDirectory({ scope }) {
                   onSaved={saved}
                 />
               )}
-              {view === "plan" && (
-                <PlanForm
-                  key={`${id}:${plan?.id ?? "new"}:${detail.data.revision}`}
+              {view === "plan" && plan && (
+                <PlanDetail
+                  key={`${id}:${plan.id}:${detail.data.revision}`}
                   proposition={detail.data}
                   plan={plan}
+                  tenantName={(tenantId) =>
+                    [
+                      ...(options.data?.brands ?? []),
+                      ...(options.data?.distributionPartners ?? []),
+                      ...detail.data.eligibleTenants,
+                    ].find((t) => t.id === tenantId)?.name ?? tenantId
+                  }
                   onCancel={() => setView("detail")}
                   onSaved={saved}
+                  onReload={reload}
+                />
+              )}
+              {view === "plan" && !plan && (
+                <PlanForm
+                  key={`${id}:new:${detail.data.revision}`}
+                  proposition={detail.data}
+                  plan={null}
+                  onCancel={() => setView("detail")}
+                  onSaved={saved}
+                />
+              )}
+              {view === "sale-orchestrator" && (
+                <SaleOrchestratorEditor
+                  key={`${id}:${saleOrchestrator?.id ?? "new"}`}
+                  proposition={detail.data}
+                  id={saleOrchestrator?.id ?? null}
+                  plans={
+                    isEnterpriseSaleOrchestratorActor(roles)
+                      ? detail.data.plans
+                      : detail.data.plans.filter((p) => (p.tenantIds ?? []).includes(tenant))
+                  }
+                  onCancel={() => setView("detail")}
+                  onSaved={saleOrchestratorSaved}
                 />
               )}
             </>
@@ -239,19 +273,6 @@ export function PropositionDirectory({ scope }) {
                 setPage(0);
               }}
             />
-            {options.data?.canCreate && (
-              <div className="prop-actions">
-                <CoreButton
-                  variant="secondary"
-                  onClick={() => setView("settings")}
-                >
-                  Default currency
-                </CoreButton>
-                <CoreButton onClick={() => setView("create")}>
-                  Create Proposition
-                </CoreButton>
-              </div>
-            )}
           </div>
           {list.isError && (
             <ErrorState error={list.error} retry={list.refetch} />
@@ -276,7 +297,10 @@ export function PropositionDirectory({ scope }) {
 function ErrorState({ error, retry }) {
   return (
     <p className="prop-error" role="alert">
-      {errorMessage(error)} <button onClick={() => retry()}>Retry</button>
+      {errorMessage(error)}{" "}
+      <CoreButton variant="ghost" size="sm" onClick={() => retry()}>
+        Retry
+      </CoreButton>
     </p>
   );
 }

@@ -1,150 +1,134 @@
-export const TYPES = ["STRING", "NUMBER", "BOOLEAN", "DATE", "OBJECT", "ARRAY"];
-export const TRANSACTION_FIELDS = {
-  invoiceNumber: "STRING",
-  transactionTime: "DATE",
-  currency: "STRING",
-  totalAmount: "NUMBER",
-  items: "ARRAY",
-};
-export const ITEM_FIELDS = {
-  productCode: "STRING",
-  productName: "STRING",
-  quantity: "NUMBER",
-  unitPrice: "NUMBER",
-  amount: "NUMBER",
-};
-export const field = (name = "", type = "STRING", required = false) => ({
-  name,
-  type,
-  required,
-});
-export function defaultSchema() {
-  const schema = {
-    fields: Object.entries(TRANSACTION_FIELDS).map(([name, type]) =>
-      name === "items"
-        ? {
-            ...field(name, type, true),
-            items: {
-              type: "OBJECT",
-              fields: Object.entries(ITEM_FIELDS).map(([key, kind]) => ({
-                ...field(key, kind, true),
-                ...(kind === "NUMBER" ? { min: 0 } : {}),
-              })),
-            },
-          }
-        : {
-            ...field(name, type, true),
-            ...(name === "totalAmount" ? { min: 0 } : {}),
-          },
-    ),
-  };
-  schema.fields.push(
-    {
-      ...field("customer", "OBJECT"),
-      fields: [
-        field("firstName"),
-        field("lastName"),
-        { ...field("email"), format: "EMAIL" },
-        field("phoneNumber"),
-      ],
-    },
-    { ...field("additionalInfo", "OBJECT"), fields: [] },
-  );
-  return schema;
-}
-export function canConfigurePlanSale(roles, tenant, plan) {
+// Same Tenant-or-Enterprise gate the backend enforces for the whole
+// directory and every CRUD route (see PlanSaleAccess.requireConfigRole) — a
+// Platform (ECO) viewer never sees this tab's content at all.
+const SALE_ORCHESTRATOR_ROLES = [
+  "TENANT_ADMIN",
+  "TENANT_PRODUCT_MANAGER",
+  "ENTERPRISE_ADMIN",
+  "ENTERPRISE_PRODUCT_MANAGER",
+];
+export function canViewSaleOrchestratorDirectory(roles, tenant) {
   return (
-    !!tenant &&
-    (roles ?? []).some((r) =>
-      ["TENANT_ADMIN", "TENANT_PRODUCT_MANAGER"].includes(r),
-    ) &&
-    (plan.tenantIds ?? []).includes(tenant)
+    !!tenant && (roles ?? []).some((r) => SALE_ORCHESTRATOR_ROLES.includes(r))
   );
 }
-export function changeType(value, type) {
-  const {
-    fields: _fields,
-    items: _items,
-    min: _min,
-    max: _max,
-    format: _format,
-    defaultValue: _default,
-    ...rest
-  } = value;
+
+// An Enterprise actor owns the whole Proposition, so (mirroring the
+// backend's currentForProposition) it can cover any Plan in it, not just
+// ones assigned to its own Tenant.
+export function isEnterpriseSaleOrchestratorActor(roles) {
+  return (roles ?? []).some((r) =>
+    ["ENTERPRISE_ADMIN", "ENTERPRISE_PRODUCT_MANAGER"].includes(r),
+  );
+}
+
+// Data types a field can declare — matches the backend's own
+// ALLOWED_DATA_TYPES in PlanSaleOrchestratorServiceImpl.
+export const DATA_TYPES = ["STRING", "NUMBER", "BOOLEAN", "DATE"];
+
+export const field = (overrides = {}) => ({
+  key: "",
+  dataType: "STRING",
+  shortName: "",
+  description: "",
+  required: false,
+  ...overrides,
+});
+
+// Matches PlanSaleOrchestratorServiceImpl.defaultPlanItems() exactly — the
+// item's own planId/quantity/actualPrice fields, pre-seeded so a brand new
+// Sale Orchestrator starts with the usual shape instead of an empty table.
+// planId/quantity's keys are fixed (the backend rejects any other key set
+// for planItems); only dataType/shortName/description/required are really
+// configurable, same as Additional Info.
+export function defaultPlanItems() {
+  return [
+    field({
+      key: "planId",
+      dataType: "STRING",
+      shortName: "Plan Id",
+      description: "The Plan the customer is buying",
+      required: true,
+    }),
+    field({
+      key: "quantity",
+      dataType: "NUMBER",
+      shortName: "Quantity",
+      description: "How many of the Plan were bought",
+      required: true,
+    }),
+    field({
+      key: "actualPrice",
+      dataType: "NUMBER",
+      shortName: "Actual Price",
+      description:
+        "Only needed when your own storefront (not the Plan's own defined price) sets what it sold for",
+      required: false,
+    }),
+  ];
+}
+
+// Matches PlanSaleOrchestratorServiceImpl.defaultInvoiceHolder() exactly —
+// the buyer's own info, carried once per invoice (not per item). Free-form,
+// like Additional Info: these five are just a starting point.
+export function defaultInvoiceHolder() {
+  return [
+    field({ key: "firstName", shortName: "First Name" }),
+    field({ key: "lastName", shortName: "Last Name" }),
+    field({ key: "email", shortName: "Email" }),
+    field({ key: "phoneNumber", shortName: "Phone Number" }),
+    field({ key: "address", shortName: "Address" }),
+  ];
+}
+
+// A Sale Orchestrator has no version/status lifecycle — just a current,
+// always-editable configuration: name/description, the Plans it covers, and
+// the three field lists describing its whole submit-transaction shape.
+export function requestForSave(row, value) {
   return {
-    ...rest,
-    type,
-    ...(type === "OBJECT" ? { fields: [] } : {}),
-    ...(type === "ARRAY" ? { items: { type: "STRING" } } : {}),
+    expectedRevision: row?.revision ?? null,
+    name: value.name.trim(),
+    description: (value.description ?? "").trim(),
+    planIds: value.planIds ?? [],
+    planItems: value.planItems ?? [],
+    additionalInfoFields: value.additionalInfoFields ?? [],
+    invoiceHolder: value.invoiceHolder ?? [],
   };
 }
 
-export const schemaGroup = (value) =>
-  Object.hasOwn(TRANSACTION_FIELDS, value.name)
-    ? "sale"
-    : /^customer/i.test(value.name ?? "")
-      ? "customer"
-      : "additional";
-export function groupFields(schema, group) {
-  return (schema?.fields ?? []).filter((value) => schemaGroup(value) === group);
-}
-export function replaceGroup(schema, group, values) {
-  const fields = schema?.fields ?? [];
-  const index = fields.findIndex((value) => schemaGroup(value) === group);
-  const result = fields.filter((value) => schemaGroup(value) !== group);
-  result.splice(
-    index < 0 ? result.length : Math.min(index, result.length),
-    0,
-    ...values,
+const EXAMPLE_VALUES = { STRING: "example", NUMBER: 1, BOOLEAN: true, DATE: "2026-01-01T00:00:00Z" };
+const exampleFor = (f) => EXAMPLE_VALUES[f.dataType] ?? "example";
+const keyedExamples = (fields) =>
+  Object.fromEntries((fields ?? []).filter((f) => f.key?.trim()).map((f) => [f.key, exampleFor(f)]));
+
+// Sample submit-transaction payload reflecting exactly what's currently
+// defined: planId/quantity plus any other planItems field (e.g.
+// actualPrice, or a renamed one) as siblings on the item, one example value
+// per configured Additional Info field (nested under `additionalInfo`), and
+// the invoiceHolder fields once per invoice (sibling to items, never
+// repeated per item). invoiceNumber is omitted here — it's the caller's
+// own identifier for a real submission, not part of what this Orchestrator
+// defines.
+export function samplePayload(planIds, planItems, additionalInfoFields, invoiceHolder) {
+  const extraPlanItemFields = (planItems ?? []).filter(
+    (f) => f.key?.trim() && !["planId", "quantity"].includes(f.key),
   );
-  return { fields: result };
-}
-export function configurationForSave(value) {
-  return {
-    name: value.name,
-    description: value.description ?? "",
-    maxItems: value.maxItems,
-    payloadSchema: value.payloadSchema,
-    postWorkflows: value.postWorkflows ?? [],
-  };
-}
-export function samplePayload(schema, currency = "VND") {
-  const examples = {
-    invoiceNumber: "INV-001",
-    transactionTime: "2026-01-01T00:00:00Z",
-    currency,
-    totalAmount: 100000,
-    productCode: "PRODUCT-001",
-    productName: "Sample product",
+  const additionalInfo = keyedExamples(additionalInfoFields);
+  const items = (planIds?.length ? planIds : ["<planId>"]).map((planId) => ({
+    planId,
     quantity: 1,
-    unitPrice: 100000,
-    amount: 100000,
-    firstName: "An",
-    lastName: "Nguyen",
-    email: "customer@example.com",
-    phoneNumber: "0900000000",
+    ...keyedExamples(extraPlanItemFields),
+    ...(Object.keys(additionalInfo).length ? { additionalInfo } : {}),
+  }));
+  const invoiceHolderExample = keyedExamples(invoiceHolder);
+  return {
+    transaction: {
+      invoices: [
+        {
+          ...(Object.keys(invoiceHolderExample).length ? { invoiceHolder: invoiceHolderExample } : {}),
+          items,
+        },
+      ],
+    },
   };
-  function value(f, depth = 0) {
-    if (depth > 10) return null;
-    if (f.defaultValue != null) return f.defaultValue;
-    if (f.type === "OBJECT")
-      return Object.fromEntries(
-        (f.fields ?? []).map((child) => [child.name, value(child, depth + 1)]),
-      );
-    if (f.type === "ARRAY") return f.items ? [value(f.items, depth + 1)] : [];
-    if (f.type === "BOOLEAN") return false;
-    if (f.type === "NUMBER") {
-      const candidate = Object.hasOwn(examples, f.name) ? examples[f.name] : 0;
-      return Math.max(
-        f.min == null ? -Infinity : Number(f.min),
-        Math.min(f.max == null ? Infinity : Number(f.max), candidate),
-      );
-    }
-    if (f.type === "DATE") return "2026-01-01T00:00:00Z";
-    if (f.format === "EMAIL") return "customer@example.com";
-    return String(Object.hasOwn(examples, f.name) ? examples[f.name] : "");
-  }
-  return Object.fromEntries(
-    (schema?.fields ?? []).map((f) => [f.name, value(f)]),
-  );
 }

@@ -9,6 +9,7 @@
 .product-page .product-primary, :is(.product-modal, .product-surface) .product-primary { background: var(--fnb-accent); border-color: var(--fnb-accent); color: #fff; }
 .product-page .product-primary:hover, :is(.product-modal, .product-surface) .product-primary:hover { background: var(--fnb-accent-hover); }
 .product-page input, .product-page select, :is(.product-modal, .product-surface) input, :is(.product-modal, .product-surface) select, :is(.product-modal, .product-surface) textarea { border: 1px solid var(--fnb-line); border-radius: 6px; padding: 11px 12px; color: var(--fnb-ink); background: #fff; width: 100%; min-width: 0; }
+.product-page input:disabled, .product-page select:disabled, .product-page textarea:disabled, :is(.product-modal, .product-surface) input:disabled, :is(.product-modal, .product-surface) select:disabled, :is(.product-modal, .product-surface) textarea:disabled { color: var(--fnb-muted); cursor: not-allowed; background: #f4f7f6; }
 .product-search { position: relative; width: 270px; }
 .product-search input { padding-right: 38px; }
 .product-search svg { position: absolute; right: 13px; top: 14px; color: var(--fnb-muted); pointer-events: none; }
@@ -33,6 +34,14 @@
 .product-status--approved { color: #008f41; background: #e4f8ed; }
 .product-status--pending_review { color: #d95c05; background: #fff0e3; }
 .product-status--rejected { color: #d8234d; background: #ffe6ed; }
+.product-version-bar { border: 1px solid var(--fnb-line); border-radius: 8px; padding: 16px; margin-bottom: 18px; background: #fff; }
+.product-version-bar__top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.product-version-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.product-version-chips button.product-status { border: 1px solid transparent; cursor: pointer; }
+.product-version-chips button.product-status:disabled { cursor: default; opacity: .6; }
+.product-version-chips button.product-status.is-current { box-shadow: 0 0 0 2px var(--fnb-accent); font-weight: 700; }
+.product-version-bar__actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.product-version-bar .product-facts { margin-top: 0; }
 .product-state { text-align: center; padding: 50px 18px; color: var(--fnb-muted); }
 .product-error { color: #b4233b; background: #fff2f3; border-radius: 6px; padding: 12px; overflow-wrap: anywhere; }
 .product-notice { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #e9f8ef; color: #087a42; padding: 10px 14px; border-radius: 6px; margin-bottom: 18px; }

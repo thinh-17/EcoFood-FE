@@ -15,5 +15,11 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+    // @thinh-17/fe-core is linked in from ../EcoFood-FEcore (see
+    // package.json), which has its own react/react-dom in its own
+    // node_modules — without dedupe, Vite can resolve two separate React
+    // instances and hooks break ("Invalid hook call") even though the code
+    // looks fine. This forces both packages to share this app's own copy.
+    dedupe: ['react', 'react-dom'],
   },
 });

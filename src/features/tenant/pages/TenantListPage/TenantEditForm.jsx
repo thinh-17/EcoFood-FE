@@ -60,19 +60,22 @@ function seedContact(contact) {
  * time a different tenant is opened, rather than fighting stale state via
  * effects.
  *
- * "Brand Customization" (DCMP's third tab — footer/logo/favicon) is
- * intentionally omitted: this project's tenant model has no such fields.
+ * "Brand Customization" (DCMP's third tab — footer/favicon) is intentionally
+ * omitted beyond the single Logo URL field on Configuration: this project's
+ * tenant model has no other such fields.
  *
  * Owns its own Save/Cancel footer (rather than TenantListPage passing one
  * into CoreModal's `footer` prop) because it's the one holding the draft
- * state PUT /api/v1/tenants/{id} needs to submit — only tenantName + contact
- * are sent, matching TenantUpdateRequest's own narrow shape; Realm/Client
- * ID/Partner Type/Tenant Type/Domain stay disabled and are never submitted.
+ * state PUT /api/v1/tenants/{id} needs to submit — only tenantName, logoUrl
+ * and contact are sent, matching TenantUpdateRequest's own narrow shape;
+ * Partner Type/Tenant Type/Domain stay disabled and are never submitted;
+ * Realm/Client ID aren't shown at all.
  */
 export function TenantEditForm({ tenant, onCancel, onSaved }) {
   const [activeTab, setActiveTab] = useState("basic");
   const [form, setForm] = useState({
     tenantName: tenant.tenantName ?? "",
+    logoUrl: tenant.logoUrl ?? "",
     contact: seedContact(tenant.contact),
   });
 
@@ -113,7 +116,7 @@ export function TenantEditForm({ tenant, onCancel, onSaved }) {
 
   function handleSave() {
     updateTenant.mutate(
-      { id: tenant.id, payload: { tenantName: form.tenantName, contact: form.contact } },
+      { id: tenant.id, payload: { tenantName: form.tenantName, logoUrl: form.logoUrl, contact: form.contact } },
       { onSuccess: onSaved },
     );
   }
@@ -149,13 +152,8 @@ export function TenantEditForm({ tenant, onCancel, onSaved }) {
           </label>
 
           <label className="fe-field">
-            Realm
-            <input className="fe-input" value={tenant.realm || ""} disabled />
-          </label>
-
-          <label className="fe-field">
-            Client ID
-            <input className="fe-input" value={tenant.clientId || ""} disabled />
+            Logo URL
+            <input className="fe-input" value={form.logoUrl} onChange={handleChange("logoUrl")} />
           </label>
         </div>
       )}

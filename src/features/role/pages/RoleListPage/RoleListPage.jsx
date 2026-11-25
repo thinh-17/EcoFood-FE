@@ -1,27 +1,24 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { CoreButton, CoreCard, CoreModal, CorePageHeader, CoreTable, useDisclosure } from "@thinh-17/fe-core";
 
-import { useRoleDetail } from "../../hooks/useRoleDetail.js";
+import { ROUTES } from "../../../../constants/routes.js";
 import { useRoleDirectory } from "../../hooks/useRoleDirectory.js";
 import { RoleCreateForm } from "./RoleCreateForm.jsx";
-import { RoleDetailForm } from "./RoleDetailForm.jsx";
 import "./RoleListPage.css";
 
 const COLUMNS = [{ accessorKey: "name", header: "Name" }];
 
 export function RoleListPage() {
+  const navigate = useNavigate();
   const { data, isLoading, isError, error } = useRoleDirectory();
   const columns = useMemo(() => COLUMNS, []);
 
-  const [selectedRoleId, setSelectedRoleId] = useState(null);
   const createModal = useDisclosure(false);
-  const editModal = useDisclosure(false);
-  const { data: roleDetail, isLoading: isDetailLoading, isError: isDetailError } = useRoleDetail(selectedRoleId);
 
   function handleRowClick(role) {
-    setSelectedRoleId(role.id);
-    editModal.open();
+    navigate(`${ROUTES.ROLES}/${role.id}`);
   }
 
   return (
@@ -52,16 +49,6 @@ export function RoleListPage() {
 
       <CoreModal isOpen={createModal.isOpen} onClose={createModal.close} title="New Role" size="lg">
         <RoleCreateForm onCancel={createModal.close} onCreated={createModal.close} />
-      </CoreModal>
-
-      <CoreModal isOpen={editModal.isOpen} onClose={editModal.close} title="Edit Role" size="lg">
-        {isDetailLoading && <p>Loading…</p>}
-
-        {isDetailError && <p className="role-list__error">Failed to load role detail.</p>}
-
-        {roleDetail && (
-          <RoleDetailForm key={roleDetail.id} role={roleDetail} onCancel={editModal.close} onSaved={editModal.close} />
-        )}
       </CoreModal>
     </div>
   );

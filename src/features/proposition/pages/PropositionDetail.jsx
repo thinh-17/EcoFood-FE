@@ -1,69 +1,33 @@
 ﻿import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { CoreButton } from "@thinh-17/fe-core";
-import {
-  approvePlan,
-  submitPlan,
-  removePlan,
-  versionPlan,
-  submitProposition,
-  approveProposition,
-} from "../api/proposition.api.js";
-import {
-  errorMessage,
-  money,
-  showDate,
-  statusLabel,
-} from "../lib/proposition.js";
+import { CoreButton, CoreTabs, CoreTable } from "@thinh-17/fe-core";
+import { errorMessage, money, showDate } from "../lib/proposition.js";
+import { usePlanDirectory } from "../hooks/usePlanDirectory.js";
 import { MetricsTable } from "./PropositionFields.jsx";
-import { PlanSaleOrchestrator } from "../../orchestrator/pages/PlanSaleOrchestrator.jsx";
+import { PlanStatus } from "./PlanStatus.jsx";
+import { useAuthStore } from "../../auth/store/authStore.js";
+import { useCurrentRoles } from "../../auth/hooks/useCurrentRoles.js";
+import { canViewSaleOrchestratorDirectory } from "../../orchestrator/lib/planSale.js";
+import { useSaleOrchestratorDirectory } from "../../orchestrator/hooks/useSaleOrchestratorDirectory.js";
 
-const MESSAGES = {
-  submitProposition:
-    "Submit this Proposition for review? Its definition becomes read-only.",
-  approveProposition:
-    "Approve this Proposition? Approved Plans can operate within their effective dates.",
-  submitPlan:
-    "Submit this Plan for review? Its configuration becomes read-only.",
-  approvePlan:
-    "Approve this Plan? It can operate only when the Proposition is also approved.",
-  removePlan: "Remove this Draft Plan?",
-  versionPlan:
-    "Create a new Draft version? The existing approved version stays available until its approved replacement takes effect.",
-};
+const OVERVIEW_TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "revenue", label: "Expected Quarterly Revenue" },
+  { id: "actual", label: "Actual Metrics" },
+];
+const TABS = [
+  { id: "plans", label: "Plans & Market Configuration" },
+  { id: "orchestrator", label: "Sale Orchestrator" },
+];
 export function PropositionDetail({
   proposition: p,
   options,
   onBack,
   onEdit,
   onPlan,
-  onSaved,
-  onReload,
+  onSaleOrchestrator,
 }) {
-  const [confirmation, setConfirmation] = useState(null);
-  const mutation = useMutation({
-    mutationFn: ({ action, plan }) => {
-      if (action === "submitProposition")
-        return submitProposition(p.id, p.revision);
-      if (action === "approveProposition")
-        return approveProposition(p.id, p.revision);
-      return { submitPlan, approvePlan, removePlan, versionPlan }[action](
-        p.id,
-        plan.id,
-        p.revision,
-      );
-    },
-    onSuccess: (result) => {
-      setConfirmation(null);
-      onSaved(result);
-    },
-  });
-  const confirm = (action, plan) => {
-    mutation.reset();
-    setConfirmation({ action, plan });
-  };
-  const d = p.definition,
-    source = p.sourceProcess?.definition?.processElementAttribute?.[0];
+  const [overviewTab, setOverviewTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("plans");
   const tenantName = (id) =>
     [
       ...(options?.brands ?? []),
@@ -79,351 +43,339 @@ export function PropositionDetail({
         {p.canEdit && (
           <CoreButton onClick={onEdit}>Edit Proposition</CoreButton>
         )}
-        {p.canSubmit && (
-          <CoreButton
-            disabled={mutation.isPending}
-            onClick={() => confirm("submitProposition")}
-          >
-            Submit Proposition for Review
-          </CoreButton>
+      </div>
+      <CoreTabs tabs={OVERVIEW_TABS} activeId={overviewTab} onChange={setOverviewTab} />
+      {overviewTab === "overview" && (
+        <OverviewPanel proposition={p} tenantName={tenantName} />
+      )}
+      {overviewTab === "revenue" && (
+        <RevenuePanel proposition={p} tenantName={tenantName} />
+      )}
+      {overviewTab === "actual" && <ActualMetricsPanel proposition={p} />}
+      <CoreTabs tabs={TABS} activeId={activeTab} onChange={setActiveTab} />
+      {activeTab === "plans" && <PlansPanel proposition={p} onPlan={onPlan} />}
+      {activeTab === "orchestrator" && (
+        <SaleOrchestratorPanel proposition={p} onSaleOrchestrator={onSaleOrchestrator} />
+      )}
+    </>
+  );
+}
+
+function OverviewPanel({ proposition: p, tenantName }) {
+  const d = p.definition;
+  return (
+    <section className="prop-panel prop-overview">
+      <div className="prop-overview-header">
+        <div>
+          <h2>{d.name}</h2>
+          <p className="prop-muted">{p.enterpriseName}</p>
+        </div>
+        <span
+          className={"prop-status-pill " + (p.active ? "prop-status-pill--approved" : "")}
+        >
+          <span aria-hidden="true" />
+          {p.active ? "Active" : "Not active"}
+        </span>
+      </div>
+      <p className="prop-overview-description">
+        {d.description || "No description."}
+      </p>
+      <div className="prop-overview-stats">
+        <div className="prop-stat">
+          <span className="prop-stat-label">Countries of Sale</span>
+          <span className="prop-stat-value">{d.regionIds.join(", ")}</span>
+        </div>
+        <div className="prop-stat">
+          <span className="prop-stat-label">Target year</span>
+          <span className="prop-stat-value">{d.targetYear ?? "—"}</span>
+        </div>
+        <div className="prop-stat">
+          <span className="prop-stat-label">Current revenue</span>
+          <span className="prop-stat-value">
+            {money(d.currentRevenue, d.currency)}
+          </span>
+        </div>
+        <div className="prop-stat">
+          <span className="prop-stat-label">Effective period</span>
+          <span className="prop-stat-value">
+            {showDate(d.startDate)} – {showDate(d.endDate)}
+          </span>
+        </div>
+      </div>
+      <dl className="prop-facts prop-overview-details">
+        {d.brandId && (
+          <div>
+            <dt>Brand</dt>
+            <dd>{tenantName(d.brandId)}</dd>
+          </div>
         )}
-        {p.canApprove && (
-          <CoreButton
-            disabled={mutation.isPending}
-            onClick={() => confirm("approveProposition")}
-          >
-            Approve Proposition
-          </CoreButton>
+        <div>
+          <dt>Distribution partners</dt>
+          <dd>{d.distributionPartnerIds.map(tenantName).join(", ")}</dd>
+        </div>
+      </dl>
+    </section>
+  );
+}
+
+function RevenuePanel({ proposition: p, tenantName }) {
+  const d = p.definition;
+  return (
+    <section className="prop-panel">
+      <h2>Expected quarterly revenue</h2>
+      <p>
+        Expected revenue:{" "}
+        <strong>{money(d.expectRevenue, d.currency)}</strong>
+      </p>
+      <MetricsTable value={d.expectMetrics} currency={d.currency} />
+      <dl className="prop-facts">
+        {["enterprise", "platform", "distribution"].map((kind) => (
+          <div key={kind}>
+            <dt>{kind === "distribution" ? "Partner" : kind} profit share</dt>
+            <dd>
+              {d[kind + "ProfitShare"] == null
+                ? "—"
+                : d[kind + "ProfitShare"] + "%"}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      {d.partnerMetrics.map((item) => (
+        <details key={item.tenantId}>
+          <summary>
+            {tenantName(item.tenantId)} · Expected revenue{" "}
+            {money(item.expectRevenue, d.currency)}
+          </summary>
+          <MetricsTable value={item.expectMetrics} currency={d.currency} />
+        </details>
+      ))}
+    </section>
+  );
+}
+
+// Same schema and table (MetricsTable) as the Expected tab, but sourced
+// from p.actualMetrics — real sales accumulated by the submit-transaction
+// flow (see BatchTransactionService.recordActualMetrics), zero-seeded for
+// this Proposition's own expectMetrics periods at creation so this never
+// starts as a blank table. No per-partner breakdown exists for actuals
+// (unlike expectMetrics' partnerMetrics) — a submitted sale isn't attributed
+// to a specific distribution partner today.
+function ActualMetricsPanel({ proposition: p }) {
+  const d = p.definition;
+  return (
+    <section className="prop-panel">
+      <h2>Actual metrics</h2>
+      <p className="prop-muted">
+        Accumulated from Plan sales actually submitted for this Proposition,
+        one row per calendar quarter.
+      </p>
+      <MetricsTable value={p.actualMetrics} currency={d.currency} />
+    </section>
+  );
+}
+
+// Fetched only once this tab is opened — GET .../plans/directory, same
+// page/size/sort/search convention as every other directory endpoint in
+// this platform. A row click opens the Plan's own edit/detail page
+// (PlanDetail, rendered by PropositionPage's "plan" view) — same pattern as
+// clicking a row in the Product directory opens ProductDetail.
+function PlansPanel({ proposition: p, onPlan }) {
+  const [search, setSearch] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
+  const [sort, setSort] = useState({ field: "name", direction: "asc" });
+  const directory = usePlanDirectory({
+    propositionId: p.id,
+    revision: p.revision,
+    page: 0,
+    size: 100,
+    sort: `${sort.field},${sort.direction}`,
+    search,
+    hasSearched,
+  });
+  const plans = directory.data?.content ?? [];
+  const columns = [
+    {
+      accessorKey: "name",
+      header: "Plan",
+      meta: { sortable: true, sortField: "name" },
+      cell: ({ row }) => (
+        <span>
+          {row.original.name} {row.original.code && <small>({row.original.code})</small>}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      meta: { sortable: true, sortField: "status" },
+      cell: ({ getValue }) => <PlanStatus status={getValue()} />,
+    },
+    { id: "country", accessorFn: (row) => row.regionIds.join(", "), header: "Country of Sale" },
+    {
+      id: "effective",
+      accessorFn: (row) => `${showDate(row.startDate)} – ${showDate(row.endDate)}`,
+      header: "Effective period",
+    },
+    {
+      id: "updatedAt",
+      accessorFn: (row) => showDate(row.updatedAt),
+      header: "Last updated",
+      meta: { sortable: true, sortField: "updatedAt" },
+    },
+  ];
+  return (
+    <section className="prop-panel">
+      <div className="prop-section-heading">
+        <div>
+          <h2>Plans & market configuration</h2>
+        </div>
+        {p.canManagePlans && (
+          <CoreButton onClick={() => onPlan(null)}>Add Plan</CoreButton>
         )}
       </div>
-      <section className="prop-panel">
-        <div className="prop-section-heading">
-          <div>
-            <h2>{d.name}</h2>
-            <p className="prop-muted">
-              {p.enterpriseName} · Revision {p.revision}
-            </p>
-          </div>
-          <span className="prop-status">{statusLabel(p.status)}</span>
-        </div>
-        <p>{d.description || "No description."}</p>
-        <dl className="prop-facts">
-          <div>
-            <dt>Approved source product</dt>
-            <dd>
-              {source?.productName ?? p.productId} · v{p.productVersion}
-            </dd>
-          </div>
-          <div>
-            <dt>ProductProcess</dt>
-            <dd>{p.productProcessId}</dd>
-          </div>
-          {d.brandId && (
-            <div>
-              <dt>Brand</dt>
-              <dd>{tenantName(d.brandId)}</dd>
-            </div>
-          )}
-          <div>
-            <dt>Distribution partners</dt>
-            <dd>{d.distributionPartnerIds.map(tenantName).join(", ")}</dd>
-          </div>
-          <div>
-            <dt>Countries of Sale</dt>
-            <dd>{d.regionIds.join(", ")}</dd>
-          </div>
-          <div>
-            <dt>Target year</dt>
-            <dd>{d.targetYear ?? "—"}</dd>
-          </div>
-          <div>
-            <dt>Current revenue</dt>
-            <dd>{money(d.currentRevenue, d.currency)}</dd>
-          </div>
-          <div>
-            <dt>Effective period</dt>
-            <dd>
-              {showDate(d.startDate)} – {showDate(d.endDate)}
-            </dd>
-          </div>
-          <div>
-            <dt>Permitted customization</dt>
-            <dd>{d.allowedOverrides.join(", ") || "None"}</dd>
-          </div>
-        </dl>
-        {p.approvedAt && (
-          <p className="prop-muted">
-            Proposition approved {showDate(p.approvedAt)} · {p.approvedBy}
-          </p>
-        )}
-        <details>
-          <summary>Approved source definition</summary>
-          <dl className="prop-facts">
-            <div>
-              <dt>Code</dt>
-              <dd>{source?.code ?? "—"}</dd>
-            </div>
-            <div>
-              <dt>Category</dt>
-              <dd>{source?.category ?? "—"}</dd>
-            </div>
-            <div>
-              <dt>Description</dt>
-              <dd>{source?.description ?? "—"}</dd>
-            </div>
-          </dl>
-          <p className="prop-muted">
-            This source version is fixed. Plan customization preserves the
-            approved ProductProcess.
-          </p>
-        </details>
-      </section>
-      <section className="prop-panel">
-        <h2>Expected quarterly revenue</h2>
-        <p>
-          Expected revenue:{" "}
-          <strong>{money(d.expectRevenue, d.currency)}</strong>
+      <input
+        type="search"
+        className="fe-input"
+        placeholder="Search Plans by name or code..."
+        value={search}
+        onChange={(event) => {
+          setSearch(event.target.value);
+          setHasSearched(true);
+        }}
+      />
+      {directory.isError && (
+        <p role="alert" className="prop-error">
+          {errorMessage(directory.error)}{" "}
+          <CoreButton variant="secondary" size="sm" onClick={() => directory.refetch()}>
+            Retry
+          </CoreButton>
         </p>
-        <MetricsTable value={d.expectMetrics} currency={d.currency} />
-        <dl className="prop-facts">
-          {["enterprise", "platform", "distribution"].map((kind) => (
-            <div key={kind}>
-              <dt>{kind === "distribution" ? "Partner" : kind} profit share</dt>
-              <dd>
-                {d[kind + "ProfitShare"] == null
-                  ? "—"
-                  : d[kind + "ProfitShare"] + "%"}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        <h3>Actual indicators</h3>
-        <MetricsTable value={p.actualMetrics} currency={d.currency} />
-        {d.partnerMetrics.map((item) => (
-          <details key={item.tenantId}>
-            <summary>
-              {tenantName(item.tenantId)} · Expected revenue{" "}
-              {money(item.expectRevenue, d.currency)}
-            </summary>
-            <MetricsTable value={item.expectMetrics} currency={d.currency} />
-          </details>
-        ))}
-      </section>
+      )}
+      <CoreTable
+        columns={columns}
+        data={directory.isError ? [] : plans}
+        loading={directory.isLoading}
+        page={directory.data?.page ?? 0}
+        pageSize={directory.data?.size ?? 100}
+        totalElements={directory.data?.totalElements ?? 0}
+        sort={sort}
+        onSortChange={setSort}
+        onPageChange={() => {}}
+        onRowClick={(row) => onPlan(row)}
+        emptyTitle={directory.isError ? "Unable to load Plans" : "No Plans in your data scope"}
+        emptyDescription={
+          directory.isError
+            ? "Retry to load the Plan list."
+            : search
+              ? "Try another search."
+              : "Add a Plan to start building this Proposition's market configuration."
+        }
+      />
+    </section>
+  );
+}
+
+// Fetched only once this tab is opened — GET .../sale-orchestrators/directory
+// — one row per Sale Orchestrator (not per Plan: one Orchestrator can cover
+// many at once). Same "table, Create new, click a row to view and edit it"
+// convention as the Plans tab — Create/click-a-row swap the whole page to
+// SaleOrchestratorEditor (see PropositionPage's "sale-orchestrator" view),
+// not an inline panel under this table. Forbidden for an Enterprise viewer —
+// a Sale Orchestrator is managed by each distribution Tenant for their own
+// Plans.
+function SaleOrchestratorPanel({ proposition: p, onSaleOrchestrator }) {
+  const tenant = useAuthStore((s) => s.tenantId),
+    roles = useCurrentRoles();
+  const [search, setSearch] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
+  const [sort, setSort] = useState({ field: "name", direction: "asc" });
+  const allowed = canViewSaleOrchestratorDirectory(roles, tenant);
+  const directory = useSaleOrchestratorDirectory({
+    propositionId: p.id,
+    page: 0,
+    size: 100,
+    sort: `${sort.field},${sort.direction}`,
+    search,
+    hasSearched,
+    enabled: allowed,
+  });
+  if (!allowed)
+    return (
       <section className="prop-panel">
-        <div className="prop-section-heading">
-          <div>
-            <h2>Plans & market configuration</h2>
-            <p className="prop-muted">
-              Propositions and Plans are reviewed separately: Draft → Pending
-              Review → Approved. Both must be approved for a Plan to operate.
-            </p>
-          </div>
-          {p.canManagePlans && (
-            <CoreButton onClick={() => onPlan(null)}>Add Plan</CoreButton>
-          )}
-        </div>
-        {!p.plans.length && (
-          <p className="prop-empty">No Plans in your data scope.</p>
-        )}
-        {p.plans.map((plan) => (
-          <article className="prop-plan" key={plan.id}>
-            <div className="prop-section-heading">
-              <h3>
-                {plan.name} {plan.code && <small>({plan.code})</small>}
-              </h3>
-              <span
-                className={
-                  "prop-status " +
-                  (plan.status === "APPROVED" ? "prop-approved" : "")
-                }
-              >
-                {statusLabel(plan.status)}
-              </span>
-            </div>
-            <p>{plan.description}</p>
-            <dl className="prop-facts">
-              <div>
-                <dt>Country of Sale</dt>
-                <dd>{plan.regionIds.join(", ")}</dd>
-              </div>
-              <div>
-                <dt>Distribution Sub-Tenants</dt>
-                <dd>{plan.tenantIds.map(tenantName).join(", ")}</dd>
-              </div>
-              <div>
-                <dt>Effective period</dt>
-                <dd>
-                  {showDate(plan.startDate)} – {showDate(plan.endDate)}
-                </dd>
-              </div>
-              <div>
-                <dt>Operation</dt>
-                <dd>{plan.active ? "Active" : "Not active"}</dd>
-              </div>
-            </dl>
-            {plan.status === "APPROVED" && !plan.active && (
-              <p className="prop-notice">
-                {p.status !== "APPROVED"
-                  ? "Plan approved — waiting for Proposition approval before it can operate."
-                  : "This Plan is outside its effective period or has been replaced by a newer approved version."}
-              </p>
-            )}
-            <p className="prop-muted">
-              Version {plan.version}
-              {plan.previousVersionId && " · Revision of an earlier Plan"}
-            </p>
-            {plan.productOverrides && (
-              <dl className="prop-facts">
-                {Object.entries(plan.productOverrides)
-                  .filter(([, value]) => value != null)
-                  .map(([key, value]) => (
-                    <div key={key}>
-                      <dt>Product {key}</dt>
-                      <dd>
-                        {key === "recipe" ? (
-                          <>
-                            <strong>{value.name || "Plan recipe"}</strong>
-                            <ol>
-                              {(value.steps ?? []).map((s) => (
-                                <li key={s.order}>
-                                  {s.name} · {s.durationMinutes} min
-                                  {s.description && " — " + s.description}
-                                </li>
-                              ))}
-                            </ol>
-                          </>
-                        ) : (
-                          value || "(empty)"
-                        )}
-                      </dd>
-                    </div>
-                  ))}
-              </dl>
-            )}
-            {plan.marketConfiguration ? (
-              <div className="prop-preview">
-                {[
-                  ["Sale price", "salePrice"],
-                  ["Tax amount", "taxAmount"],
-                  ["Additional fees", "surcharge"],
-                  ["Total price", "totalPrice"],
-                ].map(([label, key]) => (
-                  <div key={key}>
-                    {label}
-                    <strong>
-                      {money(
-                        plan.marketConfiguration[key],
-                        plan.marketConfiguration.currency,
-                      )}
-                    </strong>
-                  </div>
-                ))}
-                <div>
-                  Tax rate<strong>{plan.marketConfiguration.taxRate}%</strong>
-                </div>
-              </div>
-            ) : (
-              <p className="prop-muted">
-                Market pricing has not been configured.
-              </p>
-            )}
-            {plan.approvedAt && (
-              <p className="prop-muted">
-                Plan approved {showDate(plan.approvedAt)} · {plan.approvedBy}
-              </p>
-            )}
-            <div className="prop-actions">
-              {plan.canEdit && (
-                <>
-                  <CoreButton
-                    variant="secondary"
-                    disabled={mutation.isPending}
-                    onClick={() => onPlan(plan)}
-                  >
-                    Edit Draft
-                  </CoreButton>
-                  <CoreButton
-                    variant="secondary"
-                    disabled={mutation.isPending}
-                    onClick={() => confirm("removePlan", plan)}
-                  >
-                    Remove Draft
-                  </CoreButton>
-                </>
-              )}
-              {plan.canSubmit && (
-                <CoreButton
-                  disabled={mutation.isPending}
-                  onClick={() => confirm("submitPlan", plan)}
-                >
-                  Submit Plan for Review
-                </CoreButton>
-              )}
-              {plan.canApprove && (
-                <CoreButton
-                  disabled={mutation.isPending}
-                  onClick={() => confirm("approvePlan", plan)}
-                >
-                  Approve Plan
-                </CoreButton>
-              )}
-              {plan.canCreateVersion && (
-                <CoreButton
-                  variant="secondary"
-                  disabled={mutation.isPending}
-                  onClick={() => confirm("versionPlan", plan)}
-                >
-                  Create New Version
-                </CoreButton>
-              )}
-            </div>
-            <PlanSaleOrchestrator proposition={p} plan={plan} />
-          </article>
-        ))}
-        {confirmation && (
-          <div
-            className="prop-confirm"
-            role="group"
-            aria-label="Confirm review action"
-          >
-            <p>
-              {MESSAGES[confirmation.action]}{" "}
-              <strong>{confirmation.plan?.name ?? d.name}</strong>
-            </p>
-            <div className="prop-actions">
-              <CoreButton
-                variant="secondary"
-                disabled={mutation.isPending}
-                onClick={() => setConfirmation(null)}
-              >
-                Cancel
-              </CoreButton>
-              <CoreButton
-                loading={mutation.isPending}
-                onClick={() => mutation.mutate(confirmation)}
-              >
-                Confirm
-              </CoreButton>
-            </div>
-          </div>
-        )}
-        {mutation.isError && (
-          <p role="alert" className="prop-error">
-            {errorMessage(mutation.error)}
-            {mutation.error?.response?.status === 409 && (
-              <button
-                onClick={() => {
-                  onReload();
-                  setConfirmation(null);
-                  mutation.reset();
-                }}
-              >
-                Reload latest revision
-              </button>
-            )}
-          </p>
-        )}
+        <h2>Sale Orchestrator</h2>
+        <p className="prop-muted">
+          Sale Orchestrator configuration is managed by each distribution
+          Tenant for their own Plans — sign in as that Tenant to view or
+          configure it.
+        </p>
       </section>
-    </>
+    );
+  const columns = [
+    { accessorKey: "name", header: "Name", meta: { sortable: true, sortField: "name" } },
+    {
+      id: "planNames",
+      accessorFn: (row) => row.planNames.join(", "),
+      header: "Plans",
+    },
+    {
+      id: "updatedAt",
+      accessorFn: (row) => showDate(row.updatedAt),
+      header: "Last updated",
+      meta: { sortable: true, sortField: "updatedAt" },
+    },
+  ];
+  return (
+    <section className="prop-panel">
+      <div className="prop-section-heading">
+        <div>
+          <h2>Sale Orchestrator</h2>
+          <p className="prop-muted">
+            Configure which of your Plans a customer can buy together on one
+            invoice when submitting a Sale transaction.
+          </p>
+        </div>
+        <CoreButton onClick={() => onSaleOrchestrator(null)}>
+          Create Sale Orchestrator
+        </CoreButton>
+      </div>
+      <input
+        type="search"
+        className="fe-input"
+        placeholder="Search by name, description or Plan..."
+        value={search}
+        onChange={(event) => {
+          setSearch(event.target.value);
+          setHasSearched(true);
+        }}
+      />
+      {directory.isError && (
+        <p role="alert" className="prop-error">
+          {errorMessage(directory.error)}{" "}
+          <CoreButton variant="secondary" size="sm" onClick={() => directory.refetch()}>
+            Retry
+          </CoreButton>
+        </p>
+      )}
+      <CoreTable
+        columns={columns}
+        data={directory.isError ? [] : (directory.data?.content ?? [])}
+        loading={directory.isLoading}
+        page={directory.data?.page ?? 0}
+        pageSize={directory.data?.size ?? 100}
+        totalElements={directory.data?.totalElements ?? 0}
+        sort={sort}
+        onSortChange={setSort}
+        onPageChange={() => {}}
+        onRowClick={(row) => onSaleOrchestrator(row)}
+        emptyTitle={directory.isError ? "Unable to load Sale Orchestrators" : "No Sale Orchestrators yet"}
+        emptyDescription={
+          directory.isError
+            ? "Retry to load the Sale Orchestrator list."
+            : search
+              ? "Try another search."
+              : "Create one to let a customer buy several of your Plans on one invoice."
+        }
+      />
+    </section>
   );
 }

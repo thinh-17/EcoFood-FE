@@ -3,10 +3,11 @@ import "./TenantOnboardingPage.css";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CoreFormActions, CorePageHeader } from "@thinh-17/fe-core";
+import { CoreFormActions, CorePageHeader, CoreSelect } from "@thinh-17/fe-core";
 
 import { COUNTRIES } from "../../../../constants/countries.js";
 import { ROUTES } from "../../../../constants/routes.js";
+import { useTouched } from "../../../../hooks/useTouched.js";
 import { getActor } from "../../../auth/lib/accessControl.js";
 import { useCurrentRoles } from "../../../auth/hooks/useCurrentRoles.js";
 import { useAuthStore } from "../../../auth/store/authStore.js";
@@ -209,6 +210,15 @@ function validate(form, currentActor, domainAvailability) {
   if (!form.contactPartyLastName.trim()) {
     errors.contactPartyLastName = "Contact last name is required.";
   }
+  if (!form.isoCountryCode.trim()) {
+    errors.isoCountryCode = "Country is required.";
+  }
+  if (!form.firstName.trim()) {
+    errors.firstName = "First name is required.";
+  }
+  if (!form.lastName.trim()) {
+    errors.lastName = "Last name is required.";
+  }
 
   return errors;
 }
@@ -218,7 +228,7 @@ export function TenantOnboardingPage() {
   const onboardTenant = useTenantOnboarding();
 
   const [form, setForm] = useState(INITIAL_FORM);
-  const [fieldErrors, setFieldErrors] = useState({});
+  const { touched, touch, touchAll } = useTouched();
   const [notice, setNotice] = useState(null);
   const [submitError, setSubmitError] = useState(null);
 
@@ -293,6 +303,12 @@ export function TenantOnboardingPage() {
   const fullDomainUrl = buildDomainUrl(form, effectiveTenantType, selectedMasterTenant, rootDomain);
   const domainAvailability = useDomainAvailability(fullDomainUrl);
 
+  // Recomputed every render (cheap, pure) rather than stored in state — a
+  // field's error only ever actually shows once that field has been
+  // touched (blurred) or a submit was attempted, via `touched` below, so
+  // this live-updates as the user types without waiting for a submit click.
+  const errors = validate(form, currentActor, domainAvailability);
+
   // The default/stale selection can become invalid once we learn who the
   // current actor is (e.g. a plain ENTERPRISE can't pick "Enterprise"; a
   // MASTER can't pick either Enterprise-family option) — fall back to the
@@ -333,8 +349,7 @@ export function TenantOnboardingPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const errors = validate(form, currentActor, domainAvailability);
-    setFieldErrors(errors);
+    touchAll(Object.keys(errors));
     setSubmitError(null);
     setNotice(null);
 
@@ -387,39 +402,38 @@ export function TenantOnboardingPage() {
             <div className="tob-grid">
               <label className="tob-field">
                 <span>Tenant type *</span>
-                <select value={form.tenantType} onChange={updateTenantType}>
-                  {TENANT_TYPES.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                <CoreSelect
+                  value={form.tenantType}
+                  onChange={(value) => updateTenantType({ target: { value } })}
+                  options={TENANT_TYPES}
+                />
               </label>
 
               {isSubTenant && (
-                <label className="tob-field">
+                <label className={`tob-field${touched.masterTenantId && errors.masterTenantId ? " fe-field-invalid" : ""}`}>
                   <span>Master Tenant *</span>
-                  <select
+                  <CoreSelect
                     value={form.masterTenantId}
-                    onChange={updateField("masterTenantId")}
+                    onChange={(value) => updateField("masterTenantId")({ target: { value } })}
+                    onBlur={touch("masterTenantId")}
                     disabled={masterTenants.isLoading}
-                  >
-                    <option value="">
-                      {masterTenants.isLoading
-                        ? "Loading list..."
-                        : masterTenants.isError
-                          ? "Failed to load Master Tenants"
-                          : "Select a Master Tenant"}
-                    </option>
-
-                    {(masterTenants.data ?? []).map((tenant) => (
-                      <option key={tenant.id} value={tenant.id}>
-                        {tenant.tenantName}
-                      </option>
-                    ))}
-                  </select>
-                  {fieldErrors.masterTenantId && (
-                    <span className="tob-field__error">{fieldErrors.masterTenantId}</span>
+                    options={[
+                      {
+                        value: "",
+                        label: masterTenants.isLoading
+                          ? "Loading list..."
+                          : masterTenants.isError
+                            ? "Failed to load Master Tenants"
+                            : "Select a Master Tenant",
+                      },
+                      ...(masterTenants.data ?? []).map((tenant) => ({
+                        value: tenant.id,
+                        label: tenant.tenantName,
+                      })),
+                    ]}
+                  />
+                  {touched.masterTenantId && errors.masterTenantId && (
+                    <span className="tob-field__error">{errors.masterTenantId}</span>
                   )}
                 </label>
               )}
@@ -431,25 +445,27 @@ export function TenantOnboardingPage() {
           <h2 className="tob-section__title">Tenant Information</h2>
 
           <div className="tob-grid">
-            <label className="tob-field">
+            <label className={`tob-field${touched.tenantName && errors.tenantName ? " fe-field-invalid" : ""}`}>
               <span>Tenant name *</span>
               <input
                 type="text"
                 value={form.tenantName}
                 onChange={updateField("tenantName")}
+                onBlur={touch("tenantName")}
                 placeholder="e.g. Green Valley F&B"
               />
-              {fieldErrors.tenantName && (
-                <span className="tob-field__error">{fieldErrors.tenantName}</span>
+              {touched.tenantName && errors.tenantName && (
+                <span className="tob-field__error">{errors.tenantName}</span>
               )}
             </label>
 
-            <label className="tob-field">
+            <label className={`tob-field${touched.domainSubdomain && errors.domainSubdomain ? " fe-field-invalid" : ""}`}>
               <span>{isSubTenant ? "Domain path *" : "Subdomain *"}</span>
               <input
                 type="text"
                 value={form.domainSubdomain}
                 onChange={updateField("domainSubdomain")}
+                onBlur={touch("domainSubdomain")}
                 placeholder={isSubTenant ? "sub-tenant-domain" : "gamma"}
               />
               <span className="tob-domain-preview">
@@ -482,23 +498,18 @@ export function TenantOnboardingPage() {
                         : null}
                 </span>
               )}
-              {fieldErrors.domainSubdomain && (
-                <span className="tob-field__error">{fieldErrors.domainSubdomain}</span>
+              {touched.domainSubdomain && errors.domainSubdomain && (
+                <span className="tob-field__error">{errors.domainSubdomain}</span>
               )}
             </label>
 
             <label className="tob-field">
               <span>Partner type *</span>
-              <select
+              <CoreSelect
                 value={form.partnerTypeCode}
-                onChange={updatePartnerType}
-              >
-                {availablePartnerTypes.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => updatePartnerType({ target: { value } })}
+                options={availablePartnerTypes}
+              />
             </label>
 
             <label className="tob-field">
@@ -519,25 +530,25 @@ export function TenantOnboardingPage() {
                     {myTenant?.tenantName ? ` (${myTenant.tenantName})` : ""}.
                   </p>
                 ) : (
-                  <select
+                  <CoreSelect
                     value={form.relatedEnterpriseId}
-                    onChange={updateField("relatedEnterpriseId")}
+                    onChange={(value) => updateField("relatedEnterpriseId")({ target: { value } })}
                     disabled={masterTenants.isLoading}
-                  >
-                    <option value="">
-                      {masterTenants.isLoading
-                        ? "Loading list..."
-                        : masterTenants.isError
-                          ? "Failed to load enterprises"
-                          : "Select an enterprise"}
-                    </option>
-
-                    {eligibleParentEnterpriseTenants.map((tenant) => (
-                      <option key={tenant.id} value={tenant.id}>
-                        {tenant.tenantName}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      {
+                        value: "",
+                        label: masterTenants.isLoading
+                          ? "Loading list..."
+                          : masterTenants.isError
+                            ? "Failed to load enterprises"
+                            : "Select an enterprise",
+                      },
+                      ...eligibleParentEnterpriseTenants.map((tenant) => ({
+                        value: tenant.id,
+                        label: tenant.tenantName,
+                      })),
+                    ]}
+                  />
                 )}
               </label>
             )}
@@ -548,34 +559,43 @@ export function TenantOnboardingPage() {
           <h2 className="tob-section__title">First Admin Account</h2>
 
           <div className="tob-grid">
-            <label className="tob-field">
+            <label className={`tob-field${touched.email && errors.email ? " fe-field-invalid" : ""}`}>
               <span>Email *</span>
               <input
                 type="email"
                 value={form.email}
                 onChange={updateField("email")}
+                onBlur={touch("email")}
               />
-              {fieldErrors.email && (
-                <span className="tob-field__error">{fieldErrors.email}</span>
+              {touched.email && errors.email && (
+                <span className="tob-field__error">{errors.email}</span>
               )}
             </label>
 
-            <label className="tob-field">
-              <span>First name</span>
+            <label className={`tob-field${touched.firstName && errors.firstName ? " fe-field-invalid" : ""}`}>
+              <span>First name *</span>
               <input
                 type="text"
                 value={form.firstName}
                 onChange={updateField("firstName")}
+                onBlur={touch("firstName")}
               />
+              {touched.firstName && errors.firstName && (
+                <span className="tob-field__error">{errors.firstName}</span>
+              )}
             </label>
 
-            <label className="tob-field">
-              <span>Last name</span>
+            <label className={`tob-field${touched.lastName && errors.lastName ? " fe-field-invalid" : ""}`}>
+              <span>Last name *</span>
               <input
                 type="text"
                 value={form.lastName}
                 onChange={updateField("lastName")}
+                onBlur={touch("lastName")}
               />
+              {touched.lastName && errors.lastName && (
+                <span className="tob-field__error">{errors.lastName}</span>
+              )}
             </label>
           </div>
         </section>
@@ -584,30 +604,32 @@ export function TenantOnboardingPage() {
           <h2 className="tob-section__title">Contact Information</h2>
 
           <div className="tob-grid">
-              <label className="tob-field">
+              <label className={`tob-field${touched.contactPartyName && errors.contactPartyName ? " fe-field-invalid" : ""}`}>
                 <span>Contact first name *</span>
                 <input
                   type="text"
                   value={form.contactPartyName}
                   onChange={updateField("contactPartyName")}
+                  onBlur={touch("contactPartyName")}
                 />
-                {fieldErrors.contactPartyName && (
+                {touched.contactPartyName && errors.contactPartyName && (
                   <span className="tob-field__error">
-                    {fieldErrors.contactPartyName}
+                    {errors.contactPartyName}
                   </span>
                 )}
               </label>
 
-              <label className="tob-field">
+              <label className={`tob-field${touched.contactPartyLastName && errors.contactPartyLastName ? " fe-field-invalid" : ""}`}>
                 <span>Contact last name *</span>
                 <input
                   type="text"
                   value={form.contactPartyLastName}
                   onChange={updateField("contactPartyLastName")}
+                  onBlur={touch("contactPartyLastName")}
                 />
-                {fieldErrors.contactPartyLastName && (
+                {touched.contactPartyLastName && errors.contactPartyLastName && (
                   <span className="tob-field__error">
-                    {fieldErrors.contactPartyLastName}
+                    {errors.contactPartyLastName}
                   </span>
                 )}
               </label>
@@ -648,19 +670,26 @@ export function TenantOnboardingPage() {
                 />
               </label>
 
-              <label className="tob-field">
-                <span>Country</span>
-                <select
+              <label className={`tob-field${touched.isoCountryCode && errors.isoCountryCode ? " fe-field-invalid" : ""}`}>
+                <span>Country *</span>
+                <CoreSelect
+                  searchable
                   value={form.isoCountryCode}
-                  onChange={updateField("isoCountryCode")}
-                >
-                  <option value="">Select a country</option>
-                  {COUNTRIES.map((country) => (
-                    <option key={country.code} value={country.code}>
-                      {country.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => updateField("isoCountryCode")({ target: { value } })}
+                  onBlur={touch("isoCountryCode")}
+                  options={[
+                    { value: "", label: "Select a country" },
+                    ...COUNTRIES.map((country) => ({
+                      value: country.code,
+                      label: country.name,
+                    })),
+                  ]}
+                />
+                {touched.isoCountryCode && errors.isoCountryCode && (
+                  <span className="tob-field__error">
+                    {errors.isoCountryCode}
+                  </span>
+                )}
               </label>
 
               <label className="tob-field">

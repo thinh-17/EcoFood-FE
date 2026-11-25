@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { CoreCard, CoreModal, CorePageHeader, CoreTable, useDisclosure } from "@thinh-17/fe-core";
+import { CoreCard, CorePageHeader, CoreTable } from "@thinh-17/fe-core";
 
-import { useTenantDetail } from "../../hooks/useTenantDetail.js";
+import { ROUTES } from "../../../../constants/routes.js";
 import { useTenantDirectory } from "../../hooks/useTenantDirectory.js";
-import { TenantEditForm } from "./TenantEditForm.jsx";
 import "./TenantListPage.css";
 
 const PAGE_SIZE = 20;
@@ -17,11 +17,11 @@ const COLUMNS = [
 ];
 
 export function TenantListPage() {
+  const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [sort, setSort] = useState({ field: "updatedAt", direction: "desc" });
   const [search, setSearch] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
-  const [selectedTenantId, setSelectedTenantId] = useState(null);
 
   const { data, isLoading, isError, error } = useTenantDirectory({
     page,
@@ -30,10 +30,6 @@ export function TenantListPage() {
     search,
     hasSearched,
   });
-
-  const detailModal = useDisclosure(false);
-  const { data: tenantDetail, isLoading: isDetailLoading, isError: isDetailError } =
-    useTenantDetail(selectedTenantId);
 
   const columns = useMemo(() => COLUMNS, []);
 
@@ -49,8 +45,7 @@ export function TenantListPage() {
   }
 
   function handleRowClick(tenant) {
-    setSelectedTenantId(tenant.id);
-    detailModal.open();
+    navigate(`${ROUTES.TENANT}/${tenant.id}`);
   }
 
   return (
@@ -91,21 +86,6 @@ export function TenantListPage() {
           emptyDescription="Try a different search term."
         />
       </CoreCard>
-
-      <CoreModal isOpen={detailModal.isOpen} onClose={detailModal.close} title="Edit Tenant" size="lg">
-        {isDetailLoading && <p>Loading…</p>}
-
-        {isDetailError && <p className="tenant-list__error">Failed to load tenant detail.</p>}
-
-        {tenantDetail && (
-          <TenantEditForm
-            key={tenantDetail.id}
-            tenant={tenantDetail}
-            onCancel={detailModal.close}
-            onSaved={detailModal.close}
-          />
-        )}
-      </CoreModal>
     </div>
   );
 }
