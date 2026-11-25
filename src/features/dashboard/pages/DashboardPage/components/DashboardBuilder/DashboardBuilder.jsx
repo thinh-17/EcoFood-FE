@@ -1,3 +1,4 @@
+import { CoreButton } from "@thinh-17/fe-core";
 import "./DashboardBuilder.css";
 import { useEffect, useMemo, useState } from "react";
 import ReactGridLayout, { useContainerWidth } from "react-grid-layout";
@@ -67,38 +68,38 @@ export function DashboardBuilder({ tenantId, canEdit, summary, activities }) {
   const reset = () => setDraft((prev) => prev ? { ...createDefaultDashboard(tenantId), revision: prev.revision } : prev);
   const persist = async () => {
     if (!draft || isMobile) return;
-    try { await save.mutateAsync(draft); setDraft(null); setPaletteOpen(false); setNotice("Đã lưu Dashboard cho tenant hiện tại."); }
-    catch (error) { setNotice(error?.response?.data?.message || error.message || "Lưu thất bại."); }
+    try { await save.mutateAsync(draft); setDraft(null); setPaletteOpen(false); setNotice("Dashboard saved for the current tenant."); }
+    catch (error) { setNotice(error?.response?.data?.message || error.message || "Unable to save."); }
   };
 
-  if (!tenantId) return <p className="wb-subtext">Chọn tenant để xem Dashboard.</p>;
-  if (definition.isLoading) return <p className="wb-subtext">Đang tải bố cục Dashboard...</p>;
-  if (definition.isError) return <p role="alert" className="wb-error">Không tải được layout: {definition.error.message}</p>;
+  if (!tenantId) return <p className="wb-subtext">Select a tenant to view the dashboard.</p>;
+  if (definition.isLoading) return <p className="wb-subtext">Loading dashboard layout...</p>;
+  if (definition.isError) return <p role="alert" className="wb-error">Unable to load layout: {definition.error.message}</p>;
 
-  return <section className="dashboard-builder" aria-label="Dashboard tùy chỉnh">
+  return <section className="dashboard-builder" aria-label="Custom dashboard">
     <div className="wb-toolbar">
-      <div><span className="wb-eyebrow">DASHBOARD TÙY CHỈNH</span><h2>{current?.name || "Dashboard"}</h2>
-        <p className="wb-subtext">{editable ? "Kéo ở đầu widget, kéo góc dưới phải để resize. Nhấn Lưu để áp dụng." : "Bố cục được lưu riêng cho từng tenant."}</p>
+      <div><span className="wb-eyebrow">CUSTOM DASHBOARD</span><h2>{current?.name || "Dashboard"}</h2>
+        <p className="wb-subtext">{editable ? "Drag a widget header to move it, or the bottom-right corner to resize it. Click Save to apply." : "Layouts are saved separately for each tenant."}</p>
       </div>
       <div className="wb-actions">
         {editable ? <>
-          <button className="wb-btn wb-btn-neutral" onClick={() => setPaletteOpen((v) => !v)}><FiPlus /> Thêm widget</button>
-          <button className="wb-btn wb-btn-neutral" onClick={reset}><FiRotateCcw /> Mặc định</button>
-          <button className="wb-btn wb-btn-neutral" onClick={cancel}><FiX /> Hủy</button>
-          <button className="wb-btn wb-btn-primary" disabled={save.isPending || isMobile} onClick={persist}><FiSave /> {save.isPending ? "Đang lưu" : "Lưu bố cục"}</button>
-        </> : canEdit ? <button className="wb-btn wb-btn-primary" onClick={begin}><FiEdit3 /> Chỉnh sửa Dashboard</button> : <span className="wb-readonly"><FiLock /> Bạn có quyền xem Dashboard</span>}
+          <CoreButton variant="secondary" onClick={() => setPaletteOpen((v) => !v)}><FiPlus /> Add widget</CoreButton>
+          <CoreButton variant="secondary" onClick={reset}><FiRotateCcw /> Reset to default</CoreButton>
+          <CoreButton variant="secondary" onClick={cancel}><FiX /> Cancel</CoreButton>
+          <CoreButton variant="primary" disabled={save.isPending || isMobile} onClick={persist}><FiSave /> {save.isPending ? "Saving" : "Save layout"}</CoreButton>
+        </> : canEdit ? <CoreButton variant="primary" onClick={begin}><FiEdit3 /> Edit dashboard</CoreButton> : <span className="wb-readonly"><FiLock /> You have view-only access to this dashboard</span>}
       </div>
     </div>
     {notice && <p className="wb-notice" role="status">{notice}</p>}
-    {editable && isMobile && <p className="wb-notice">Chế độ kéo thả cần màn hình rộng tối thiểu 800px. Bạn vẫn có thể xem Dashboard trên điện thoại.</p>}
-    {editable && paletteOpen && <div className="wb-palette" aria-label="Thư viện widget">
-      <div className="wb-palette-header"><strong>Thư viện widget</strong><button type="button" onClick={() => setPaletteOpen(false)} aria-label="Đóng">×</button></div>
+    {editable && isMobile && <p className="wb-notice">Drag and drop requires a screen at least 800px wide. You can still view the dashboard on mobile.</p>}
+    {editable && paletteOpen && <div className="wb-palette" aria-label="Widget library">
+      <div className="wb-palette-header"><strong>Widget library</strong><CoreButton type="button" onClick={() => setPaletteOpen(false)} aria-label="Close">×</CoreButton></div>
       <div className="wb-palette-items">{Object.entries(widgetRegistry).map(([type, info]) => {
         const Icon = info.icon;
-        return <button key={type} type="button" className="wb-palette-item" onClick={() => addWidget(type)}><Icon size={19} /><span>{info.title}</span><FiPlus /></button>;
+        return <CoreButton key={type} type="button" className="wb-palette-item" onClick={() => addWidget(type)}><Icon size={19} /><span>{info.title}</span><FiPlus /></CoreButton>;
       })}</div>
     </div>}
-    {widgetData.isError && <p className="wb-error" role="alert">Không tải được dữ liệu widget.</p>}
+    {widgetData.isError && <p className="wb-error" role="alert">Unable to load widget data.</p>}
     <div className={editable ? "wb-grid-container wb-grid-editing" : "wb-grid-container"} ref={containerRef}>
       {isMobile ? <div className="wb-mobile-grid">{widgets.map((w) => <div key={w.id} style={{ minHeight: w.type.startsWith("kpi.") ? 160 : 290 }}><DashboardWidget widget={w} summary={summary} activities={activities} data={widgetData.data} editable={false} /></div>)}</div>
         : mounted && <ReactGridLayout

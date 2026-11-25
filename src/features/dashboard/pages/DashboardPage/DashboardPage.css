@@ -47,7 +47,7 @@
   color: #337369;
 }
 
-.tenant-select-wrap select {
+.tenant-select-wrap .fe-select {
   border: 0;
   appearance: none;
   cursor: pointer;
@@ -111,6 +111,8 @@
   gap: 17px;
 }
 
+.intro-grid > .fe-card { margin-top: 0; }
+
 .welcome-panel {
   background: #fff;
   border-radius: 10px;
@@ -136,7 +138,7 @@
   margin-bottom: 10px;
 }
 
-.welcome-panel h1 {
+.welcome-panel h2 {
   font-size: clamp(25px, 2.5vw, 34px);
   line-height: 1.2;
   letter-spacing: -.8px;
@@ -348,7 +350,7 @@
     padding: 21px;
   }
 
-  .tenant-select-wrap select {
+  .tenant-select-wrap .fe-select {
     min-width: 95px;
     max-width: 155px;
   }

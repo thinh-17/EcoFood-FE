@@ -105,7 +105,7 @@ export function AppRouter() {
 
         <Route
           path="manager"
-          element={<Suspense fallback={<p role="status">Đang tải Dashboard…</p>}><BusinessDashboardPage /></Suspense>}
+          element={<Suspense fallback={<p role="status">Loading business dashboard…</p>}><BusinessDashboardPage /></Suspense>}
         />
 
         <Route

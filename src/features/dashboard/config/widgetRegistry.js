@@ -2,14 +2,14 @@ import { FiDollarSign, FiShoppingBag, FiCoffee, FiMessageSquare, FiTrendingUp, F
 
 // Whitelist: layout từ server chỉ lưu type/config, KHÔNG chứa component code hay API URL tùy ý.
 export const widgetRegistry = {
-  "kpi.revenue": { title: "Doanh thu hôm nay", icon: FiDollarSign, size: { w: 3, h: 2 }, minW: 2, minH: 2 },
-  "kpi.orders": { title: "Số đơn hàng", icon: FiShoppingBag, size: { w: 3, h: 2 }, minW: 2, minH: 2 },
-  "kpi.products": { title: "Sản phẩm đang bán", icon: FiCoffee, size: { w: 3, h: 2 }, minW: 2, minH: 2 },
-  "kpi.feedback": { title: "Phản hồi chờ xử lý", icon: FiMessageSquare, size: { w: 3, h: 2 }, minW: 2, minH: 2 },
-  "chart.revenue": { title: "Doanh thu 7 ngày", icon: FiTrendingUp, size: { w: 8, h: 5 }, minW: 5, minH: 4 },
-  "list.products": { title: "Top món bán chạy", icon: FiAward, size: { w: 4, h: 5 }, minW: 3, minH: 4 },
-  "list.activities": { title: "Hoạt động mới nhất", icon: FiList, size: { w: 8, h: 4 }, minW: 4, minH: 3 },
-  "list.alerts": { title: "Cảnh báo vận hành", icon: FiBell, size: { w: 4, h: 4 }, minW: 3, minH: 3 },
+  "kpi.revenue": { title: "Today's revenue", icon: FiDollarSign, size: { w: 3, h: 2 }, minW: 2, minH: 2 },
+  "kpi.orders": { title: "Orders", icon: FiShoppingBag, size: { w: 3, h: 2 }, minW: 2, minH: 2 },
+  "kpi.products": { title: "Active products", icon: FiCoffee, size: { w: 3, h: 2 }, minW: 2, minH: 2 },
+  "kpi.feedback": { title: "Pending feedback", icon: FiMessageSquare, size: { w: 3, h: 2 }, minW: 2, minH: 2 },
+  "chart.revenue": { title: "Revenue over 7 days", icon: FiTrendingUp, size: { w: 8, h: 5 }, minW: 5, minH: 4 },
+  "list.products": { title: "Best-selling products", icon: FiAward, size: { w: 4, h: 5 }, minW: 3, minH: 4 },
+  "list.activities": { title: "Latest activity", icon: FiList, size: { w: 8, h: 4 }, minW: 4, minH: 3 },
+  "list.alerts": { title: "Operational alerts", icon: FiBell, size: { w: 4, h: 4 }, minW: 3, minH: 3 },
 };
 
 const widget = (id, type, x, y, w, h) => ({
@@ -23,7 +23,7 @@ export function createDefaultDashboard(tenantId) {
   return {
     id: `dashboard-${tenantId}`,
     scopeType: "TENANT", scopeId: tenantId,
-    name: "Dashboard tổng quan",
+    name: "Overview dashboard",
     version: 1,
     revision: 0,
     widgets: [

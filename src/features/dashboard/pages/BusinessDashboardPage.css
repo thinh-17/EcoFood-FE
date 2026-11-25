@@ -1,10 +1,10 @@
 .business-dashboard { padding: 24px; color: #25364a; }
-.business-dashboard button, .business-dashboard select { border: 1px solid #ccd5df; border-radius: 6px; padding: 9px 12px; background: white; color: inherit; font: inherit; }
 .business-refresh { display: inline-flex; align-items: center; gap: 8px; margin: 12px 0; cursor: pointer; }
 .business-filters { display: flex; flex-wrap: wrap; gap: 14px; margin: 12px 0 22px; }
-.business-dashboard label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
-.business-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin: 18px 0; }
-.business-card, .business-charts article, .business-breakdown { background: white; border-radius: 8px; padding: 20px; min-width: 0; }
+.business-filter { display: flex; flex-direction: column; gap: 6px; font-size: 14px; min-width: 150px; }
+.business-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 18px 0; }
+.business-cards > .fe-card, .business-charts > .fe-card { margin-top: 0; }
+.business-card, .business-charts > .fe-card, .business-breakdown { min-width: 0; }
 .business-card h2, .business-charts h2, .business-breakdown h2 { font-size: 16px; margin: 0 0 16px; }
 .business-card strong { font-size: 25px; overflow-wrap: anywhere; }
 .business-card p { font-size: 14px; margin: 10px 0; }
@@ -15,7 +15,7 @@
 .business-chart { height: 290px; min-width: 0; }
 .business-tooltip { background: white; padding: 12px; border: 1px solid #ccd5df; font-size: 13px; }
 .business-error { padding: 14px; color: #9d2837; background: #fff0f1; border-radius: 6px; }
-.business-breakdown { margin: 20px 0; }.business-table { overflow-x: auto; }.business-table table { width: 100%; min-width: 580px; border-collapse: collapse; text-align: left; }.business-table th, .business-table td { padding: 12px; border-bottom: 1px solid #e5eaf0; }
+.business-breakdown { margin: 20px 0; }
 .business-dashboard select:focus-visible, .business-dashboard button:focus-visible { outline: 2px solid #177967; outline-offset: 2px; }
 @media(max-width: 1100px) { .business-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }.business-charts { grid-template-columns: minmax(0, 1fr); } }
-@media(max-width: 600px) { .business-dashboard { padding: 12px; }.business-cards { grid-template-columns: minmax(0, 1fr); }.business-filters label { width: 100%; }.business-dashboard select { max-width: 100%; } }
+@media(max-width: 600px) { .business-dashboard { padding: 12px; }.business-cards { grid-template-columns: minmax(0, 1fr); }.business-filter { width: 100%; min-width: 0; } }
