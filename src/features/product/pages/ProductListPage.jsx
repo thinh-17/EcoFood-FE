@@ -8,7 +8,7 @@ import { useAuthStore } from "../../auth/store/authStore.js";
 import { useCurrentRoles } from "../../auth/hooks/useCurrentRoles.js";
 import { useDebouncedValue } from "../../../hooks/useDebouncedValue.js";
 import { listProducts } from "../api/product.api.js";
-import { canManageProducts, PRODUCT_STATUSES, PRODUCT_TYPES, productDate, productError } from "../lib/product.js";
+import { canManageProducts, canViewProducts, PRODUCT_STATUSES, PRODUCT_TYPES, productDate, productError } from "../lib/product.js";
 import { ProductStatus } from "./ProductStatus.jsx";
 import "./ProductListPage.css";
 
@@ -17,11 +17,11 @@ const PAGE_SIZE = 20;
 export function ProductListPage() {
   const scope = useAuthStore((state) => state.tenantId);
   const roles = useCurrentRoles();
-  if (!canManageProducts(roles)) return <section className="product-page"><CorePageHeader title="Products" description="An Enterprise Admin or Product Manager role is required to manage products." /></section>;
-  return <ProductDirectory key={scope} scope={scope} />;
+  if (!canViewProducts(roles)) return <section className="product-page"><CorePageHeader title="Products" description="An Enterprise Admin or Product Manager role is required to manage products." /></section>;
+  return <ProductDirectory key={scope} scope={scope} canManage={canManageProducts(roles)} />;
 }
 
-function ProductDirectory({ scope }) {
+function ProductDirectory({ scope, canManage }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [search, setSearch] = useState("");
@@ -62,7 +62,7 @@ function ProductDirectory({ scope }) {
       <div className="product-toolbar">
         <label className="product-search"><span className="product-sr-only">Search products</span><input type="search" placeholder="Search name or code..." value={search} onChange={(event) => { setSearch(event.target.value); setPage(0); }} /><FiSearch aria-hidden="true" /></label>
         <button className={type || status ? "product-filter-active" : ""} aria-expanded={filtersOpen} aria-controls="product-filters" onClick={() => setFiltersOpen(!filtersOpen)}><FiFilter />Filter{type || status ? " (active)" : ""}</button>
-        <button className="product-primary" onClick={() => navigate(ROUTES.PRODUCT_NEW)}><FiPlus />Create Product</button>
+        {canManage && <button className="product-primary" onClick={() => navigate(ROUTES.PRODUCT_NEW)}><FiPlus />Create Product</button>}
       </div>
     </header>
     {filtersOpen && <div className="product-filters" id="product-filters">

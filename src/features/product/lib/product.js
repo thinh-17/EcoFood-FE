@@ -3,6 +3,14 @@ export const PRODUCT_STATUSES = { DRAFT: "Draft", PENDING_REVIEW: "Pending Revie
 export const PRODUCT_STEPS = ["Product Type", "Definition", "Ingredients", "Recipe", "Submit"];
 export const canEditProduct = (product) => ["DRAFT", "REJECTED"].includes(product?.status);
 export const canManageProducts = (roles) => (roles ?? []).some((role) => ["ENTERPRISE_ADMIN", "ENTERPRISE_PRODUCT_MANAGER"].includes(role));
+// Wider than canManageProducts — matches the backend's ProductAuthorization.currentRead():
+// Enterprise roles still manage (create/edit/submit/approve/reject) their own Products;
+// ECO (platform-wide) and Tenant Product Managers can only ever read — across every
+// Enterprise for ECO, a scoped set of Enterprises for Tenant. No Master Tenant role:
+// that role group is never actually granted to anyone in this system.
+export const canViewProducts = (roles) =>
+  canManageProducts(roles) ||
+  (roles ?? []).some((role) => ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_PRODUCT_MANAGER"].includes(role));
 export const productDate = (value) => value ? new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
 export const productMoney = (value, currency = "VND") => `${Number(value).toLocaleString("vi-VN")} ${currency}`;
 export const COST_FIELDS = { ingredientCost: "Ingredient cost", packagingCost: "Packaging cost", laborCost: "Labor cost", operationCost: "Operation cost", marketingFee: "Marketing fee" };
@@ -71,10 +79,14 @@ export function buildProductPayload(form, product) {
 export function productFromProcess(product, process) {
   const definition = process.definition?.processElementAttribute?.[0];
   const costing = process.costing?.processElementAttribute?.[0];
-  if (!definition || !costing) return product;
+  // A version may have no definition/costing attribute yet (e.g. a brand-new
+  // DRAFT version). That must still switch the view to it — falling back to
+  // `product` here made clicking such a version chip look like a no-op.
   return { ...product, version: process.version, revision: process.revision, status: process.status,
-    name: definition.productName, code: definition.code, category: definition.category, description: definition.description, imageUrl: definition.imagesURL,
-    ingredients: definition.ingredients ?? [], recipe: definition.recipe,
-    costing, pricing: costing.sellingPrice == null ? null : { sellingPrice: costing.sellingPrice, costPrice: costing.totalCost, currency: costing.currency, note: costing.note },
+    name: definition?.productName ?? product.name, code: definition?.code ?? product.code,
+    category: definition?.category ?? product.category, description: definition?.description ?? product.description,
+    imageUrl: definition?.imagesURL ?? product.imageUrl,
+    ingredients: definition?.ingredients ?? [], recipe: definition?.recipe,
+    costing: costing ?? null, pricing: costing?.sellingPrice == null ? null : { sellingPrice: costing.sellingPrice, costPrice: costing.totalCost, currency: costing.currency, note: costing.note },
     createdAt: process.createdAt, updatedAt: process.updatedAt, approvedBy: process.approvedBy ?? null, approvedAt: process.approvedAt ?? null, rejectionReason: process.rejectionReason ?? null };
 }

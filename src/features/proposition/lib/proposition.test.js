@@ -37,25 +37,21 @@ test("money formats decimal precision per currency", () => {
   assert.equal(money("999999999999999.99"), "USD 999,999,999,999,999.99");
   assert.equal(money(null), "—");
 });
-test("create references one approved process; update preserves source and revision", () => {
+test("create references one Product; update never carries a product binding", () => {
   const form = {
     ...propositionFormState(),
-    source: {
-      productId: "product",
-      productVersion: 2,
-      productProcessId: "process",
-    },
+    source: { productId: "product", name: "Boiled Chicken" },
     name: "Distribution",
     brandId: "brand",
     regionIds: "SOUTH",
     distributionPartnerIds: ["partner"],
   };
   const created = propositionPayload(form);
-  assert.equal(created.productProcessId, "process");
+  assert.equal(created.productId, "product");
   assert.equal(created.definition.currency, "USD");
   const updated = propositionPayload(form, { revision: 4 });
   assert.equal(updated.expectedRevision, 4);
-  assert.equal("productProcessId" in updated, false);
+  assert.equal("productId" in updated, false);
   assert.throws(() => propositionPayload({ ...form, source: null }));
 });
 const planProposition = () => ({
@@ -63,24 +59,29 @@ const planProposition = () => ({
   definition: { currency: "USD", startDate: null, endDate: null },
   availableCurrencies: ["USD"],
   eligibleTenants: [{ id: "partner", country: "SOUTH" }],
-  sourceProcess: {
-    definition: {
-      processElementAttribute: [
-        {
-          productName: "Boiled Chicken",
-          description: "Original description",
-          category: "Meals",
-          imagesURL: "https://example.com/chicken.png",
-          ingredients: [],
-          recipe: { enabled: false, name: "", steps: [], preparationMinutes: 0, cookingMinutes: 0, note: "" },
-        },
-      ],
-    },
+});
+// The Plan's own bound Product version — resolved by the caller (e.g.
+// PlanForm fetching the Proposition's Product's processes), never cached on
+// the Proposition itself.
+const planSourceProcess = () => ({
+  version: 3,
+  definition: {
+    processElementAttribute: [
+      {
+        productName: "Boiled Chicken",
+        description: "Original description",
+        category: "Meals",
+        imagesURL: "https://example.com/chicken.png",
+        ingredients: [],
+        recipe: { enabled: false, name: "", steps: [], preparationMinutes: 0, cookingMinutes: 0, note: "" },
+      },
+    ],
   },
 });
-test("a brand new Plan clones the source product's definition and starts at zero cost", () => {
+test("a brand new Plan clones the source product's definition, binds its version and starts at zero cost", () => {
   const p = planProposition();
-  const form = planFormState(null, p);
+  const form = planFormState(null, p, planSourceProcess());
+  assert.equal(form.productVersion, 3);
   assert.equal(form.name, "Boiled Chicken");
   assert.equal(form.category, "Meals");
   assert.equal(form.imageUrl, "https://example.com/chicken.png");
@@ -90,7 +91,7 @@ test("a brand new Plan clones the source product's definition and starts at zero
 test("Draft Plan allows empty pricing; a selling price auto-derives its cost basis", () => {
   const p = planProposition();
   const form = {
-    ...planFormState(null, p),
+    ...planFormState(null, p, planSourceProcess()),
     name: "South",
     regionIds: ["SOUTH"],
     tenantIds: ["partner"],
@@ -108,6 +109,7 @@ test("Draft Plan allows empty pricing; a selling price auto-derives its cost bas
 test("an existing Plan's own saved costing/content round-trips through form state", () => {
   const p = planProposition();
   const plan = {
+    productVersion: 5,
     name: "Existing Plan",
     description: "Already saved",
     category: "Drinks",
@@ -124,6 +126,7 @@ test("an existing Plan's own saved costing/content round-trips through form stat
     endDate: null,
   };
   const form = planFormState(plan, p);
+  assert.equal(form.productVersion, 5);
   assert.equal(form.name, "Existing Plan");
   assert.equal(form.currency, "VND");
   assert.equal(form.sellingPrice, 2000);

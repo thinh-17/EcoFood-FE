@@ -1,19 +1,25 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CoreButton, CoreModal, CoreToggle } from "@thinh-17/fe-core";
 import { ROUTES } from "../../../constants/routes.js";
-import { getProduct, getProductVersions, productAction, productVersionAction } from "../api/product.api.js";
+import { getPendingPlanApprovals, getProduct, getProductVersions, productAction, productVersionAction } from "../api/product.api.js";
 import { canEditProduct, PRODUCT_STATUSES, productDate, productError } from "../lib/product.js";
 import { ProductForm } from "./ProductForm.jsx";
 import { ProductStatus } from "./ProductStatus.jsx";
 import { productFromProcess } from "../lib/product.js";
 
-export function ProductDetail({ id, scope, onClose, onNotice }) {
+export function ProductDetail({ id, scope, canManage = true, onClose, onNotice }) {
   const client = useQueryClient();
   const navigate = useNavigate();
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
   const [selectedVersion, setSelectedVersion] = useState(null);
+  // Populated only once "Approve" finds Plans bound to this version that
+  // are still Pending Review — null means the popup is closed.
+  const [approvalModal, setApprovalModal] = useState(null);
+  const [checkingApprovals, setCheckingApprovals] = useState(false);
+  const [approvalsError, setApprovalsError] = useState(null);
   // Close/Reject/Approve only make sense once you've reached the Submit step
   // of the (now always-shown) wizard below — mirrored here since ProductForm
   // owns the step state internally.
@@ -29,7 +35,7 @@ export function ProductDetail({ id, scope, onClose, onNotice }) {
       client.setQueryData(["products", scope, "detail", id], product);
       client.invalidateQueries({ queryKey: ["products", scope] });
       if (variables.action === "versions") client.invalidateQueries({ queryKey: ["propositions"] });
-      setRejecting(false); setReason(""); setSelectedVersion(null);
+      setRejecting(false); setReason(""); setSelectedVersion(null); setApprovalModal(null);
       onNotice(variables.action === "versions" ? "New draft version created." : "Product updated successfully.");
     },
   });
@@ -41,6 +47,33 @@ export function ProductDetail({ id, scope, onClose, onNotice }) {
   const historical = selectedProcess && selectedProcess.version !== latestProduct.version;
   const product = selectedProcess ? productFromProcess(latestProduct, selectedProcess) : latestProduct;
   const act = (action, payload) => mutation.mutate({ action, payload, version: product.version });
+  // Approving a Product never silently touches a Plan: before the actual
+  // approve call, check whether any Plan bound to this version is Pending
+  // Review; if so, show a toggle list and send Confirm as ONE combined
+  // action (approve + the chosen approvePlanIds). Cancel aborts the whole
+  // thing — the Product itself is not approved either.
+  const startApprove = async () => {
+    setApprovalsError(null);
+    setCheckingApprovals(true);
+    try {
+      const candidates = await getPendingPlanApprovals(id, product.version);
+      if (candidates.length === 0) act("approve");
+      else setApprovalModal({ candidates, selected: new Set() });
+    } catch (error) {
+      setApprovalsError(productError(error));
+    } finally {
+      setCheckingApprovals(false);
+    }
+  };
+  const toggleCandidate = (planId) =>
+    setApprovalModal((modal) => {
+      if (!modal) return modal;
+      const selected = new Set(modal.selected);
+      if (selected.has(planId)) selected.delete(planId);
+      else selected.add(planId);
+      return { ...modal, selected };
+    });
+  const confirmApprove = () => act("approve", { approvePlanIds: Array.from(approvalModal.selected) });
   // A Proposition can only ever source an APPROVED ProductProcess (server
   // enforces this at creation) — so "Create Proposition" always targets
   // whichever version currently holds APPROVED, never the version you
@@ -51,8 +84,6 @@ export function ProductDetail({ id, scope, onClose, onNotice }) {
       state: {
         createFromSource: {
           productId: latestProduct.id,
-          productVersion: approvedProcess.version,
-          productProcessId: approvedProcess.id,
           name: approvedProcess.definition?.processElementAttribute?.[0]?.productName ?? latestProduct.name,
         },
       },
@@ -66,8 +97,8 @@ export function ProductDetail({ id, scope, onClose, onNotice }) {
   // — so this is no longer gated by `!historical`.
   const extraFooterActions = formStep === 4 && <>
     <button type="button" disabled={mutation.isPending} onClick={onClose}>Close</button>
-    {product.status === "PENDING_REVIEW" && <><button type="button" disabled={mutation.isPending || rejecting} onClick={() => setRejecting(true)}>Reject</button><button type="button" className="product-primary" disabled={mutation.isPending || rejecting} onClick={() => act("approve")}>Approve</button></>}
-    {(latestProduct.status === "PENDING_REVIEW" || latestProduct.status === "APPROVED") && approvedProcess && <button type="button" disabled={mutation.isPending} onClick={createProposition}>Create Proposition</button>}
+    {canManage && product.status === "PENDING_REVIEW" && <><button type="button" disabled={mutation.isPending || rejecting} onClick={() => setRejecting(true)}>Reject</button><button type="button" className="product-primary" disabled={mutation.isPending || rejecting || checkingApprovals} onClick={startApprove}>{checkingApprovals ? "Checking..." : "Approve"}</button></>}
+    {canManage && (latestProduct.status === "PENDING_REVIEW" || latestProduct.status === "APPROVED") && approvedProcess && <button type="button" disabled={mutation.isPending} onClick={createProposition}>Create Proposition</button>}
   </>;
   return <div className="product-detail">
     <div className="product-section-heading"><h3>{product.name}</h3><ProductStatus status={product.status} /></div>
@@ -90,8 +121,8 @@ export function ProductDetail({ id, scope, onClose, onNotice }) {
           })}
         </div>
         <div className="product-version-bar__actions">
-          {!historical && product.status === "DRAFT" && <button className="product-primary" disabled={mutation.isPending} onClick={() => act("submit")}>Submit for review</button>}
-          {!historical && product.status === "APPROVED" && <><button className="product-primary" disabled={mutation.isPending} onClick={() => act("versions")}>Create new version</button><small>Creating a new version moves the previous version and its Propositions to Pending Review.</small></>}
+          {canManage && !historical && product.status === "DRAFT" && <button className="product-primary" disabled={mutation.isPending} onClick={() => act("submit")}>Submit for review</button>}
+          {canManage && !historical && product.status === "APPROVED" && <><button className="product-primary" disabled={mutation.isPending} onClick={() => act("versions")}>Create new version</button><small>Creating a new version moves the previous version and its Propositions to Pending Review.</small></>}
           {mutation.isPending && <span role="status">Updating...</span>}
         </div>
       </div>
@@ -108,6 +139,31 @@ export function ProductDetail({ id, scope, onClose, onNotice }) {
       </form>}
     </div>
     {mutation.isError && <p className="product-error" role="alert">{productError(mutation.error)} <button disabled={mutation.isPending} onClick={() => { query.refetch(); history.refetch(); mutation.reset(); }}>Reload product</button></p>}
+    {approvalsError && <p className="product-error" role="alert">{approvalsError}</p>}
+    <CoreModal
+      isOpen={!!approvalModal}
+      onClose={() => setApprovalModal(null)}
+      title="Approve linked Plans too?"
+      size="lg"
+      footer={<>
+        <CoreButton variant="secondary" disabled={mutation.isPending} onClick={() => setApprovalModal(null)}>Cancel</CoreButton>
+        <CoreButton loading={mutation.isPending} onClick={confirmApprove}>Approve</CoreButton>
+      </>}
+    >
+      <p>These Plans are linked to this Product version and still Pending Review. Turn on any you want to Approve along with it.</p>
+      <table className="product-table">
+        <thead><tr><th>Proposition</th><th>Plan</th><th>Approve</th></tr></thead>
+        <tbody>
+          {approvalModal?.candidates.map((candidate) => (
+            <tr key={candidate.planId}>
+              <td>{candidate.propositionName ?? candidate.propositionId}</td>
+              <td>{candidate.planName ?? candidate.planCode}</td>
+              <td><CoreToggle checked={approvalModal.selected.has(candidate.planId)} onChange={() => toggleCandidate(candidate.planId)} /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </CoreModal>
     <ProductForm
       // Force a remount whenever the displayed version actually changes (new
       // draft from "Create new version", or picking a different version chip)
@@ -117,7 +173,7 @@ export function ProductDetail({ id, scope, onClose, onNotice }) {
       key={`${product.id}-${product.version}`}
       product={product}
       scope={scope}
-      readOnly={historical || !canEditProduct(product)}
+      readOnly={!canManage || historical || !canEditProduct(product)}
       onCancel={onClose}
       onSaved={(result) => onNotice(result.status === "PENDING_REVIEW" ? "Product submitted for review." : "Product draft saved.")}
       onStepChange={setFormStep}

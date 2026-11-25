@@ -12,6 +12,13 @@ export async function getProduct(id, signal) {
 export async function getProductVersions(id, signal) {
   return unwrapData(await apiClient.get(`${path(id)}/versions`, { signal }));
 }
+// Full ProductProcessResponse per version (definition/ingredients/recipe) —
+// used by Plan creation/editing to clone a specific approved version's
+// content, since a Plan now binds to its own Product version independently
+// of its Proposition (which no longer pins one at all).
+export async function getProductProcesses(id, signal) {
+  return unwrapData(await apiClient.get(`${path(id)}/processes`, { signal }));
+}
 export async function createProduct(payload) {
   return unwrapData(await apiClient.post(base, payload));
 }
@@ -28,4 +35,11 @@ export async function productAction(id, action, payload) {
 export async function productVersionAction(id, version, action, payload) {
   if (!["approve", "reject"].includes(action)) throw new Error("Unknown product version action");
   return unwrapData(await apiClient.post(`${path(id)}/processes/${version}/${action}`, payload));
+}
+// Plans (across every Proposition sourced from this Product) bound to this
+// exact version and still Pending Review — shown as an opt-in toggle list
+// before approving, since approving the Product never touches a Plan unless
+// it's chosen here.
+export async function getPendingPlanApprovals(id, version, signal) {
+  return unwrapData(await apiClient.get(`${path(id)}/processes/${version}/pending-plan-approvals`, { signal }));
 }

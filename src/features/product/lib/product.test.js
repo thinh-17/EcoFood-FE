@@ -1,11 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildProductPayload, calculateProductCost, canEditProduct, canManageProducts, productFormState, productFromProcess, validateProductStep } from "./product.js";
+import { buildProductPayload, calculateProductCost, canEditProduct, canManageProducts, canViewProducts, productFormState, productFromProcess, validateProductStep } from "./product.js";
 const draft = (extra = {}) => ({ ...productFormState(), name: " Chicken ", code: " ch-01 ", category: " Meals ", ...extra });
 test("Product actions require an Enterprise Admin or Product Manager role", () => {
   assert.equal(canManageProducts(["ENTERPRISE_ADMIN"]), true);
   assert.equal(canManageProducts(["ENTERPRISE_PRODUCT_MANAGER"]), true);
   for (const role of ["ENTERPRISE_PARTNERSHIP_MANAGER", "ENTERPRISE_DASHBOARD_MANAGER", "TENANT_ADMIN", "CUSTOMER"]) assert.equal(canManageProducts([role]), false);
+});
+test("ECO/Tenant Product Managers can view the directory but not manage it", () => {
+  for (const role of ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_PRODUCT_MANAGER", "ENTERPRISE_ADMIN"])
+    assert.equal(canViewProducts([role]), true);
+  for (const role of ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_PRODUCT_MANAGER"])
+    assert.equal(canManageProducts([role]), false);
+  for (const role of ["MASTER_ADMIN", "MASTER_PRODUCT_MANAGER", "TENANT_ADMIN", "CUSTOMER"])
+    assert.equal(canViewProducts([role]), false);
 });
 test("standalone draft includes definition and optional sections", () => {
   const result = buildProductPayload(draft());
@@ -53,4 +61,8 @@ test("cost calculation sums all inputs and applies target margin and tax", () =>
 test("historical process projects its own attributes rather than latest product fields", () => {
   const value = productFromProcess({ version: 2, name: "Latest" }, { version: 1, revision: 3, status: "APPROVED", definition: { processElementAttribute: [{ productName: "Original", code: "P1", category: "Meals", ingredients: [] }] }, costing: { processElementAttribute: [{ totalCost: 70000, sellingPrice: 100000, currency: "VND" }] } });
   assert.equal(value.name, "Original"); assert.equal(value.version, 1); assert.equal(value.pricing.costPrice, 70000);
+});
+test("a version without a definition/costing attribute yet still switches the displayed version", () => {
+  const value = productFromProcess({ version: 2, name: "Latest" }, { version: 3, revision: 0, status: "DRAFT" });
+  assert.equal(value.version, 3); assert.equal(value.status, "DRAFT"); assert.equal(value.name, "Latest"); assert.equal(value.pricing, null);
 });

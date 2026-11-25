@@ -98,13 +98,9 @@ export function propositionFormState(p, fallback = "USD") {
   const d = p?.definition;
   const revenueStart = p?.createdAt ?? new Date().toISOString();
   return {
-    source: p
-      ? {
-          productId: p.productId,
-          productVersion: p.productVersion,
-          productProcessId: p.productProcessId,
-        }
-      : null,
+    // Only meaningful for creation (p is null there); editing an existing
+    // Proposition never reads form.source (its Product binding is fixed).
+    source: null,
     name: d?.name ?? "",
     description: d?.description ?? "",
     brandId: d?.brandId ?? "",
@@ -176,7 +172,7 @@ export function propositionPayload(form, existing) {
       "Enterprise, Platform and Partner profit shares must total 100%.",
     );
   if (!existing && !form.source)
-    throw new Error("Select an approved ProductProcess.");
+    throw new Error("Select a Product.");
   const definition = {
     name: form.name.trim(),
     description: form.description.trim(),
@@ -215,8 +211,6 @@ export function propositionPayload(form, existing) {
     ? { expectedRevision: existing.revision, definition }
     : {
         productId: form.source.productId,
-        productVersion: form.source.productVersion,
-        productProcessId: form.source.productProcessId,
         definition,
       };
 }
@@ -227,13 +221,17 @@ const planWhole = (value) =>
   Number.isFinite(Number(value)) &&
   Number(value) >= 0 &&
   Number.isInteger(Number(value));
-// A Plan starts life as a full clone of its Proposition's approved source
-// product — name, description, category, image, ingredients and recipe are
-// all editable from there, just like a Product's own Definition/Ingredients/
-// Recipe steps. The Plan's own costing is never cloned from the Product (the
-// Product no longer has one): a brand-new Plan always starts at zero cost.
-function cloneFromSource(p) {
-  const source = p.sourceProcess?.definition?.processElementAttribute?.[0];
+// A new Plan starts life as a full clone of whichever approved Product
+// version it's bound to — name, description, category, image, ingredients
+// and recipe are all editable from there, just like a Product's own
+// Definition/Ingredients/Recipe steps. The Plan's own costing is never
+// cloned from the Product (the Product no longer has one): a brand-new Plan
+// always starts at zero cost. Unlike before, this binding is the Plan's own
+// (not the Proposition's) — `sourceProcess` is the caller-resolved
+// ProductProcessResponse for whichever version the user picked, not
+// anything cached on the Proposition itself.
+export function cloneFromSource(sourceProcess) {
+  const source = sourceProcess?.definition?.processElementAttribute?.[0];
   return {
     name: source?.productName ?? "",
     description: source?.description ?? "",
@@ -252,10 +250,11 @@ function cloneFromSource(p) {
       },
   };
 }
-export function planFormState(plan, p) {
-  const base = plan ?? cloneFromSource(p);
+export function planFormState(plan, p, sourceProcess) {
+  const base = plan ?? cloneFromSource(sourceProcess);
   const costing = plan?.costing;
   return {
+    productVersion: plan?.productVersion ?? sourceProcess?.version ?? "",
     name: base.name ?? "",
     description: base.description ?? "",
     category: base.category ?? "",
@@ -296,6 +295,8 @@ export function planFormState(plan, p) {
   };
 }
 export function planPayload(form, p) {
+  if (!form.productVersion)
+    throw new Error("Select a source product version.");
   if (!form.name.trim() || form.regionIds.length !== 1 || !form.tenantIds.length)
     throw new Error("Plan name and a Country of Sale are required.");
   if (form.imageUrl.trim()) {
@@ -333,6 +334,7 @@ export function planPayload(form, p) {
   }
   const result = {
     expectedRevision: p.revision,
+    productVersion: Number(form.productVersion),
     name: form.name.trim(),
     description: form.description.trim(),
     category: form.category.trim(),
@@ -380,6 +382,9 @@ export function planPayload(form, p) {
 }
 
 export const statusLabel = (status) =>
-  ({ DRAFT: "Draft", PENDING_REVIEW: "Pending Review", APPROVED: "Approved" })[
-    status
-  ] ?? status;
+  ({
+    DRAFT: "Draft",
+    PENDING_REVIEW: "Pending Review",
+    APPROVED: "Approved",
+    REJECTED: "Rejected",
+  })[status] ?? status;

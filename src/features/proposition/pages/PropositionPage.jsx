@@ -27,6 +27,9 @@ import {
 import { PropositionForm } from "./PropositionForm.jsx";
 import { PropositionDetail } from "./PropositionDetail.jsx";
 import { PlanForm } from "./PlanForm.jsx";
+import { PlanDetail } from "./PlanDetail.jsx";
+import { isEnterpriseSaleOrchestratorActor } from "../../orchestrator/lib/planSale.js";
+import { SaleOrchestratorEditor } from "../../orchestrator/pages/PlanSaleOrchestrator.jsx";
 import "./PropositionPage.css";
 
 const PAGE_SIZE = 20;
@@ -83,6 +86,8 @@ export function PropositionPage() {
 export function PropositionDirectory({ scope }) {
   const client = useQueryClient();
   const location = useLocation();
+  const tenant = useAuthStore((state) => state.tenantId),
+    roles = useCurrentRoles();
   // Reached from a Product's "Create Proposition" button (see
   // ProductDetail.jsx) carrying the APPROVED ProductProcess to source from —
   // read once on mount so Create opens straight into PropositionForm with
@@ -91,6 +96,7 @@ export function PropositionDirectory({ scope }) {
   const [view, setView] = useState(createSource ? "create" : "list"),
     [id, setId] = useState(null),
     [plan, setPlan] = useState(null),
+    [saleOrchestrator, setSaleOrchestrator] = useState(null),
     [notice, setNotice] = useState("");
   const [search, setSearch] = useState(""),
     [page, setPage] = useState(0);
@@ -112,7 +118,7 @@ export function PropositionDirectory({ scope }) {
   const detail = useQuery({
     queryKey: ["propositions", scope, "detail", id],
     queryFn: ({ signal }) => getProposition(id, signal),
-    enabled: Boolean(id) && ["detail", "edit", "plan"].includes(view),
+    enabled: Boolean(id) && ["detail", "edit", "plan", "sale-orchestrator"].includes(view),
     refetchInterval: view === "detail" ? 30000 : false,
   });
   const reload = () =>
@@ -127,12 +133,18 @@ export function PropositionDirectory({ scope }) {
     setNotice("Proposition saved.");
     open(result.id);
   };
+  const saleOrchestratorSaved = () => {
+    client.invalidateQueries({ queryKey: ["propositions", id, "sale-orchestrators", "directory"] });
+    setNotice("Sale Orchestrator saved.");
+    setView("detail");
+  };
   const title = {
     list: "Propositions",
     create: "Create Proposition",
     edit: "Edit Proposition",
     detail: "Proposition details",
-    plan: plan ? "Edit Draft Plan" : "Create Plan",
+    plan: plan ? "Edit Plan" : "Create Plan",
+    "sale-orchestrator": saleOrchestrator ? "Edit Sale Orchestrator" : "Create Sale Orchestrator",
   }[view];
   return (
     <section className="prop-page">
@@ -165,7 +177,7 @@ export function PropositionDirectory({ scope }) {
           onSaved={saved}
         />
       )}
-      {["detail", "edit", "plan"].includes(view) && (
+      {["detail", "edit", "plan", "sale-orchestrator"].includes(view) && (
         <>
           {detail.isPending && <p role="status">Loading Proposition...</p>}
           {detail.isError && (
@@ -188,8 +200,10 @@ export function PropositionDirectory({ scope }) {
                     setPlan(value);
                     setView("plan");
                   }}
-                  onSaved={saved}
-                  onReload={reload}
+                  onSaleOrchestrator={(value) => {
+                    setSaleOrchestrator(value);
+                    setView("sale-orchestrator");
+                  }}
                 />
               )}
               {view === "edit" && options.data && (
@@ -201,13 +215,44 @@ export function PropositionDirectory({ scope }) {
                   onSaved={saved}
                 />
               )}
-              {view === "plan" && (
-                <PlanForm
-                  key={`${id}:${plan?.id ?? "new"}:${detail.data.revision}`}
+              {view === "plan" && plan && (
+                <PlanDetail
+                  key={`${id}:${plan.id}:${detail.data.revision}`}
                   proposition={detail.data}
                   plan={plan}
+                  tenantName={(tenantId) =>
+                    [
+                      ...(options.data?.brands ?? []),
+                      ...(options.data?.distributionPartners ?? []),
+                      ...detail.data.eligibleTenants,
+                    ].find((t) => t.id === tenantId)?.name ?? tenantId
+                  }
                   onCancel={() => setView("detail")}
                   onSaved={saved}
+                  onReload={reload}
+                />
+              )}
+              {view === "plan" && !plan && (
+                <PlanForm
+                  key={`${id}:new:${detail.data.revision}`}
+                  proposition={detail.data}
+                  plan={null}
+                  onCancel={() => setView("detail")}
+                  onSaved={saved}
+                />
+              )}
+              {view === "sale-orchestrator" && (
+                <SaleOrchestratorEditor
+                  key={`${id}:${saleOrchestrator?.id ?? "new"}`}
+                  proposition={detail.data}
+                  id={saleOrchestrator?.id ?? null}
+                  plans={
+                    isEnterpriseSaleOrchestratorActor(roles)
+                      ? detail.data.plans
+                      : detail.data.plans.filter((p) => (p.tenantIds ?? []).includes(tenant))
+                  }
+                  onCancel={() => setView("detail")}
+                  onSaved={saleOrchestratorSaved}
                 />
               )}
             </>

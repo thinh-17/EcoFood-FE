@@ -1,10 +1,17 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { CoreButton, CoreSelect } from "@thinh-17/fe-core";
 import { savePlan } from "../api/proposition.api.js";
+import { getProductProcesses } from "../../product/api/product.api.js";
 import { useTouched } from "../../../hooks/useTouched.js";
-import { errorMessage, planFormState, planPayload } from "../lib/proposition.js";
+import {
+  cloneFromSource,
+  errorMessage,
+  planFormState,
+  planPayload,
+} from "../lib/proposition.js";
 import { Field } from "./PropositionFields.jsx";
+import { PlanSourceVersionPicker } from "./PlanSourceVersionPicker.jsx";
 import { COUNTRIES } from "../../../constants/countries.js";
 import { CurrencySelect } from "../../../components/CurrencySelect.jsx";
 import { ProductUnitInput } from "../../product/pages/ProductUnitInput.jsx";
@@ -22,15 +29,46 @@ const STEP_DESCRIPTIONS = [
 const isQuantityInvalid = (value) => !(value !== "" && Number.isFinite(Number(value)) && Number(value) > 0);
 const isDurationInvalid = (value) => !(value !== "" && Number.isFinite(Number(value)) && Number(value) >= 0 && Number.isInteger(Number(value)));
 
-export function PlanForm({ proposition: p, plan, onCancel, onSaved }) {
+export function PlanForm({
+  proposition: p,
+  plan,
+  onCancel,
+  onSaved,
+  onStepChange,
+  extraFooterActions,
+  submitAction,
+  readOnly = false,
+}) {
   const [form, setForm] = useState(() => planFormState(plan, p));
   const [step, setStep] = useState(0);
   const [validation, setValidation] = useState("");
   const { touched, touch, touchAll } = useTouched();
+  useEffect(() => { onStepChange?.(step); }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
   const set = (field, value) => setForm((current) => ({ ...current, [field]: value }));
   const changeRow = (field, index, key, value) => set(field, form[field].map((row, i) => i === index ? { ...row, [key]: value } : row));
   const remove = (field, index) => set(field, form[field].filter((_, i) => i !== index));
   const country = form.regionIds[0] ?? "";
+  // A Plan binds its own Product version — independently of its siblings
+  // and of the Proposition itself, which no longer pins one at all — so a
+  // future change to this specific version only ever affects this Plan.
+  const processes = useQuery({
+    queryKey: ["products", p.productId, "processes"],
+    queryFn: ({ signal }) => getProductProcesses(p.productId, signal),
+  });
+  const versions = processes.data ?? [];
+  const chooseVersion = (version) => {
+    const match = versions.find((x) => x.version === version);
+    setForm((current) => ({
+      ...current,
+      productVersion: version,
+      // Re-clone from whichever version is picked — that's the whole point
+      // of picking one, for a new Plan and an existing Draft/Rejected Plan
+      // alike. Just opening the editor never triggers this (no onChange
+      // fires on mount), so an untouched existing Plan's own saved content
+      // is left alone; only an explicit version switch replaces it.
+      ...(match ? cloneFromSource(match) : {}),
+    }));
+  };
   // No Distribution Sub-Tenants picker anymore — every Proposition partner
   // that operates in the chosen Country of Sale is automatically included
   // (the backend requires every Plan tenant's country to match the Plan's
@@ -48,16 +86,16 @@ export function PlanForm({ proposition: p, plan, onCancel, onSaved }) {
     onSuccess: onSaved,
   });
   function goNext() {
-    touchAll(["name", "country"]);
-    if (step === 0 && (!form.name.trim() || !country)) {
-      setValidation("Plan name and a Country of Sale are required.");
+    touchAll(["productVersion", "name", "country"]);
+    if (step === 0 && (!form.productVersion || !form.name.trim() || !country)) {
+      setValidation("A source product version, Plan name and a Country of Sale are required.");
       return;
     }
     setValidation("");
     setStep(step + 1);
   }
   function save() {
-    touchAll(["name", "country"]);
+    touchAll(["productVersion", "name", "country"]);
     try {
       const body = planPayload(form, p);
       setValidation("");
@@ -100,13 +138,35 @@ export function PlanForm({ proposition: p, plan, onCancel, onSaved }) {
           <h2>{PLAN_STEPS[step]}</h2>
           <p>{STEP_DESCRIPTIONS[step]}</p>
         </header>
-        <fieldset className="prop-wizard-fields" disabled={busy}>
+        <fieldset className="prop-wizard-fields" disabled={busy || readOnly}>
           {step === 0 && (
             <>
-              <p className="prop-source">
-                {p.definition.name} · Approved product version {p.productVersion}
-              </p>
               <div className="prop-grid">
+                <label
+                  className={touched.productVersion && !form.productVersion ? "fe-field-invalid" : ""}
+                >
+                  Source product version *
+                  <PlanSourceVersionPicker
+                    value={form.productVersion === "" ? null : form.productVersion}
+                    versions={versions}
+                    loading={processes.isPending}
+                    disabled={processes.isPending || processes.isError}
+                    onChange={(version) => {
+                      touch("productVersion")();
+                      chooseVersion(version);
+                    }}
+                  />
+                  {processes.isError && (
+                    <span className="fe-field-error">
+                      {errorMessage(processes.error)}
+                    </span>
+                  )}
+                  {touched.productVersion && !form.productVersion && (
+                    <span className="fe-field-error">
+                      A source product version is required.
+                    </span>
+                  )}
+                </label>
                 <Field
                   label="Plan name *"
                   required
@@ -180,7 +240,7 @@ export function PlanForm({ proposition: p, plan, onCancel, onSaved }) {
                 const quantityInvalid = touched[`ingredient-quantity-${index}`] && isQuantityInvalid(item.quantity);
                 return (
                   <div className="prop-subcard" key={index}>
-                    <div className="prop-grid">
+                    <div className="prop-ingredient-row">
                       <Field
                         label="Ingredient name *"
                         value={item.name}
@@ -279,7 +339,7 @@ export function PlanForm({ proposition: p, plan, onCancel, onSaved }) {
                 <CurrencySelect value={form.currency} onChange={(value) => set("currency", value)} />
                 <small>Applies to all costs and the selling price. Changing currency does not convert amounts.</small>
               </label>
-              <ProductCostingPanel currency={form.currency} costing={form.costing} onChange={(value) => set("costing", value)} />
+              <ProductCostingPanel currency={form.currency} costing={form.costing} onChange={(value) => set("costing", value)} showBasePrice={false} />
               <div className="prop-subcard">
                 <strong>Selling price</strong>
                 <div className="prop-grid">
@@ -304,21 +364,27 @@ export function PlanForm({ proposition: p, plan, onCancel, onSaved }) {
         )}
         <footer className="prop-actions prop-wizard-actions">
           <CoreButton variant="secondary" disabled={busy} onClick={onCancel}>
-            Cancel
+            {readOnly ? "Close" : "Cancel"}
           </CoreButton>
           {step > 0 && (
             <CoreButton variant="secondary" disabled={busy} onClick={() => setStep(step - 1)}>
               Back
             </CoreButton>
           )}
-          {step === 1 && (
+          {extraFooterActions}
+          {!readOnly && step === 1 && (
             <CoreButton variant="secondary" disabled={busy} onClick={() => { set("ingredients", []); setStep(2); }}>
               Skip ingredients
             </CoreButton>
           )}
-          {step === 2 && (
+          {!readOnly && step === 2 && (
             <CoreButton variant="secondary" disabled={busy} onClick={() => { set("recipeEnabled", false); setStep(3); }}>
               Skip recipe
+            </CoreButton>
+          )}
+          {!readOnly && step >= 1 && (
+            <CoreButton loading={busy} onClick={save}>
+              Save Plan
             </CoreButton>
           )}
           {step < PLAN_STEPS.length - 1 ? (
@@ -326,9 +392,7 @@ export function PlanForm({ proposition: p, plan, onCancel, onSaved }) {
               Next
             </CoreButton>
           ) : (
-            <CoreButton loading={busy} onClick={save}>
-              Save Draft Plan
-            </CoreButton>
+            submitAction
           )}
         </footer>
       </div>
