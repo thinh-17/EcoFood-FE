@@ -93,8 +93,20 @@ export function requestForSave(row, value) {
     planItems: value.planItems ?? [],
     additionalInfoFields: value.additionalInfoFields ?? [],
     invoiceHolder: value.invoiceHolder ?? [],
+    createCustomer: !!value.createCustomer,
   };
 }
+
+// The fixed, locked Invoice Holder field createCustomer always adds — see
+// PlanSaleOrchestratorServiceImpl.withLockedExternalId (the backend enforces
+// this regardless, this is only so the editor's own saved shape matches it).
+export const EXTERNAL_ID_FIELD = field({
+  key: "externalId",
+  dataType: "STRING",
+  shortName: "External Id",
+  description: "Distribution partner's own id for this Customer — matched against Customer.externalIds to auto-link the Invoice.",
+  required: true,
+});
 
 const EXAMPLE_VALUES = { STRING: "example", NUMBER: 1, BOOLEAN: true, DATE: "2026-01-01T00:00:00Z" };
 const exampleFor = (f) => EXAMPLE_VALUES[f.dataType] ?? "example";

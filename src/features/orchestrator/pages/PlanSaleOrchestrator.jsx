@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CoreButton, CoreExpansionPanel } from "@thinh-17/fe-core";
+import { CoreButton, CoreExpansionPanel, CoreToggle } from "@thinh-17/fe-core";
 import { useTouched } from "../../../hooks/useTouched.js";
 import { errorMessage } from "../../proposition/lib/proposition.js";
 import { getSaleOrchestrator, saveSaleOrchestrator } from "../api/planSale.api.js";
-import { defaultInvoiceHolder, defaultPlanItems, field, samplePayload } from "../lib/planSale.js";
+import { EXTERNAL_ID_FIELD, defaultInvoiceHolder, defaultPlanItems, field, samplePayload } from "../lib/planSale.js";
 import { PlanMultiPicker } from "./PlanMultiPicker.jsx";
 import { PayloadPreview } from "./PayloadPreview.jsx";
 import { SaleConfigurationFieldTable } from "./SaleConfigurationFieldTable.jsx";
@@ -82,6 +82,8 @@ const FIELD_LISTS = {
     editableFields: ["required"],
     creatable: false,
     removable: false,
+    // Present only when Create Customer is on — always required, never editable.
+    lockedKeys: ["externalId"],
   },
 };
 
@@ -94,6 +96,7 @@ function SaleOrchestratorForm({ row, proposition, plans, onSaved, onCancel }) {
     additionalInfoFields: row?.additionalInfoFields ?? [],
     invoiceHolder: row?.invoiceHolder ?? defaultInvoiceHolder(),
   });
+  const [createCustomer, setCreateCustomer] = useState(row?.createCustomer ?? false);
   const [error, setError] = useState("");
   const { touched, touch, touchAll } = useTouched();
   const nameInvalid = touched.name && !name.trim();
@@ -102,13 +105,22 @@ function SaleOrchestratorForm({ row, proposition, plans, onSaved, onCancel }) {
   // — see PlanSaleOrchestratorServiceImpl.response()'s canEdit.
   const readOnly = !!row && row.canEdit === false;
   const mutation = useMutation({
-    mutationFn: () => saveSaleOrchestrator(proposition.id, row, { name, description, planIds, ...fieldLists }),
+    mutationFn: () =>
+      saveSaleOrchestrator(proposition.id, row, { name, description, planIds, createCustomer, ...fieldLists }),
     onSuccess: (saved) => onSaved(saved),
     onError: (err) => setError(errorMessage(err)),
   });
 
   function updateList(list, updater) {
     setFieldLists((lists) => ({ ...lists, [list]: updater(lists[list]) }));
+  }
+
+  function toggleCreateCustomer(checked) {
+    setCreateCustomer(checked);
+    updateList("invoiceHolder", (fields) => {
+      const withoutExternalId = fields.filter((f) => f.key !== "externalId");
+      return checked ? [...withoutExternalId, { ...EXTERNAL_ID_FIELD }] : withoutExternalId;
+    });
   }
 
   return (
@@ -179,13 +191,30 @@ function SaleOrchestratorForm({ row, proposition, plans, onSaved, onCancel }) {
         )}
       </label>
       {Object.entries(FIELD_LISTS).map(
-        ([list, { title, blurb, editableFields, requiredEditableKeys, creatable, removable }]) => (
+        ([list, { title, blurb, editableFields, requiredEditableKeys, lockedKeys, creatable, removable }]) => (
           <CoreExpansionPanel key={list} title={title} defaultExpanded={list === "planItems"}>
             <p className="sale-muted">{blurb}</p>
+            {list === "invoiceHolder" && (
+              <label className="sale-field sale-field--inline">
+                <span>Create Customer</span>
+                <CoreToggle
+                  checked={createCustomer}
+                  disabled={readOnly}
+                  onChange={readOnly ? undefined : toggleCreateCustomer}
+                />
+              </label>
+            )}
+            {list === "invoiceHolder" && createCustomer && (
+              <p className="sale-muted">
+                A submitted invoice's externalId is matched against a Customer's own linked ids to
+                auto-link the Invoice — see the external-customer QR flow.
+              </p>
+            )}
             <SaleConfigurationFieldTable
               fields={fieldLists[list]}
               editableFields={readOnly ? [] : editableFields}
               requiredEditableKeys={readOnly ? [] : requiredEditableKeys}
+              lockedKeys={lockedKeys}
               onChange={readOnly ? undefined : (fields) => updateList(list, () => fields)}
               onRemove={
                 readOnly || !removable

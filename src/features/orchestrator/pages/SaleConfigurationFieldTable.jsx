@@ -17,12 +17,14 @@ export function SaleConfigurationFieldTable({
   fields,
   editableFields = [],
   requiredEditableKeys = [],
+  lockedKeys = [],
   onChange,
   onRemove,
   onCreate,
 }) {
-  const canEdit = (column) => !!onChange && editableFields.includes(column);
-  const canEditRequired = (field) => canEdit("required") || (!!onChange && requiredEditableKeys.includes(field.key));
+  const isLocked = (field) => lockedKeys.includes(field.key);
+  const canEdit = (column, field) => !isLocked(field) && !!onChange && editableFields.includes(column);
+  const canEditRequired = (field) => !isLocked(field) && (canEdit("required", field) || (!!onChange && requiredEditableKeys.includes(field.key)));
 
   function update(index, patch) {
     onChange(fields.map((f, i) => (i === index ? { ...f, ...patch } : f)));
@@ -45,7 +47,7 @@ export function SaleConfigurationFieldTable({
         // one character — the field's key effectively never got finished,
         // so it stayed blank and silently never made it into the preview.
         <div className="sale-field-table__row" key={index}>
-          {canEdit("key") ? (
+          {canEdit("key", f) ? (
             <input
               className="fe-input"
               value={f.key}
@@ -55,7 +57,7 @@ export function SaleConfigurationFieldTable({
           ) : (
             <span className="sale-field-table__underline">{f.key}</span>
           )}
-          {canEdit("dataType") ? (
+          {canEdit("dataType", f) ? (
             <select
               className="fe-input"
               value={f.dataType}
@@ -70,7 +72,7 @@ export function SaleConfigurationFieldTable({
           ) : (
             <span className="sale-field-table__plain">{f.dataType}</span>
           )}
-          {canEdit("description") ? (
+          {canEdit("description", f) ? (
             <input
               className="fe-input sale-field-table__description-input"
               value={f.description}
@@ -85,7 +87,7 @@ export function SaleConfigurationFieldTable({
               </span>
             </span>
           )}
-          {canEdit("shortName") ? (
+          {canEdit("shortName", f) ? (
             <input
               className="fe-input"
               value={f.shortName}
@@ -100,7 +102,7 @@ export function SaleConfigurationFieldTable({
             disabled={!canEditRequired(f)}
             onChange={canEditRequired(f) ? (checked) => update(index, { required: checked }) : undefined}
           />
-          {onRemove && (
+          {onRemove && !isLocked(f) && (
             <button
               type="button"
               className="sale-field-table__remove"

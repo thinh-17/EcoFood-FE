@@ -8,6 +8,7 @@ import {
   defaultPlanItems,
   defaultInvoiceHolder,
   field,
+  EXTERNAL_ID_FIELD,
 } from "./planSale.js";
 
 test("Tenant and Enterprise roles can view the Sale Orchestrator directory, Platform cannot", () => {
@@ -56,6 +57,7 @@ test("save request trims name/description, carries the row's own revision only o
       planItems: [],
       additionalInfoFields: [],
       invoiceHolder: [],
+      createCustomer: false,
     },
   );
   const giftNote = field({ key: "giftNote", required: true });
@@ -81,6 +83,7 @@ test("save request trims name/description, carries the row's own revision only o
       planItems,
       additionalInfoFields: [giftNote],
       invoiceHolder,
+      createCustomer: false,
     },
   );
 });
@@ -127,6 +130,17 @@ test("sample payload includes an example value per configured Additional Info fi
       ],
     },
   });
+});
+
+test("EXTERNAL_ID_FIELD is a locked, required STRING field keyed externalId", () => {
+  assert.equal(EXTERNAL_ID_FIELD.key, "externalId");
+  assert.equal(EXTERNAL_ID_FIELD.dataType, "STRING");
+  assert.equal(EXTERNAL_ID_FIELD.required, true);
+});
+
+test("requestForSave carries createCustomer through, defaulting to false", () => {
+  assert.equal(requestForSave(null, { name: "Sale A", planIds: ["p1"] }).createCustomer, false);
+  assert.equal(requestForSave(null, { name: "Sale A", planIds: ["p1"], createCustomer: true }).createCustomer, true);
 });
 
 test("sample payload merges any extra planItems field (e.g. actualPrice) onto the item, and invoiceHolder once per invoice", () => {
