@@ -7,7 +7,6 @@ import {
 const METRICS = {
   totalSalesVolume: "Sales volume",
   profit: "Profit",
-  ingredientCost: "Ingredient cost",
   platformCost: "Platform cost",
 };
 export function MetricsEditor({

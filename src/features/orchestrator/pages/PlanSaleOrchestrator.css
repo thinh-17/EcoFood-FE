@@ -47,6 +47,16 @@
 .sale-field textarea {
   resize: vertical;
 }
+.sale-field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.sale-field--inline span {
+  font-weight: 600;
+  color: #1b2933;
+}
 .sale-form-actions {
   display: flex;
   gap: 12px;
