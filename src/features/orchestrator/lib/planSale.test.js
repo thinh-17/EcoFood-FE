@@ -8,7 +8,6 @@ import {
   defaultPlanItems,
   defaultInvoiceHolder,
   field,
-  EXTERNAL_ID_FIELD,
 } from "./planSale.js";
 
 test("Tenant and Enterprise roles can view the Sale Orchestrator directory, Platform cannot", () => {
@@ -130,12 +129,6 @@ test("sample payload includes an example value per configured Additional Info fi
       ],
     },
   });
-});
-
-test("EXTERNAL_ID_FIELD is a locked, required STRING field keyed externalId", () => {
-  assert.equal(EXTERNAL_ID_FIELD.key, "externalId");
-  assert.equal(EXTERNAL_ID_FIELD.dataType, "STRING");
-  assert.equal(EXTERNAL_ID_FIELD.required, true);
 });
 
 test("requestForSave carries createCustomer through, defaulting to false", () => {

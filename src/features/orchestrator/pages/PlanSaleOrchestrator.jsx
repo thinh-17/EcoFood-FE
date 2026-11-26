@@ -4,7 +4,7 @@ import { CoreButton, CoreExpansionPanel, CoreToggle } from "@thinh-17/fe-core";
 import { useTouched } from "../../../hooks/useTouched.js";
 import { errorMessage } from "../../proposition/lib/proposition.js";
 import { getSaleOrchestrator, saveSaleOrchestrator } from "../api/planSale.api.js";
-import { EXTERNAL_ID_FIELD, defaultInvoiceHolder, defaultPlanItems, field, samplePayload } from "../lib/planSale.js";
+import { defaultInvoiceHolder, defaultPlanItems, field, samplePayload } from "../lib/planSale.js";
 import { PlanMultiPicker } from "./PlanMultiPicker.jsx";
 import { PayloadPreview } from "./PayloadPreview.jsx";
 import { SaleConfigurationFieldTable } from "./SaleConfigurationFieldTable.jsx";
@@ -82,8 +82,6 @@ const FIELD_LISTS = {
     editableFields: ["required"],
     creatable: false,
     removable: false,
-    // Present only when Create Customer is on — always required, never editable.
-    lockedKeys: ["externalId"],
   },
 };
 
@@ -115,12 +113,14 @@ function SaleOrchestratorForm({ row, proposition, plans, onSaved, onCancel }) {
     setFieldLists((lists) => ({ ...lists, [list]: updater(lists[list]) }));
   }
 
+  // The backend enforces this regardless (PlanSaleOrchestratorServiceImpl.
+  // withLockedCustomerEmail), this just keeps the editor's own saved shape
+  // in sync so Save doesn't silently diverge from what gets persisted.
   function toggleCreateCustomer(checked) {
     setCreateCustomer(checked);
-    updateList("invoiceHolder", (fields) => {
-      const withoutExternalId = fields.filter((f) => f.key !== "externalId");
-      return checked ? [...withoutExternalId, { ...EXTERNAL_ID_FIELD }] : withoutExternalId;
-    });
+    updateList("invoiceHolder", (fields) =>
+      fields.map((f) => (f.key === "email" ? { ...f, required: checked } : f)),
+    );
   }
 
   return (
@@ -191,7 +191,7 @@ function SaleOrchestratorForm({ row, proposition, plans, onSaved, onCancel }) {
         )}
       </label>
       {Object.entries(FIELD_LISTS).map(
-        ([list, { title, blurb, editableFields, requiredEditableKeys, lockedKeys, creatable, removable }]) => (
+        ([list, { title, blurb, editableFields, requiredEditableKeys, creatable, removable }]) => (
           <CoreExpansionPanel key={list} title={title} defaultExpanded={list === "planItems"}>
             <p className="sale-muted">{blurb}</p>
             {list === "invoiceHolder" && (
@@ -206,15 +206,15 @@ function SaleOrchestratorForm({ row, proposition, plans, onSaved, onCancel }) {
             )}
             {list === "invoiceHolder" && createCustomer && (
               <p className="sale-muted">
-                A submitted invoice's externalId is matched against a Customer's own linked ids to
-                auto-link the Invoice — see the external-customer QR flow.
+                A submitted invoice's email is matched against an existing Customer account to
+                auto-link the Invoice — see the external-customer onboarding flow.
               </p>
             )}
             <SaleConfigurationFieldTable
               fields={fieldLists[list]}
               editableFields={readOnly ? [] : editableFields}
               requiredEditableKeys={readOnly ? [] : requiredEditableKeys}
-              lockedKeys={lockedKeys}
+              lockedKeys={list === "invoiceHolder" && createCustomer ? ["email"] : []}
               onChange={readOnly ? undefined : (fields) => updateList(list, () => fields)}
               onRemove={
                 readOnly || !removable
