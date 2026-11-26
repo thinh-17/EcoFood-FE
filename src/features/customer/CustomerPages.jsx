@@ -26,10 +26,20 @@ export function CustomerLoginPage() {
 
 function CustomerLogin({ tenant, token = "", invoiceId = "" }) {
   const [error, setError] = useState("");
+  // The external-customer QR's loginUrl carries no ?tenant= (every such
+  // Customer is created under the same onboarding Tenant) — resolve it here
+  // instead, rather than making the caller know about that convention.
+  const defaultTenant = useQuery({
+    queryKey: ["customer-default-tenant"],
+    queryFn: api.defaultTenant,
+    enabled: !tenant,
+    retry: false,
+  });
+  const effectiveTenant = tenant || defaultTenant.data?.tenantId;
   const config = useQuery({
-    queryKey: ["customer-login", tenant],
-    queryFn: () => api.config(tenant),
-    enabled: !!tenant,
+    queryKey: ["customer-login", effectiveTenant],
+    queryFn: () => api.config(effectiveTenant),
+    enabled: !!effectiveTenant,
     retry: false,
   });
 
@@ -42,12 +52,19 @@ function CustomerLogin({ tenant, token = "", invoiceId = "" }) {
     }
   }
 
-  if (!tenant) {
+  if (!effectiveTenant) {
+    if (defaultTenant.isFetching) {
+      return <p role="status">Loading sign-in configuration…</p>;
+    }
     return (
       <CoreEmptyState
         icon={FiLayers}
         title="Tenant not specified"
-        description="Open the Customer Portal from your tenant domain, or from an invoice link, so we can identify the Tenant."
+        description={
+          defaultTenant.error
+            ? customerError(defaultTenant.error)
+            : "Open the Customer Portal from your tenant domain, or from an invoice link, so we can identify the Tenant."
+        }
       />
     );
   }
