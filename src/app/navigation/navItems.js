@@ -52,7 +52,11 @@ export const navItems = [
     id: "manager",
     label: "Manager",
     icon: FiGrid,
-    to: ROUTES.MANAGER,
+    children: [
+      { id: "business-dashboard", label: "Business Dashboard", icon: FiGrid, to: "/manager/business" },
+      { id: "invoice-dashboard", label: "Invoice Dashboard", icon: FiGrid, to: "/manager/invoices" },
+      { id: "customer-dashboard", label: "Customer Dashboard", icon: FiGrid, to: "/manager/customers" },
+    ],
   },
 
   {

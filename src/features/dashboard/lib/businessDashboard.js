@@ -1,7 +1,8 @@
+import { canAccessManager } from "./dashboardAccess.js";
 export const KPI_NAMES = {
-  totalSalesVolume: "Successful sales plans", profit: "Profit", platformCost: "Platform cost",
+  revenue: "Actual Revenue", totalSalesVolume: "Total Sales Volume", profit: "Profit", platformCost: "Platform cost",
 };
-export function canReadBusinessDashboard(claims = {}) { return Array.isArray(claims.permissions) && claims.permissions.includes("DASHBOARD_READ"); }
+export function canReadBusinessDashboard(claims = {}) { return canAccessManager(claims.roles); }
 export function dashboardDefaults(options) {
   const parts = new Intl.DateTimeFormat("en", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "numeric" }).formatToParts(new Date());
   const year = Number(parts.find((p) => p.type === "year").value), month = Number(parts.find((p) => p.type === "month").value);

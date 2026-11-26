@@ -3,12 +3,12 @@ import assert from "node:assert/strict";
 import { canReadBusinessDashboard, dashboardParams, formatDashboardValue, expectedLabel, periodLabel, dashboardChartValue } from "./businessDashboard.js";
 import { filterNavItems } from "../../../app/navigation/navAccess.js";
 
-test("business dashboard requires explicit permission before API queries", () => {
-  assert.equal(canReadBusinessDashboard({ roles: ["ECO_ADMIN"] }), false);
-  assert.equal(canReadBusinessDashboard({ permissions: ["DASHBOARD_READ"] }), true);
+test("business dashboard uses roles for navigation independently of data rules", () => {
+  assert.equal(canReadBusinessDashboard({ roles: ["ECO_ADMIN"] }), true);
+  assert.equal(canReadBusinessDashboard({ permissions: ["DASHBOARD_READ"] }), false);
   const items = [{ id: "home" }, { id: "manager" }];
-  assert.equal(filterNavItems(items, ["TENANT_ADMIN"]).length, 1);
-  assert.equal(filterNavItems(items, [], ["DASHBOARD_READ"]).length, 2);
+  assert.equal(filterNavItems(items, ["TENANT_ADMIN"]).length, 2);
+  assert.equal(filterNavItems(items, [], ["DASHBOARD_READ"]).length, 1);
 });
 test("null is missing, real zero remains zero and profit can be negative", () => {
   assert.equal(formatDashboardValue(null, "USD"), "Insufficient data");

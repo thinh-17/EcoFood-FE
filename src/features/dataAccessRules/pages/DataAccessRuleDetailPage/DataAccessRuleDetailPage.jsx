@@ -18,9 +18,10 @@ const TABS = [
 // Hardcoded for now — no backend entity-type catalog exists yet (frontend-
 // first, per explicit instruction). Swap for a real fetched list once one does.
 const ENTITY_TYPE_OPTIONS = [
-  { value: "Dashboard_bills", label: "Dashboard_bills" },
-  { value: "Dashboard_Customer", label: "Dashboard_Customer" },
-  { value: "Product", label: "Product" },
+  { value: "ALL_DASHBOARDS", label: "All Dashboards" },
+  { value: "BUSINESS_DASHBOARD", label: "Business Dashboard" },
+  { value: "INVOICE_DASHBOARD", label: "Invoice Dashboard" },
+  { value: "CUSTOMER_DASHBOARD", label: "Customer Dashboard" },
 ];
 
 const INITIAL_FORM = {
@@ -28,8 +29,6 @@ const INITIAL_FORM = {
   ruleName: "",
   description: "",
   accessEntityType: "",
-  accessLevel: "LIMITED_ACCESS",
-  limitedEntityIds: [],
 };
 
 function validate(form) {
@@ -37,9 +36,6 @@ function validate(form) {
   if (!form.businessEntityId) errors.businessEntityId = "Business Entity is required.";
   if (!form.ruleName.trim()) errors.ruleName = "Rule Name is required.";
   if (!form.description.trim()) errors.description = "Description is required.";
-  if (form.accessLevel === "LIMITED_ACCESS" && form.limitedEntityIds.length === 0) {
-    errors.limitedEntityIds = "Select at least one entity the users can access.";
-  }
   return errors;
 }
 
@@ -50,13 +46,7 @@ function validate(form) {
  * writes a Group (groupType=ACCESS_CONTROL_GROUP) + its GroupEntity child +
  * an update to each selected user's own UserGroupEntity.
  *
- * businessEntityId is the TENANT this rule applies for; accessEntityType is
- * which SINGLE kind of record within it the rule governs (e.g.
- * Dashboard_bills, Product) — explicit instruction: only one choice allowed,
- * not several. limitedEntityIds (shown only for Access Level = Limited
- * Access) reuses the same tenant list as a placeholder for "which specific
- * entities the users can access" — there's no finer-grained entity model in
- * this app yet, so tenant is the only real "entity" concept to scope by for now.
+ * Access Level is fixed to Full Access while Limited Access is unavailable.
  */
 export function DataAccessRuleDetailPage() {
   const navigate = useNavigate();
@@ -66,7 +56,7 @@ export function DataAccessRuleDetailPage() {
   const [fieldErrors, setFieldErrors] = useState({});
 
   const { data: tenants, isLoading: isTenantsLoading } = useAllTenants();
-  const { data: users, isLoading: isUsersLoading } = useAllUsersForPicker();
+  const { data: users, isLoading: isUsersLoading } = useAllUsersForPicker(form.businessEntityId, form.accessEntityType);
   const createRule = useCreateDataAccessRule();
 
   const tenantOptions = (tenants ?? []).map((tenant) => ({
@@ -78,16 +68,18 @@ export function DataAccessRuleDetailPage() {
     label: `${user.firstName} ${user.lastName} (${user.email})`,
   }));
 
-  // The "Limited Access" Entities picker should list actual records of
-  // whichever Entity Type is selected above (e.g. specific Dashboard_bills
-  // rows) — there's no backend endpoint for entity records yet, so this
-  // stays empty rather than reusing an unrelated list like tenants.
-  // form.accessEntityType is already threaded through so wiring the real
-  // fetch later only needs to fill this in.
-  const entityOptionsByType = [];
 
   function updateField(field) {
-    return (value) => setForm((prev) => ({ ...prev, [field]: value }));
+    return (value) => {
+      if (field === "businessEntityId" && form.accessEntityType !== "Product") setUserIds([]);
+      setForm((prev) => ({ ...prev, [field]: value }));
+    };
+  }
+
+  function handleNext() {
+    const errors = validate(form);
+    setFieldErrors(errors);
+    if (Object.keys(errors).length === 0) setActiveTab("users");
   }
 
   function handleSave() {
@@ -103,8 +95,8 @@ export function DataAccessRuleDetailPage() {
       ruleName: form.ruleName.trim(),
       description: form.description.trim(),
       accessEntityType: form.accessEntityType || undefined,
-      accessLevel: form.accessLevel,
-      limitedEntityIds: form.accessLevel === "LIMITED_ACCESS" ? form.limitedEntityIds : [],
+      accessLevel: "FULL_ACCESS",
+      limitedEntityIds: [],
       userIds,
     };
 
@@ -183,39 +175,23 @@ export function DataAccessRuleDetailPage() {
               <input
                 type="radio"
                 name="accessLevel"
-                checked={form.accessLevel === "LIMITED_ACCESS"}
-                onChange={() => updateField("accessLevel")("LIMITED_ACCESS")}
+                checked={false}
+                disabled
               />
               <span>
                 <strong>Limited Access</strong>
                 <span className="dar-radio-option__hint">
-                  You will be able to select the Entities which the users can access. <FiInfo aria-hidden="true" />
+                  Temporarily unavailable.
                 </span>
               </span>
             </label>
-
-            {form.accessLevel === "LIMITED_ACCESS" && (
-              <label className="fe-field dar-limited-entities">
-                Entities
-                <CoreMultiSelect
-                  selected={form.limitedEntityIds}
-                  onChange={updateField("limitedEntityIds")}
-                  options={entityOptionsByType}
-                  placeholder="Select entities..."
-                  searchPlaceholder="Search entities..."
-                />
-                {fieldErrors.limitedEntityIds && (
-                  <span className="dar-error">{fieldErrors.limitedEntityIds}</span>
-                )}
-              </label>
-            )}
 
             <label className="dar-radio-option">
               <input
                 type="radio"
                 name="accessLevel"
-                checked={form.accessLevel === "FULL_ACCESS"}
-                onChange={() => updateField("accessLevel")("FULL_ACCESS")}
+                checked
+                disabled
               />
               <span>
                 <strong>Full Access</strong>
@@ -256,9 +232,9 @@ export function DataAccessRuleDetailPage() {
       <div className="dar-actions">
         <CoreFormActions
           onCancel={() => navigate(ROUTES.DATA_ACCESS_RULES)}
-          onConfirm={handleSave}
-          confirmLabel="Save"
-          confirmLoading={createRule.isPending}
+          onConfirm={activeTab === "configuration" ? handleNext : handleSave}
+          confirmLabel={activeTab === "configuration" ? "Next" : "Save"}
+          confirmLoading={activeTab === "users" && createRule.isPending}
         />
       </div>
     </div>

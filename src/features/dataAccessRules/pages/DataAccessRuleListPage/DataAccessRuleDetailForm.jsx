@@ -13,18 +13,16 @@ const TABS = [
 // Same hardcoded list as DataAccessRuleDetailPage's create form — no
 // backend entity-type catalog exists yet.
 const ENTITY_TYPE_OPTIONS = [
-  { value: "Dashboard_bills", label: "Dashboard_bills" },
-  { value: "Dashboard_Customer", label: "Dashboard_Customer" },
-  { value: "Product", label: "Product" },
+  { value: "ALL_DASHBOARDS", label: "All Dashboards" },
+  { value: "BUSINESS_DASHBOARD", label: "Business Dashboard" },
+  { value: "INVOICE_DASHBOARD", label: "Invoice Dashboard" },
+  { value: "CUSTOMER_DASHBOARD", label: "Customer Dashboard" },
 ];
 
 function validate(form) {
   const errors = {};
   if (!form.ruleName.trim()) errors.ruleName = "Rule Name is required.";
   if (!form.description.trim()) errors.description = "Description is required.";
-  if (form.accessLevel === "LIMITED_ACCESS" && form.limitedEntityIds.length === 0) {
-    errors.limitedEntityIds = "Select at least one entity the users can access.";
-  }
   return errors;
 }
 
@@ -43,13 +41,11 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
     ruleName: rule.ruleName ?? "",
     description: rule.description ?? "",
     accessEntityType: rule.accessEntityType ?? "",
-    accessLevel: rule.accessLevel ?? "LIMITED_ACCESS",
-    limitedEntityIds: rule.limitedEntityIds ?? [],
   });
   const [userIds, setUserIds] = useState(rule.userIds ?? []);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  const { data: users, isLoading: isUsersLoading } = useAllUsersForPicker();
+  const { data: users, isLoading: isUsersLoading } = useAllUsersForPicker(rule.businessEntityId, form.accessEntityType);
   const updateRule = useUpdateDataAccessRule();
 
   const userOptions = (users ?? []).map((user) => ({
@@ -57,12 +53,18 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
     label: `${user.firstName} ${user.lastName} (${user.email})`,
   }));
 
-  // Same placeholder-until-a-real-entity-record-endpoint-exists gap as the
-  // create form — see DataAccessRuleDetailPage.jsx's own comment on this.
-  const entityOptionsByType = [];
 
   function updateField(field) {
-    return (value) => setForm((prev) => ({ ...prev, [field]: value }));
+    return (value) => {
+
+      setForm((prev) => ({ ...prev, [field]: value }));
+    };
+  }
+
+  function handleNext() {
+    const errors = rule.editable ? validate(form) : {};
+    setFieldErrors(errors);
+    if (Object.keys(errors).length === 0) setActiveTab("users");
   }
 
   function handleSave() {
@@ -77,8 +79,8 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
       ruleName: form.ruleName.trim(),
       description: form.description.trim(),
       accessEntityType: form.accessEntityType || undefined,
-      accessLevel: form.accessLevel,
-      limitedEntityIds: form.accessLevel === "LIMITED_ACCESS" ? form.limitedEntityIds : [],
+      accessLevel: "FULL_ACCESS",
+      limitedEntityIds: [],
       userIds,
     };
 
@@ -142,9 +144,8 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
                 <input
                   type="radio"
                   name="accessLevel"
-                  checked={form.accessLevel === "LIMITED_ACCESS"}
-                  onChange={() => updateField("accessLevel")("LIMITED_ACCESS")}
-                  disabled={!rule.editable}
+                  checked={false}
+                  disabled
                 />
                 Limited Access
               </label>
@@ -152,31 +153,14 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
                 <input
                   type="radio"
                   name="accessLevel"
-                  checked={form.accessLevel === "FULL_ACCESS"}
-                  onChange={() => updateField("accessLevel")("FULL_ACCESS")}
-                  disabled={!rule.editable}
+                  checked
+                  disabled
                 />
                 Full Access
               </label>
             </div>
           </label>
 
-          {form.accessLevel === "LIMITED_ACCESS" && (
-            <label className="fe-field">
-              Entities
-              <CoreMultiSelect
-                selected={form.limitedEntityIds}
-                onChange={updateField("limitedEntityIds")}
-                options={entityOptionsByType}
-                placeholder="Select entities..."
-                searchPlaceholder="Search entities..."
-                disabled={!rule.editable}
-              />
-              {fieldErrors.limitedEntityIds && (
-                <span className="dar-error">{fieldErrors.limitedEntityIds}</span>
-              )}
-            </label>
-          )}
         </div>
       )}
 
@@ -205,10 +189,10 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
       <div className="fe-modal__footer dar-detail-form__footer">
         <CoreFormActions
           onCancel={onCancel}
-          onConfirm={handleSave}
-          confirmLabel="Save"
-          confirmDisabled={!rule.editable}
-          confirmLoading={updateRule.isPending}
+          onConfirm={activeTab === "configuration" ? handleNext : handleSave}
+          confirmLabel={activeTab === "configuration" ? "Next" : "Save"}
+          confirmDisabled={activeTab === "users" && !rule.editable}
+          confirmLoading={activeTab === "users" && updateRule.isPending}
         />
       </div>
     </div>

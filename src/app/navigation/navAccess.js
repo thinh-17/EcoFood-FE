@@ -1,3 +1,4 @@
+import { canAccessManager } from "../../features/dashboard/lib/dashboardAccess.js";
 import {
   canSeeDataAccessRulesSubTab,
   canSeePartnerTab,
@@ -35,7 +36,7 @@ export function filterNavItems(items, roleCodes, permissions = []) {
       if (item.id === "audit-log") return canReadAudit(roleCodes, permissions);
       if (item.id === "catalog-publications") return catalogAccess({ roles: roleCodes, permissions }).read;
       if (item.id === "complaints") return permissions.includes("COMPLAINT_READ") && roleCodes.some((r) => ["TENANT_ADMIN", "ECO_ADMIN"].includes(r));
-      if (item.id === "manager" || item.id === "business-dashboard") return permissions.includes("DASHBOARD_READ");
+      if (item.id === "manager" || item.id === "business-dashboard") return canAccessManager(roleCodes);
       const rule = VISIBILITY_RULES[item.id];
       return rule ? rule(roleCodes) : true;
     })
