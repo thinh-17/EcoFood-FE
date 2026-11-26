@@ -56,6 +56,7 @@ test("save request trims name/description, carries the row's own revision only o
       planItems: [],
       additionalInfoFields: [],
       invoiceHolder: [],
+      createCustomer: false,
     },
   );
   const giftNote = field({ key: "giftNote", required: true });
@@ -81,6 +82,7 @@ test("save request trims name/description, carries the row's own revision only o
       planItems,
       additionalInfoFields: [giftNote],
       invoiceHolder,
+      createCustomer: false,
     },
   );
 });
@@ -127,6 +129,11 @@ test("sample payload includes an example value per configured Additional Info fi
       ],
     },
   });
+});
+
+test("requestForSave carries createCustomer through, defaulting to false", () => {
+  assert.equal(requestForSave(null, { name: "Sale A", planIds: ["p1"] }).createCustomer, false);
+  assert.equal(requestForSave(null, { name: "Sale A", planIds: ["p1"], createCustomer: true }).createCustomer, true);
 });
 
 test("sample payload merges any extra planItems field (e.g. actualPrice) onto the item, and invoiceHolder once per invoice", () => {

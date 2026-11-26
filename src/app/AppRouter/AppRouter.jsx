@@ -8,6 +8,8 @@ import { ROUTES } from "../../constants/routes.js";
 import { MainLayout } from "../../layouts/MainLayout/MainLayout.jsx";
 
 import { HomePage } from "../../features/home/pages/HomePage/HomePage.jsx";
+import { useAuthStore } from "../../features/auth/store/authStore.js";
+import { decodeJwt } from "../../features/auth/lib/jwt.js";
 
 import { ModulePage } from "../../features/modules/pages/ModulePage/ModulePage.jsx";
 import { ProductListPage } from "../../features/product/pages/ProductListPage.jsx";
@@ -45,6 +47,18 @@ import { AuditLogPage } from "../../features/audit/pages/AuditLogPage.jsx";
 const BusinessDashboardPage = lazy(() => import("../../features/dashboard/pages/BusinessDashboardPage.jsx")
   .then((module) => ({ default: module.BusinessDashboardPage })));
 
+/** A Customer who ends up on the staff shell's "/" (same internalAccessToken as everyone else) belongs on their own portal, not the staff Home. */
+function HomeRoute() {
+  const token = useAuthStore((s) => s.internalAccessToken);
+  let roles = [];
+  try {
+    roles = decodeJwt(token)?.roles || [];
+  } catch {
+    /* Malformed/missing token — treat as no roles, fall through to Home. */
+  }
+  return roles.includes("CUSTOMER") ? <Navigate to="/customer" replace /> : <HomePage />;
+}
+
 export function AppRouter() {
   const location = useLocation();
   return (
@@ -65,7 +79,7 @@ export function AppRouter() {
           </RequireAuth>
         }
       >
-        <Route index element={<HomePage />} />
+        <Route index element={<HomeRoute />} />
         <Route path="notifications" element={<NotificationPage />} />
         <Route path="audit-log" element={<AuditLogPage />} />
         <Route path="complaints" element={<ComplaintManagementPage />} />

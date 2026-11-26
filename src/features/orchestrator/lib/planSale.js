@@ -93,6 +93,7 @@ export function requestForSave(row, value) {
     planItems: value.planItems ?? [],
     additionalInfoFields: value.additionalInfoFields ?? [],
     invoiceHolder: value.invoiceHolder ?? [],
+    createCustomer: !!value.createCustomer,
   };
 }
 
