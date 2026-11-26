@@ -7,12 +7,12 @@ test("Product actions require an Enterprise Admin or Product Manager role", () =
   assert.equal(canManageProducts(["ENTERPRISE_PRODUCT_MANAGER"]), true);
   for (const role of ["ENTERPRISE_PARTNERSHIP_MANAGER", "ENTERPRISE_DASHBOARD_MANAGER", "TENANT_ADMIN", "CUSTOMER"]) assert.equal(canManageProducts([role]), false);
 });
-test("ECO/Tenant Product Managers can view the directory but not manage it", () => {
-  for (const role of ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_PRODUCT_MANAGER", "ENTERPRISE_ADMIN"])
+test("ECO/Tenant Admin/Product Managers can view the directory but not manage it", () => {
+  for (const role of ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_ADMIN", "TENANT_PRODUCT_MANAGER", "ENTERPRISE_ADMIN"])
     assert.equal(canViewProducts([role]), true);
-  for (const role of ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_PRODUCT_MANAGER"])
+  for (const role of ["ECO_ADMIN", "ECO_PRODUCT_MANAGER", "TENANT_ADMIN", "TENANT_PRODUCT_MANAGER"])
     assert.equal(canManageProducts([role]), false);
-  for (const role of ["MASTER_ADMIN", "MASTER_PRODUCT_MANAGER", "TENANT_ADMIN", "CUSTOMER"])
+  for (const role of ["MASTER_ADMIN", "MASTER_PRODUCT_MANAGER", "CUSTOMER"])
     assert.equal(canViewProducts([role]), false);
 });
 test("standalone draft includes definition and optional sections", () => {
@@ -54,9 +54,9 @@ test("optional steps may be skipped and editing respects status", () => {
   validateProductStep(draft(), 2); validateProductStep(draft(), 3);
   assert.equal(canEditProduct({ status: "REJECTED" }), true); assert.equal(canEditProduct({ status: "APPROVED" }), false);
 });
-test("cost calculation sums all inputs and applies target margin and tax", () => {
+test("cost calculation excludes retired ingredient input and applies margin and tax", () => {
   const costing = { ingredientCost: 50000, packagingCost: 5000, laborCost: 10000, operationCost: 3000, marketingFee: 2000, targetMargin: 30, tax: 10 };
-  assert.deepEqual(calculateProductCost(costing), { totalCost: 70000, basePrice: 110000 });
+  assert.deepEqual(calculateProductCost(costing), { totalCost: 20000, basePrice: 31428.57 });
 });
 test("historical process projects its own attributes rather than latest product fields", () => {
   const value = productFromProcess({ version: 2, name: "Latest" }, { version: 1, revision: 3, status: "APPROVED", definition: { processElementAttribute: [{ productName: "Original", code: "P1", category: "Meals", ingredients: [] }] }, costing: { processElementAttribute: [{ totalCost: 70000, sellingPrice: 100000, currency: "VND" }] } });

@@ -5,8 +5,35 @@ import {
   appendRevenueYear,
   normalizeQuarterlyMetrics,
   quarterlyRevenueTotal,
+  propositionRevenueTotal,
 } from "./quarterlyMetrics.js";
 import { propositionFormState, propositionPayload } from "./proposition.js";
+
+test("current revenue sums actual sales exactly in the Proposition currency", () => {
+  const p = {
+    definition: { currency: "USD", currentRevenue: "99999" },
+    actualMetrics: [
+      { month: 1, year: 2026, revenue: "0.1", currency: "USD", tenantId: "a" },
+      { month: 2, year: 2026, revenue: "0.2", currency: "USD", tenantId: "b" },
+      { month: 2, year: 2026, revenue: "100000", currency: "VND", tenantId: "a" },
+    ],
+  };
+  assert.equal(propositionRevenueTotal(p), "0.3");
+  assert.equal(propositionRevenueTotal({ ...p, actualMetrics: [] }), "0");
+  assert.equal(propositionRevenueTotal({ ...p, definition: {} }), null);
+  assert.equal(propositionRevenueTotal({ ...p, actualMetrics: [{ quarter: 4, year: 2026, revenue: "100" }] }), "100");
+});
+
+test("monthly actuals sum quantities and negative profit exactly across partners", () => {
+  const rows = normalizeQuarterlyMetrics([
+    { month: 1, year: 2026, totalSalesVolume: "2", revenue: "100", profit: "-1.25", tenantId: "a" },
+    { month: 2, year: 2026, totalSalesVolume: "3", revenue: "150", profit: "0.50", tenantId: "b" },
+  ]);
+  assert.equal(rows[0].quarter, 1);
+  assert.equal(rows[0].totalSalesVolume, "5");
+  assert.equal(rows[0].revenue, "250");
+  assert.equal(rows[0].profit, "-0.75");
+});
 
 test("three years starts at the creation calendar quarter and crosses years", () => {
   const rows = quarterlyRevenueRows([], "2026-11-17T12:00:00Z");
