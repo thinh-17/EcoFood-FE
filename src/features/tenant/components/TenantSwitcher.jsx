@@ -1,13 +1,14 @@
 import "./TenantSwitcher.css";
+import { FeedbackMessage } from "../../../components/FeedbackMessage.jsx";
 
-import { useRef, useState } from "react";
-import { FiLayers } from "react-icons/fi";
+import { useEffect, useRef, useState } from "react";
+import { FiChevronDown, FiLayers } from "react-icons/fi";
 
 import { useAuthStore } from "../../auth/store/authStore.js";
 import { useEligibleTenants } from "../hooks/useEligibleTenants.js";
 
-// hover-open flyout, anchored right, active tenant highlighted
-const CLOSE_DELAY_MS = 200;
+// Presentation only; tenant discovery and switching retain the existing auth flow.
+
 
 export function TenantSwitcher() {
   const currentTenantId = useAuthStore((s) => s.tenantId);
@@ -15,7 +16,17 @@ export function TenantSwitcher() {
   const { data: tenants = [], isLoading, isError } = useEligibleTenants();
   const [isOpen, setIsOpen] = useState(false);
   const [switchingTenantId, setSwitchingTenantId] = useState(null);
-  const closeTimerRef = useRef(null);
+
+  const containerRef = useRef(null);
+  const triggerRef = useRef(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    function outside(event) { if (!event.target.closest?.("[data-core-feedback]") && !containerRef.current?.contains(event.target)) setIsOpen(false); }
+    function escape(event) { if (event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); setIsOpen(false); triggerRef.current?.focus(); } }
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape, true);
+    return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", escape, true); };
+  }, [isOpen]);
 
   const currentTenant = tenants.find((tenant) => tenant.tenantId === currentTenantId);
   const currentTenantLabel = isLoading
@@ -23,15 +34,6 @@ export function TenantSwitcher() {
     : isError
       ? "Failed to load tenant"
       : (currentTenant?.tenantName ?? "Current tenant");
-
-  const openFlyout = () => {
-    clearTimeout(closeTimerRef.current);
-    setIsOpen(true);
-  };
-
-  const scheduleClose = () => {
-    closeTimerRef.current = setTimeout(() => setIsOpen(false), CLOSE_DELAY_MS);
-  };
 
   const handleSelect = async (tenant) => {
     if (tenant.tenantId === currentTenantId || switchingTenantId) {
@@ -50,28 +52,36 @@ export function TenantSwitcher() {
   return (
     <div
       className="eco-tenant-switcher"
-      onMouseEnter={openFlyout}
-      onMouseLeave={scheduleClose}
+      ref={containerRef}
+
+
     >
-      <button type="button" className="eco-sidebar__workspace eco-tenant-switcher__trigger">
+      <button ref={triggerRef} type="button" className="eco-sidebar__workspace eco-tenant-switcher__trigger"
+        title={`Current Tenant: ${currentTenantLabel}`} aria-label={`Current Tenant: ${currentTenantLabel}`}
+        aria-expanded={isOpen} aria-controls={isOpen ? "tenant-switcher-options" : undefined}
+        onClick={() => setIsOpen((value) => !value)}>
         <FiLayers size={19} aria-hidden="true" />
 
         <div className="eco-nav-label eco-tenant-switcher__label">
-          <strong>{currentTenantLabel}</strong>
-          <small>Current tenant</small>
+          <small>Current Tenant</small>
+          <strong>{isLoading ? <CoreLoadingState variant="inline" title="Loading tenant" /> : currentTenantLabel}</strong>
         </div>
+        <FiChevronDown className="eco-tenant-switcher__chevron" size={15} aria-hidden="true" />
       </button>
 
       {isOpen && (
         <div
           className="eco-tenant-switcher__flyout"
-          onMouseEnter={openFlyout}
-          onMouseLeave={scheduleClose}
+          id="tenant-switcher-options"
+
+
         >
           <div className="eco-tenant-switcher__flyout-title">Available tenants</div>
           <div className="eco-tenant-switcher__divider" />
 
           <ul className="eco-tenant-switcher__list">
+            {isLoading && <li className="eco-tenant-switcher__empty"><CoreLoadingState variant="inline" title="Loading tenants" /></li>}
+            {isError && <li className="eco-tenant-switcher__empty"><FeedbackMessage>Failed to load tenants.</FeedbackMessage></li>}
             {!isLoading && tenants.length === 0 && (
               <li className="eco-tenant-switcher__empty">No tenants available</li>
             )}
@@ -101,3 +111,4 @@ export function TenantSwitcher() {
     </div>
   );
 }
+import { CoreLoadingState } from "@thinh-17/fe-core";

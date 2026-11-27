@@ -1,300 +1,96 @@
 import "./MainLayout.css";
-
-import { useMemo, useState } from "react";
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-
-import {
-  FiGrid,
-  FiMenu,
-  FiX,
-  FiChevronDown,
-  FiChevronsLeft,
-  FiChevronsRight,
-} from "react-icons/fi";
-
-import { useDisclosure } from "@thinh-17/fe-core";
-
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { FiX, FiUser, FiLogOut, FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
+import { EcoFoodBrand } from "../../components/EcoFoodBrand.jsx";
 import { navItems } from "../../app/navigation/navItems.js";
 import { filterNavItems } from "../../app/navigation/navAccess.js";
-import { ROUTES } from "../../constants/routes.js";
-
+import { navigationSections, activeNavigationPath } from "../../app/navigation/navSections.js";
 import { useAuthStore } from "../../features/auth/store/authStore.js";
 import { useCurrentRoles } from "../../features/auth/hooks/useCurrentRoles.js";
 import { decodeJwt } from "../../features/auth/lib/jwt.js";
 import { TenantSwitcher } from "../../features/tenant/components/TenantSwitcher.jsx";
+import { NotificationBell } from "../../features/notification/components/NotificationBell.jsx";
+import { SidebarContext } from "./SidebarContext.js";
 
 export function MainLayout() {
   const location = useLocation();
-
-  const mobileMenu = useDisclosure(false);
-
   const [collapsed, setCollapsed] = useState(false);
-
-  const [expandedGroups, setExpandedGroups] = useState({
-    "product-library": true,
-    partner: true,
-    "users-group": true,
-  });
-
-
+  const [mobileRoute, setMobileRoute] = useState(null);
+  const sidebarRef = useRef(null);
+  const openerRef = useRef(null);
   const logout = useAuthStore((s) => s.logout);
-
-  const roles = useCurrentRoles();
   const token = useAuthStore((s) => s.internalAccessToken);
+  const tenantId = useAuthStore((s) => s.tenantId);
+  const roles = useCurrentRoles();
+  const routeScope = location.key + tenantId + token;
+  const mobileOpen = mobileRoute === routeScope;
   const permissions = useMemo(() => {
     try { return decodeJwt(token).permissions || []; } catch { return []; }
   }, [token]);
-  const visibleNavItems = useMemo(
-    () => filterNavItems(navItems, roles, permissions),
-    [roles, permissions]
-  );
+  const sections = navigationSections(filterNavItems(navItems, roles, permissions));
+  const activePath = activeNavigationPath(location.pathname, [...sections.flatMap((section) => section.items), { to: "/account" }]);
+  function closeMobile() { setMobileRoute(null); openerRef.current?.focus(); }
+  function openMobile() { openerRef.current = document.activeElement; setMobileRoute(routeScope); }
 
-  const allLinks = visibleNavItems.flatMap((item) =>
-    item.children ?? [item]
-  );
-
-  const currentPage = allLinks.find(
-    (item) => item.to === location.pathname
-  );
-
-  const toggleGroup = (id) => {
-    setExpandedGroups((previous) => ({
-      ...previous,
-      [id]: !previous[id],
-    }));
-  };
-
-  const closeMobileMenu = () => {
-    mobileMenu.close();
-  };
-
-  const renderNavItem = (item) => {
-    const Icon = item.icon;
-
-    if (item.children) {
-      const isExpanded = expandedGroups[item.id] ?? false;
-
-      const isGroupActive = item.children.some(
-        (child) => child.to === location.pathname
-      );
-
-      return (
-        <div
-          key={item.id}
-          className={`eco-nav-group ${
-            isGroupActive ? "eco-nav-group--active" : ""
-          }`}
-        >
-          <button
-            type="button"
-            className="eco-nav-group__trigger"
-            aria-expanded={isExpanded}
-            aria-controls={`eco-submenu-${item.id}`}
-            onClick={() => toggleGroup(item.id)}
-            title={item.label}
-          >
-            <Icon size={19} aria-hidden="true" />
-
-            <span className="eco-nav-label">
-              {item.label}
-            </span>
-
-            <FiChevronDown
-              size={15}
-              aria-hidden="true"
-              className={`eco-nav-chevron ${
-                isExpanded ? "eco-nav-chevron--open" : ""
-              }`}
-            />
-          </button>
-
-          {isExpanded && (
-            <div
-              id={`eco-submenu-${item.id}`}
-              className="eco-submenu"
-            >
-              {item.children.map((child) => {
-                const ChildIcon = child.icon;
-
-                if (child.action === "logout") {
-                  return (
-                    <button
-                      key={child.id}
-                      type="button"
-                      className="eco-submenu__link"
-                      title={child.label}
-                      onClick={() => {
-                        closeMobileMenu();
-                        logout();
-                      }}
-                    >
-                      <ChildIcon
-                        size={16}
-                        aria-hidden="true"
-                      />
-
-                      <span className="eco-nav-label">
-                        {child.label}
-                      </span>
-                    </button>
-                  );
-                }
-
-                return (
-                  <NavLink
-                    key={child.id}
-                    to={child.to}
-                    end
-                    onClick={closeMobileMenu}
-                    title={child.label}
-                    className={({ isActive }) =>
-                      `eco-submenu__link ${
-                        isActive ? "eco-nav-link--active" : ""
-                      }`
-                    }
-                  >
-                    <ChildIcon
-                      size={16}
-                      aria-hidden="true"
-                    />
-
-                    <span className="eco-nav-label">
-                      {child.label}
-                    </span>
-                  </NavLink>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      );
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    sidebarRef.current?.querySelector("a, button")?.focus();
+    function keydown(event) {
+      if (event.key === "Escape") { event.preventDefault(); closeMobile(); }
+      if (event.key !== "Tab") return;
+      const focusable = [...sidebarRef.current.querySelectorAll('a[href], button:not(:disabled), [tabindex="0"]')]
+        .filter((element) => element.getClientRects().length);
+      const first = focusable[0], last = focusable.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
     }
-
-    return (
-      <NavLink
-        key={item.id}
-        to={item.to}
-        end
-        title={item.label}
-        onClick={closeMobileMenu}
-        className={({ isActive }) =>
-          `eco-nav-link ${
-            isActive ? "eco-nav-link--active" : ""
-          }`
-        }
-      >
-        <Icon size={19} aria-hidden="true" />
-
-        <span className="eco-nav-label">
-          {item.label}
-        </span>
-      </NavLink>
-    );
-  };
-
-  return (
-    <div
-      className={[
-        "eco-shell",
-        collapsed ? "eco-shell--collapsed" : "",
-        mobileMenu.isOpen ? "eco-shell--mobile-open" : "",
-      ].filter(Boolean).join(" ")}
-    >
-      {mobileMenu.isOpen && (
-        <button
-          type="button"
-          className="eco-overlay"
-          aria-label="Close menu"
-          onClick={mobileMenu.close}
-        />
-      )}
-
-      <aside className="eco-sidebar">
+    document.addEventListener("keydown", keydown);
+    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", keydown); };
+  }, [mobileOpen]);
+  return <SidebarContext.Provider value={{ mobileOpen, openMobile }}>
+    <div className={`eco-shell eco-admin-shell${collapsed ? " eco-shell--collapsed" : ""}${mobileOpen ? " eco-shell--mobile-open" : ""}`}>
+      <a className="eco-skip-link" href="#admin-content">Skip to content</a>
+      {mobileOpen && <button type="button" className="eco-overlay" aria-label="Close navigation" onClick={closeMobile} />}
+      <aside id="admin-sidebar" ref={sidebarRef} className="eco-sidebar" aria-label="Administrative workspace">
         <div className="eco-sidebar__brand">
-          <Link
-            to={ROUTES.HOME}
-            className="eco-brand"
-            onClick={closeMobileMenu}
-          >
-            <span className="eco-brand__icon">
-              <FiGrid size={22} />
-            </span>
-
-            <span className="eco-brand__name eco-nav-label">
-              <strong>EcoFood</strong>
-              <small>MULTI-TENANT PLATFORM</small>
-            </span>
+          <Link to="/" className="eco-brand" title="EcoFood Home" aria-label="EcoFood Home" onClick={() => setMobileRoute(null)}>
+            <EcoFoodBrand />
           </Link>
-
-          <button
-            type="button"
-            className="eco-sidebar__collapse"
-            aria-label={
-              collapsed ? "Expand sidebar" : "Collapse sidebar"
-            }
-            onClick={() => setCollapsed((value) => !value)}
-          >
-            {collapsed ? (
-              <FiChevronsRight size={18} />
-            ) : (
-              <FiChevronsLeft size={18} />
-            )}
-          </button>
+          <NotificationBell key={`${location.key}:${tenantId}:${token}`} />
+          <button type="button" className="eco-drawer-close" aria-label="Close navigation" onClick={closeMobile}><FiX size={18} /></button>
         </div>
-
-        <nav
-          className="eco-sidebar__nav"
-          aria-label="Main navigation"
-        >
-          <span className="eco-sidebar__caption eco-nav-label">
-            WORKSPACE
-          </span>
-
-          {visibleNavItems.map(renderNavItem)}
+        <button type="button" className="eco-sidebar__collapse" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-controls="admin-sidebar" aria-expanded={!collapsed} onClick={() => setCollapsed((value) => !value)}>
+          {collapsed ? <FiChevronsRight size={16} /> : <FiChevronsLeft size={16} />}<span className="eco-nav-label">Collapse sidebar</span>
+        </button>
+        <nav className="eco-sidebar__nav" aria-label="Main navigation">
+          {sections.map((section) => <section className="eco-sidebar-section" key={section.id} aria-label={section.label}>
+            <h2 className="eco-sidebar__caption">{section.label}</h2>
+            {section.items.map((item) => {
+              const Icon = item.icon;
+              return <Link key={item.id} to={item.to} title={item.label} aria-label={item.label}
+                aria-current={activePath === item.to ? "page" : undefined}
+                onClick={() => setMobileRoute(null)} className={`eco-nav-link${activePath === item.to ? " eco-nav-link--active" : ""}`}>
+                <Icon size={18} aria-hidden="true" /><span className="eco-nav-label">{item.label}</span>
+              </Link>;
+            })}
+          </section>)}
         </nav>
-
-        <div className="eco-sidebar__footer">
+        <footer className="eco-sidebar__footer">
+          <Link to="/account" title="Account" aria-label="Account" aria-current={activePath === "/account" ? "page" : undefined} onClick={() => setMobileRoute(null)}
+            className={`eco-nav-link${activePath === "/account" ? " eco-nav-link--active" : ""}`}>
+            <FiUser size={18} aria-hidden="true" /><span className="eco-nav-label">Account</span>
+          </Link>
           <TenantSwitcher />
-        </div>
+          <button type="button" title="Log out" aria-label="Log out" className="eco-nav-link" onClick={() => { setMobileRoute(null); logout(); }}>
+            <FiLogOut size={18} aria-hidden="true" /><span className="eco-nav-label">Log out</span>
+          </button>
+        </footer>
       </aside>
-
-      <div className="eco-body">
-        <header className="eco-topbar">
-          <div className="eco-topbar__left">
-            <button
-              type="button"
-              className="eco-mobile-toggle"
-              aria-label={
-                mobileMenu.isOpen ? "Close sidebar" : "Open sidebar"
-              }
-              aria-expanded={mobileMenu.isOpen}
-              onClick={mobileMenu.toggle}
-            >
-              {mobileMenu.isOpen ? <FiX /> : <FiMenu />}
-            </button>
-
-            <div className="eco-breadcrumb">
-              <span>Workspace</span>
-              <span aria-hidden="true">/</span>
-              <strong>{currentPage?.label ?? "Home"}</strong>
-            </div>
-          </div>
-
-          <div className="eco-topbar__right">
-            <div
-              className="eco-user-avatar"
-              title="Demo account"
-              aria-label="Demo account"
-            >
-              DU
-            </div>
-          </div>
-        </header>
-
-        <main className="eco-content">
-          <Outlet />
-        </main>
-      </div>
+      <div className="eco-body"><main id="admin-content" className="eco-content" tabIndex={-1}><Outlet /></main></div>
     </div>
-  );
+  </SidebarContext.Provider>;
 }

@@ -1,7 +1,9 @@
+import { FeedbackMessage } from "../../../components/FeedbackMessage.jsx";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
-import { CorePageHeader, CoreSelect, CoreTable } from "@thinh-17/fe-core";
+import { CoreSelect, CoreTable } from "@thinh-17/fe-core";
+import { PageHeader as CorePageHeader } from "../../../components/PageHeader.jsx";
 import { FiFilter, FiMoreHorizontal, FiPlus, FiSearch } from "react-icons/fi";
 import { ROUTES } from "../../../constants/routes.js";
 import { useAuthStore } from "../../auth/store/authStore.js";
@@ -9,7 +11,7 @@ import { useCurrentRoles } from "../../auth/hooks/useCurrentRoles.js";
 import { useDebouncedValue } from "../../../hooks/useDebouncedValue.js";
 import { listProducts } from "../api/product.api.js";
 import { canManageProducts, canViewProducts, PRODUCT_STATUSES, PRODUCT_TYPES, productDate, productError } from "../lib/product.js";
-import { ProductStatus } from "./ProductStatus.jsx";
+import { ProductStatus } from "../components/ProductStatus.jsx";
 import "./ProductListPage.css";
 
 const PAGE_SIZE = 20;
@@ -57,21 +59,19 @@ function ProductDirectory({ scope, canManage }) {
     { id: "actions", header: "Actions", cell: ({ row }) => <button className="product-more" aria-label={`View details and actions for ${row.original.name}`} title="Details and actions" onClick={() => navigate(`${ROUTES.PRODUCTS}/${row.original.id}`)}><FiMoreHorizontal /></button> },
   ], [navigate]);
   return <section className="product-page" aria-label="Products">
-    <header className="product-header">
-      <div><h1>Products</h1><p>Manage product catalog, versions and lifecycle.</p></div>
+    <CorePageHeader title="Products" description="Manage product catalog, versions and lifecycle."
+      aside={canManage && <button className="product-primary" onClick={() => navigate(ROUTES.PRODUCT_NEW)}><FiPlus />Create Product</button>} />
       <div className="product-toolbar">
         <label className="product-search"><span className="product-sr-only">Search products</span><input type="search" placeholder="Search name or code..." value={search} onChange={(event) => { setSearch(event.target.value); setPage(0); }} /><FiSearch aria-hidden="true" /></label>
         <button className={type || status ? "product-filter-active" : ""} aria-expanded={filtersOpen} aria-controls="product-filters" onClick={() => setFiltersOpen(!filtersOpen)}><FiFilter />Filter{type || status ? " (active)" : ""}</button>
-        {canManage && <button className="product-primary" onClick={() => navigate(ROUTES.PRODUCT_NEW)}><FiPlus />Create Product</button>}
       </div>
-    </header>
     {filtersOpen && <div className="product-filters" id="product-filters">
       <label>Product type<CoreSelect value={type} onChange={(value) => { setType(value); setPage(0); }} options={[{ value: "", label: "All types" }, ...Object.entries(PRODUCT_TYPES).map(([value, label]) => ({ value, label }))]} /></label>
       <label>Status<CoreSelect value={status} onChange={(value) => { setStatus(value); setPage(0); }} options={[{ value: "", label: "All statuses" }, ...Object.entries(PRODUCT_STATUSES).map(([value, label]) => ({ value, label }))]} /></label>
       <button onClick={() => { setType(""); setStatus(""); setSearch(""); setPage(0); }}>Clear filters</button>
     </div>}
     {notice && <div className="product-notice" role="status">{notice}<button aria-label="Dismiss notification" onClick={() => setNotice("")}>×</button></div>}
-    {query.isError && <div className="product-error" role="alert">{productError(query.error)} <button onClick={() => query.refetch()}>Retry</button></div>}
+    {query.isError && <FeedbackMessage error={query.error}>{productError(query.error)} <button onClick={() => query.refetch()}>Retry</button></FeedbackMessage>}
     <fieldset className="product-directory-table" disabled={busy || query.isError} aria-busy={busy}>
       <CoreTable
         columns={columns}

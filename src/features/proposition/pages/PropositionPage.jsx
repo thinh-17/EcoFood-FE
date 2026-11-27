@@ -1,3 +1,5 @@
+import { FeedbackMessage } from "../../../components/FeedbackMessage.jsx";
+import { CoreLoadingState } from "@thinh-17/fe-core";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
@@ -5,12 +7,9 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import {
-  CoreButton,
-  CoreCard,
-  CorePageHeader,
-  CoreTable,
-} from "@thinh-17/fe-core";
+import { CoreCard, CoreTable } from "@thinh-17/fe-core";
+import { CoreButton } from "@thinh-17/fe-core";
+import { PageHeader as CorePageHeader } from "../../../components/PageHeader.jsx";
 import { useAuthStore } from "../../auth/store/authStore.js";
 import { useCurrentRoles } from "../../auth/hooks/useCurrentRoles.js";
 import { useDebouncedValue } from "../../../hooks/useDebouncedValue.js";
@@ -24,10 +23,10 @@ import {
   errorMessage,
   showDate,
 } from "../lib/proposition.js";
-import { PropositionForm } from "./PropositionForm.jsx";
-import { PropositionDetail } from "./PropositionDetail.jsx";
-import { PlanForm } from "./PlanForm.jsx";
-import { PlanDetail } from "./PlanDetail.jsx";
+import { PropositionForm } from "../components/PropositionForm.jsx";
+import { PropositionDetail } from "../components/PropositionDetail.jsx";
+import { PlanForm } from "../components/PlanForm.jsx";
+import { PlanDetail } from "../components/PlanDetail.jsx";
 import { isEnterpriseSaleOrchestratorActor } from "../../orchestrator/lib/planSale.js";
 import { SaleOrchestratorEditor } from "../../orchestrator/pages/PlanSaleOrchestrator.jsx";
 import "./PropositionPage.css";
@@ -145,6 +144,8 @@ export function PropositionDirectory({ scope }) {
     <section className="prop-page">
       <CorePageHeader
         title={title}
+        onBack={view !== "list" ? () => setView("list") : undefined}
+        backLabel="Back to propositions"
         description="Commercial proposals, partner Plans and market pricing for approved product versions."
       />
       {notice && (
@@ -160,7 +161,7 @@ export function PropositionDirectory({ scope }) {
           </CoreButton>
         </div>
       )}
-      {options.isPending && <p role="status">Loading permissions...</p>}
+      {options.isPending && <CoreLoadingState title="Loading permissions" />}
       {options.isError && (
         <ErrorState error={options.error} retry={options.refetch} />
       )}
@@ -174,12 +175,9 @@ export function PropositionDirectory({ scope }) {
       )}
       {["detail", "edit", "plan", "sale-orchestrator"].includes(view) && (
         <>
-          {detail.isPending && <p role="status">Loading Proposition...</p>}
+          {detail.isPending && <CoreLoadingState title="Loading Proposition" />}
           {detail.isError && (
             <>
-              <CoreButton variant="secondary" onClick={() => setView("list")}>
-                Back to list
-              </CoreButton>
               <ErrorState error={detail.error} retry={detail.refetch} />
             </>
           )}
@@ -297,11 +295,11 @@ export function PropositionDirectory({ scope }) {
 }
 function ErrorState({ error, retry }) {
   return (
-    <p className="prop-error" role="alert">
+    <FeedbackMessage error={error}>
       {errorMessage(error)}{" "}
       <CoreButton variant="ghost" size="sm" onClick={() => retry()}>
         Retry
       </CoreButton>
-    </p>
+    </FeedbackMessage>
   );
 }

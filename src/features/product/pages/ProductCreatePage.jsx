@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { CorePageHeader } from "@thinh-17/fe-core";
+
+import { PageHeader as CorePageHeader } from "../../../components/PageHeader.jsx";
 import { ROUTES } from "../../../constants/routes.js";
 import { useAuthStore } from "../../auth/store/authStore.js";
-import { ProductForm } from "./ProductForm.jsx";
+import { ProductForm } from "../components/ProductForm.jsx";
 
 export function ProductCreatePage() {
   const navigate = useNavigate();

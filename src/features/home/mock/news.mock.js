@@ -2,9 +2,9 @@ export const newsMock = [
   {
     id: "news-001",
     category: "Ecosystem",
-    title: "Phát triển hệ sinh thái F&B bền vững",
+    title: "Building a sustainable F&B ecosystem",
     summary:
-      "Khám phá định hướng kết nối doanh nghiệp, đối tác và các đơn vị vận hành trong một nền tảng quản lý thống nhất.",
+      "Explore how businesses, partners and operators connect through one unified management platform.",
     source: "EcoFood Editorial",
     publishedAt: "2026-10-14T09:00:00+07:00",
     image:
@@ -14,9 +14,9 @@ export const newsMock = [
   {
     id: "news-002",
     category: "Product",
-    title: "Xây dựng thư viện sản phẩm tập trung",
+    title: "Building a centralized product library",
     summary:
-      "Thư viện sản phẩm giúp doanh nghiệp quản lý thông tin sản phẩm một cách nhất quán và dễ dàng mở rộng.",
+      "A product library helps businesses manage consistent product information as they grow.",
     source: "EcoFood Editorial",
     publishedAt: "2026-10-13T10:30:00+07:00",
     image:
@@ -26,9 +26,9 @@ export const newsMock = [
   {
     id: "news-003",
     category: "Management",
-    title: "Tối ưu quy trình quản lý hoạt động",
+    title: "Optimizing operational management",
     summary:
-      "Những phương pháp giúp doanh nghiệp cải thiện hiệu suất và nâng cao khả năng giám sát hoạt động.",
+      "Methods for improving business performance and operational oversight.",
     source: "EcoFood Editorial",
     publishedAt: "2026-10-12T14:15:00+07:00",
     image:
@@ -38,9 +38,9 @@ export const newsMock = [
   {
     id: "news-004",
     category: "Partner",
-    title: "Kết nối đối tác trong hệ sinh thái EcoFood",
+    title: "Connecting partners in the EcoFood ecosystem",
     summary:
-      "Đơn giản hóa quy trình hợp tác và onboarding để các đối tác có thể tham gia hệ sinh thái thuận tiện hơn.",
+      "Simplify collaboration and onboarding so partners can join the ecosystem more easily.",
     source: "EcoFood Editorial",
     publishedAt: "2026-10-11T08:00:00+07:00",
     image:
@@ -50,9 +50,9 @@ export const newsMock = [
   {
     id: "news-005",
     category: "Technology",
-    title: "Multi-tenant Architecture trong nền tảng doanh nghiệp",
+    title: "Multi-tenant architecture for enterprise platforms",
     summary:
-      "Tìm hiểu cách một ứng dụng phục vụ nhiều tổ chức với dữ liệu và chính sách truy cập được quản lý độc lập.",
+      "Learn how one application serves multiple organizations with independent data and access policies.",
     source: "EcoFood Editorial",
     publishedAt: "2026-10-10T09:30:00+07:00",
     image:

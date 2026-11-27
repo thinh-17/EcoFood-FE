@@ -4,8 +4,11 @@ import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { ROUTES } from "../../constants/routes.js";
+import { NotFoundPage } from "../../pages/NotFoundPage/NotFoundPage.jsx";
+import { LoadingPage } from "../../pages/LoadingPage/LoadingPage.jsx";
 
 import { MainLayout } from "../../layouts/MainLayout/MainLayout.jsx";
+import { CustomerLayout } from "../../layouts/CustomerLayout/CustomerLayout.jsx";
 
 import { HomePage } from "../../features/home/pages/HomePage/HomePage.jsx";
 import { useAuthStore } from "../../features/auth/store/authStore.js";
@@ -16,7 +19,7 @@ import { ProductListPage } from "../../features/product/pages/ProductListPage.js
 import { ProductCreatePage } from "../../features/product/pages/ProductCreatePage.jsx";
 import { ProductDetailPage } from "../../features/product/pages/ProductDetailPage.jsx";
 import { PropositionPage } from "../../features/proposition/pages/PropositionPage.jsx";
-import { NotificationPage } from "../../features/notification/NotificationPage.jsx";
+import { NotificationPage } from "../../features/notification/pages/NotificationPage.jsx";
 
 import { TenantOnboardingPage } from "../../features/tenant/pages/TenantOnboardingPage/TenantOnboardingPage.jsx";
 import { TenantListPage } from "../../features/tenant/pages/TenantListPage/TenantListPage.jsx";
@@ -39,13 +42,14 @@ import { RequireRolesAndPermissionsAccess } from "../../features/auth/components
 import { RequireUsersAccess } from "../../features/auth/components/RequireUsersAccess.jsx";
 import { CallbackPage } from "../../features/auth/pages/CallbackPage.jsx";
 import { AuthHandoffPage } from "../../features/auth/pages/AuthHandoffPage.jsx";
-import { CustomerLoginPage, CustomerCallbackPage, CustomerPortalPage, ReceiptPage } from "../../features/customer/CustomerPages.jsx";
-import { CustomerCarePage, ComplaintManagementPage } from "../../features/complaint/ComplaintPage.jsx";
-import { CatalogPage } from "../../features/catalog/CatalogPage.jsx";
+import { CustomerLoginPage, CustomerCallbackPage, CustomerPortalPage, ReceiptPage } from "../../features/customer/pages/CustomerPages.jsx";
+import { CustomerProfilePage } from "../../features/customer/pages/CustomerProfilePage/CustomerProfilePage.jsx";
+import { CustomerCarePage, ComplaintManagementPage } from "../../features/complaint/pages/ComplaintPage.jsx";
+import { CatalogPage } from "../../features/catalog/pages/CatalogPage.jsx";
 import { AuditLogPage } from "../../features/audit/pages/AuditLogPage.jsx";
 
-const BusinessDashboardPage = lazy(() => import("../../features/dashboard/pages/BusinessDashboardPage.jsx")
-  .then((module) => ({ default: module.BusinessDashboardPage })));
+const ManagerPage = lazy(() => import("../../features/manager/pages/ManagerPage.jsx")
+  .then((module) => ({ default: module.ManagerPage })));
 
 /** A Customer who ends up on the staff shell's "/" (same internalAccessToken as everyone else) belongs on their own portal, not the staff Home. */
 function HomeRoute() {
@@ -63,12 +67,16 @@ export function AppRouter() {
   const location = useLocation();
   return (
     <Routes>
+      <Route path="404" element={<NotFoundPage />} />
       <Route path="receipt" element={<ReceiptPage />} />
       <Route path="customer/login" element={<CustomerLoginPage />} />
       <Route path="customer/callback" element={<CustomerCallbackPage />} />
-      <Route path="customer" element={<CustomerPortalPage />} />
-      <Route path="customer/complaints" element={<CustomerCarePage />} />
-      <Route path="customer/invoices/:invoiceId" element={<CustomerPortalPage />} />
+      <Route element={<CustomerLayout />}>
+        <Route path="customer" element={<CustomerPortalPage />} />
+        <Route path="customer/profile" element={<CustomerProfilePage />} />
+        <Route path="customer/complaints" element={<CustomerCarePage />} />
+        <Route path="customer/invoices/:invoiceId" element={<CustomerPortalPage />} />
+      </Route>
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/auth-handoff" element={<AuthHandoffPage />} />
 
@@ -119,7 +127,7 @@ export function AppRouter() {
 
         <Route
           path="manager"
-          element={<Suspense fallback={<p role="status">Đang tải Dashboard…</p>}><BusinessDashboardPage /></Suspense>}
+          element={<Suspense fallback={<LoadingPage title="Loading Manager" />}><ManagerPage /></Suspense>}
         />
 
         <Route

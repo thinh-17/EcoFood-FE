@@ -32,7 +32,7 @@
 
 .dar-section {
   background: var(--fnb-paper, #fff);
-  border: 1px solid var(--fnb-line, #e9eded);
+  border: 1px solid var(--fnb-line, #e5eaf1);
   border-radius: 12px;
   padding: 20px 22px;
   display: flex;
@@ -44,13 +44,13 @@
   margin: 0;
   font-size: 15px;
   font-weight: 700;
-  color: var(--fnb-ink, #1b2933);
+  color: var(--fnb-ink, #17263b);
 }
 
 .dar-section__description {
   margin: -10px 0 0;
   font-size: 13px;
-  color: var(--fnb-muted, #74818a);
+  color: var(--fnb-muted, #64748b);
 }
 
 .dar-radio-option {
@@ -59,7 +59,7 @@
   gap: 10px;
   cursor: pointer;
   font-size: 13px;
-  color: var(--fnb-ink, #1b2933);
+  color: var(--fnb-ink, #17263b);
 }
 
 .dar-radio-option input[type="radio"] {
@@ -79,7 +79,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--fnb-muted, #74818a);
+  color: var(--fnb-muted, #64748b);
   font-size: 12px;
   margin-top: 2px;
 }
@@ -99,3 +99,6 @@
   justify-content: flex-end;
   gap: 12px;
 }
+
+.dar-section { padding: 24px; border-radius: 8px; }.dar-section__title { font-size: 16px; font-weight: 600; }
+@media (max-width: 600px) { .dar-section { padding: 16px; } }

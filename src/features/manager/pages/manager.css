@@ -1,0 +1,2 @@
+.manager-tabs { margin-bottom: 24px; }.manager-loading, .manager-denied { padding: 24px 0; }
+@media (max-width: 800px) { .manager-tabs { padding-left: 48px; } }

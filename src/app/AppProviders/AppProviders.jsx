@@ -2,6 +2,7 @@ import "./AppProviders.css";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
+import { CoreFeedbackProvider } from "@thinh-17/fe-core";
 
 import { queryClient } from "../queryClient.js";
 
@@ -13,11 +14,13 @@ export function AppProviders({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <CoreFeedbackProvider>
         <AuthBootstrap>
           <TenantProvider>
             {children}
           </TenantProvider>
         </AuthBootstrap>
+        </CoreFeedbackProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );

@@ -1,21 +1,20 @@
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
+import { CoreLoadingState } from "@thinh-17/fe-core";
 import "./HomePage.css";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import {
     FiLayers,
     FiInbox,
     FiAlertCircle,
     FiBookOpen,
-    FiChevronLeft,
-    FiChevronRight,
 } from "react-icons/fi";
 
-import {
-    CoreButton,
-    CorePageHeader,
-    CoreEmptyState,
-} from "@thinh-17/fe-core";
+import { CoreEmptyState } from "@thinh-17/fe-core";
+import { CoreButton } from "@thinh-17/fe-core";
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
+import { CorePagination as Pagination } from "@thinh-17/fe-core";
 
 import { useActiveTenant } from
     "../../../tenant/context/TenantProvider.jsx";
@@ -25,7 +24,7 @@ import { useNews } from "../../hooks/useNews.js";
 const ALL_CATEGORY = "All";
 
 function formatDate(value) {
-    return new Intl.DateTimeFormat("vi-VN", {
+    return new Intl.DateTimeFormat("en-US", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
@@ -43,7 +42,7 @@ function NewsCard({ article }) {
                 />
             </div>
 
-            <div className="eco-news-card__overlay" />
+
 
             <div className="eco-news-card__content">
                 <span className="eco-news-card__category">
@@ -69,68 +68,18 @@ function NewsCard({ article }) {
 }
 
 function NewsCarousel({ articles }) {
-    const carouselRef = useRef(null);
-
-    const scroll = (direction) => {
-        const container = carouselRef.current;
-
-        if (!container) return;
-
-        const firstCard = container.querySelector(
-            ".eco-news-card"
-        );
-
-        if (!firstCard) return;
-
-        const styles = window.getComputedStyle(container);
-        const gap = parseFloat(styles.columnGap) || 0;
-
-        const distance = firstCard.getBoundingClientRect().width + gap;
-
-        container.scrollBy({
-            left: direction * distance,
-            behavior: "smooth",
-        });
-    };
-
+    const [page, setPage] = useState(0);
+    const pageSize = 6;
+    const totalPages = Math.ceil(articles.length / pageSize);
+    const currentPage = Math.min(page, Math.max(0, totalPages - 1));
     if (!articles.length) return null;
-
-    return (
-        <div className="eco-news-carousel">
-            <button
-                type="button"
-                className="eco-news-carousel__arrow eco-news-carousel__arrow--left"
-                aria-label="Xem bản tin trước"
-                onClick={() => scroll(-1)}
-            >
-                <FiChevronLeft size={22} />
-            </button>
-
-            <div
-                ref={carouselRef}
-                className="eco-news-carousel__track"
-                aria-label="Danh sách bản tin"
-            >
-                {articles.map((article) => (
-                    <NewsCard
-                        key={article.id}
-                        article={article}
-                    />
-                ))}
-            </div>
-
-            <button
-                type="button"
-                className="eco-news-carousel__arrow eco-news-carousel__arrow--right"
-                aria-label="Xem bản tin tiếp theo"
-                onClick={() => scroll(1)}
-            >
-                <FiChevronRight size={22} />
-            </button>
+    return <div className="eco-news-carousel">
+        <div className="eco-home__news-grid" aria-label="News articles">
+            {articles.slice(currentPage * pageSize, (currentPage + 1) * pageSize).map((article) => <NewsCard key={article.id} article={article} />)}
         </div>
-    );
+        <Pagination page={currentPage} totalPages={totalPages} hasNext={currentPage + 1 < totalPages} onPageChange={setPage} label="News pagination" />
+    </div>;
 }
-
 export function HomePage() {
     const {
         tenantId,
@@ -164,8 +113,8 @@ export function HomePage() {
                 eyebrow="EcoFood Platform / Home"
                 title="Welcome to EcoFood"
                 description={
-                    "Khám phá những thông tin, kiến thức và cập nhật " +
-                    "mới nhất từ hệ sinh thái EcoFood."
+                    "Discover the latest news, insights and updates " +
+                    "from the EcoFood ecosystem."
                 }
                 aside={
                     selectedTenant && (
@@ -184,12 +133,12 @@ export function HomePage() {
                         LATEST UPDATES
                     </span>
 
-                    <h2>Thông tin từ hệ sinh thái</h2>
+                    <h2>From the ecosystem</h2>
 
                     <p>
-                        Cập nhật những bài viết, thông báo và kiến thức
-                        hữu ích dành cho cộng đồng doanh nghiệp và
-                        các đối tác trên nền tảng.
+                        Explore articles, announcements and insights
+                        for our business community and
+                        partners across the platform.
                     </p>
                 </div>
 
@@ -199,19 +148,18 @@ export function HomePage() {
             </section>
 
             {!tenantId && (
+                tenantsQuery.isLoading ? <CoreLoadingState title="Loading tenant information" /> :
                 <CoreEmptyState
                     icon={FiLayers}
                     title={
-                        tenantsQuery.isLoading
-                            ? "Đang tải thông tin tenant"
-                            : tenantsQuery.isError
-                                ? "Không thể tải tenant"
-                                : "Chưa có tenant khả dụng"
+                        tenantsQuery.isError
+                                ? "Unable to load tenant"
+                                : "No tenants available"
                     }
                     description={
                         tenantsQuery.isError
-                            ? "Kiểm tra kết nối backend hoặc bật mock API."
-                            : "Cần có tenant hợp lệ để tải bản tin của workspace."
+                            ? "Check the backend connection or enable the demo API."
+                            : "Select a valid tenant to load workspace news."
                     }
                 />
             )}
@@ -220,10 +168,10 @@ export function HomePage() {
                 <>
                     <div className="eco-home__section-header">
                         <div>
-                            <h2>Bản tin mới nhất</h2>
+                            <h2>Latest news</h2>
 
                             <p>
-                                Thông tin và cập nhật từ EcoFood Platform
+                                News and updates from EcoFood Platform
                             </p>
                         </div>
 
@@ -235,7 +183,7 @@ export function HomePage() {
                     <div
                         className="eco-home__filters"
                         role="group"
-                        aria-label="Lọc bản tin theo danh mục"
+                        aria-label="Filter news by category"
                     >
                         {categories.map((item) => (
                             <CoreButton
@@ -247,29 +195,21 @@ export function HomePage() {
                                 aria-pressed={category === item}
                                 onClick={() => setCategory(item)}
                             >
-                                {item === ALL_CATEGORY ? "Tất cả" : item}
+                                {item === ALL_CATEGORY ? "All" : item}
                             </CoreButton>
                         ))}
                     </div>
 
                     {isPending && (
-                        <div
-                            className="eco-home__message"
-                            role="status"
-                        >
-                            Đang tải bản tin...
-                        </div>
+                        <CoreLoadingState title="Loading news" />
                     )}
 
                     {isError && (
-                        <div
-                            className="eco-home__error"
-                            role="alert"
-                        >
+                        <FeedbackMessage>
                             <FiAlertCircle size={18} />
 
-                            Không thể tải bản tin. Vui lòng kiểm tra API.
-                        </div>
+                            Unable to load news. Please check the API connection.
+                        </FeedbackMessage>
                     )}
 
                     {!isPending &&
@@ -277,15 +217,15 @@ export function HomePage() {
                         filteredArticles.length === 0 && (
                             <CoreEmptyState
                                 icon={FiInbox}
-                                title="Chưa có bản tin"
-                                description="Chưa có bài viết nào trong danh mục này."
+                                title="No news yet"
+                                description="No articles in this category yet."
                             />
                         )}
 
                     {!isPending &&
                         !isError &&
                         filteredArticles.length > 0 && (
-                            <NewsCarousel articles={filteredArticles} />
+                            <NewsCarousel key={category} articles={filteredArticles} />
                         )}
                 </>
             )}
@@ -294,7 +234,7 @@ export function HomePage() {
                 <span>EcoFood Multi-tenant Platform</span>
 
                 <span>
-                    Giao diện bản tin dùng chung cho mọi tenant
+                    A shared news feed for every tenant
                 </span>
             </footer>
         </div>

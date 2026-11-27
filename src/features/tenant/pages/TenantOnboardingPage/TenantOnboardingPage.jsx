@@ -1,9 +1,12 @@
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
 import "./TenantOnboardingPage.css";
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CoreFormActions, CorePageHeader, CoreSelect } from "@thinh-17/fe-core";
+import { CoreSelect } from "@thinh-17/fe-core";
+import { CoreFormActions } from "@thinh-17/fe-core";
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 
 import { COUNTRIES } from "../../../../constants/countries.js";
 import { ROUTES } from "../../../../constants/routes.js";
@@ -386,9 +389,9 @@ export function TenantOnboardingPage() {
         </p>
       )}
       {submitError && (
-        <p className="tob-error" role="alert">
+        <FeedbackMessage>
           {submitError}
-        </p>
+        </FeedbackMessage>
       )}
 
       <form className="tob-form" onSubmit={handleSubmit} noValidate>

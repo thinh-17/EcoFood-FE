@@ -1,11 +1,14 @@
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CoreButton, CoreCard, CoreModal, CorePageHeader, CoreTable, useDisclosure } from "@thinh-17/fe-core";
+import { CoreCard, CoreModal, CoreTable, useDisclosure } from "@thinh-17/fe-core";
+import { CoreButton } from "@thinh-17/fe-core";
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 
 import { ROUTES } from "../../../../constants/routes.js";
 import { usePermissionDirectory } from "../../hooks/usePermissionDirectory.js";
-import { PermissionCreateForm } from "./PermissionCreateForm.jsx";
+import { PermissionCreateForm } from "../../components/PermissionCreateForm.jsx";
 import "./PermissionListPage.css";
 
 const COLUMNS = [{ accessorKey: "name", header: "Name" }];
@@ -31,9 +34,9 @@ export function PermissionListPage() {
       />
 
       {isError && (
-        <p className="permission-list__error" role="alert">
+        <FeedbackMessage error={error}>
           {error?.response?.data?.message || "Failed to load permissions."}
-        </p>
+        </FeedbackMessage>
       )}
 
       <CoreCard>

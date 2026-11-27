@@ -1,3 +1,5 @@
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
+import { CoreLoadingState } from "@thinh-17/fe-core";
 import "./DashboardPage.css";
 import { useEffect, useState } from "react";
 import {
@@ -8,14 +10,14 @@ import {
 import { useMyTenants } from "../../../tenant/hooks/useMyTenants.js";
 import { useDashboard } from "../../hooks/useDashboard.js";
 import { getDashboardArticles } from "../../api/dashboard.api.js";
-import { DashboardBuilder } from "./components/DashboardBuilder/DashboardBuilder.jsx";
-import { InsightsCarousel } from "./components/InsightsCarousel/InsightsCarousel.jsx";
+import { DashboardBuilder } from "../../components/DashboardBuilder/DashboardBuilder.jsx";
+import { InsightsCarousel } from "../../components/InsightsCarousel/InsightsCarousel.jsx";
 
 function formatMoney(value = 0) {
   return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(value) + " ₫";
 }
 function formatTime(value) {
-  return new Intl.DateTimeFormat("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }).format(new Date(value));
+  return new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }).format(new Date(value));
 }
 const activityIcon = {
   transaction: FiCheckCircle,
@@ -54,40 +56,40 @@ export function DashboardPage() {
   return (
     <div className="dashboard-page">
       <header className="topbar">
-        <div className="topbar-breadcrumb">WORKSPACE <span>/</span> <strong>Tổng quan</strong></div>
+        <div className="topbar-breadcrumb">WORKSPACE <span>/</span> <strong>Overview</strong></div>
         <div className="topbar-right">
           <label className="tenant-select-wrap">
             <FiLayers size={16} />
-            <select aria-label="Chọn tenant hiện tại" value={tenantId} onChange={(e) => changeTenant(e.target.value)} disabled={tenantsQuery.isLoading}>
-              {!tenantId && <option value="">Đang tải tenant...</option>}
+            <select aria-label="Select current tenant" value={tenantId} onChange={(e) => changeTenant(e.target.value)} disabled={tenantsQuery.isLoading}>
+              {!tenantId && <option value="">Loading tenants…</option>}
               {(tenantsQuery.data ?? []).map((tenant) => <option key={tenant.id} value={tenant.id}>{tenant.name}</option>)}
             </select>
             <FiChevronDown size={14} />
           </label>
           <span className="header-separator" />
-          <span className="header-bell" title="Thông báo sẽ được triển khai ở giai đoạn tiếp theo"><FiBell size={20} /></span>
-          <span className="topbar-avatar" title="Tài khoản hiện tại">HY</span>
+          <span className="header-bell" title="Notifications will be available in a future phase"><FiBell size={20} /></span>
+          <span className="topbar-avatar" title="Current account">HY</span>
         </div>
       </header>
 
       <div className="dashboard-content">
-        <div className="page-meta"><span>HỆ THỐNG QUẢN LÝ F&B</span><span>{selectedTenant?.name ?? "Đang chọn tenant"}</span></div>
+        <div className="page-meta"><span>F&B MANAGEMENT PLATFORM</span><span>{selectedTenant?.name ?? "Selecting tenant"}</span></div>
 
-        {error && <div className="error-banner" role="alert"><FiAlertCircle /> Không tải được dữ liệu. Kiểm tra API hoặc bật VITE_USE_MOCK_API=true để test local.</div>}
+        {error && <FeedbackMessage><FiAlertCircle /> Unable to load data. Check the API or enable VITE_USE_MOCK_API=true for local testing.</FeedbackMessage>}
 
         <div className="intro-grid">
           <section className="welcome-panel">
             <div className="welcome-decoration" aria-hidden="true"><FiCoffee size={55} /></div>
             <span className="eyebrow">DASHBOARD</span>
-            <h1>Chào mừng trở lại, {stats?.displayName || "bạn"}!</h1>
-            <p>Cùng vận hành hiệu quả và phát triển hệ sinh thái F&B của bạn.</p>
-            <span className="welcome-foot"><span className="status-dot" /> {selectedTenant?.name ?? "Đang tải thông tin tenant"}</span>
+            <h1>Welcome back, {stats?.displayName || "there"}!</h1>
+            <p>Operate efficiently and grow your F&B ecosystem.</p>
+            <span className="welcome-foot"><span className="status-dot" /> {selectedTenant?.name ?? <CoreLoadingState variant="inline" title="Loading tenant information" />}</span>
           </section>
 
           <section className="activity-panel">
-            <div className="panel-title-row"><h2>Hoạt động gần đây</h2><FiClock color="#64748b" /></div>
-            {activities.isLoading && <p className="muted">Đang tải hoạt động...</p>}
-            {!activities.isLoading && allActivities.length === 0 && <div className="empty-activity"><FiCheckCircle size={25} /> Chưa có hoạt động gần đây.</div>}
+            <div className="panel-title-row"><h2>Recent activity</h2><FiClock color="#64748b" /></div>
+            {activities.isLoading && <CoreLoadingState title="Loading activity" />}
+            {!activities.isLoading && allActivities.length === 0 && <div className="empty-activity"><FiCheckCircle size={25} /> No recent activity.</div>}
             <ul className="activity-list">
               {allActivities.slice(0, 3).map((item) => {
                 const Icon = activityIcon[item.type] || FiBell;
@@ -106,12 +108,12 @@ export function DashboardPage() {
         />
 
         <InsightsCarousel articles={getDashboardArticles()} />
-        <footer className="dashboard-footer"><span>F&B Platform · Multi-tenant Console</span><span>Giao diện demo · Dữ liệu mẫu khi bật mock API</span></footer>
+        <footer className="dashboard-footer"><span>F&B Platform · Multi-tenant Console</span><span>Demo interface · Sample data when mock API is enabled</span></footer>
       </div>
 
       <div className="quick-action">
-        {quickMenuOpen && <div className="quick-menu"><strong>Thao tác nhanh</strong><span>Tạo giao dịch và thêm sản phẩm sẽ triển khai ở sprint tiếp theo.</span></div>}
-        <button type="button" className="fab" aria-label="Mở thao tác nhanh" aria-expanded={quickMenuOpen} onClick={() => setQuickMenuOpen((value) => !value)}><FiPlus size={23} /></button>
+        {quickMenuOpen && <div className="quick-menu"><strong>Quick actions</strong><span>Transaction and product creation will be available in a future sprint.</span></div>}
+        <button type="button" className="fab" aria-label="Open quick actions" aria-expanded={quickMenuOpen} onClick={() => setQuickMenuOpen((value) => !value)}><FiPlus size={23} /></button>
       </div>
     </div>
   );

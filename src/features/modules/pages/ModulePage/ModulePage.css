@@ -12,4 +12,5 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-}
+}.eco-module-page .fe-empty { background: white; border: 1px solid var(--fnb-line); border-radius: 8px; }.eco-module-page .fe-card .fe-empty { border: 0; }.eco-module-page .fe-card:has(> .fe-table-wrap) { padding: 20px; border-radius: 8px; }.eco-module-page .fe-empty__title { font-size: 18px; }.eco-module-page .fe-empty__icon { background: var(--fnb-accent-soft); color: var(--fnb-accent); }
+@media (max-width: 600px) { .eco-module-page .fe-card:has(> .fe-table-wrap) { padding: 12px; } }

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { LoadingPage } from "../../../pages/LoadingPage/LoadingPage.jsx";
+import { FeedbackMessage } from "../../../components/FeedbackMessage.jsx";
 
 import { useAuthStore } from "../store/authStore.js";
 
@@ -18,14 +20,14 @@ export function AuthBootstrap({ children }) {
   }, [bootstrap]);
 
   if (!ready) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Đang tải…</div>;
+    return <LoadingPage fullscreen />;
   }
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-6 text-center text-sm text-red-600">
-        Không thể xác định tenant cho tên miền này: {error}
-      </div>
+      <FeedbackMessage error={error}>
+        Unable to identify the tenant for this domain: {error}
+      </FeedbackMessage>
     );
   }
 

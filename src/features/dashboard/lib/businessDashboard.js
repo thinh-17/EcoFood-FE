@@ -1,5 +1,5 @@
 export const KPI_NAMES = {
-  totalSalesVolume: "Số Plan bán thành công", profit: "Lợi nhuận", ingredientCost: "Chi phí nguyên liệu", platformCost: "Chi phí nền tảng",
+  totalSalesVolume: "Successful Plans", profit: "Profit", ingredientCost: "Ingredient cost", platformCost: "Platform cost",
 };
 export function canReadBusinessDashboard(claims = {}) { return Array.isArray(claims.permissions) && claims.permissions.includes("DASHBOARD_READ"); }
 export function dashboardDefaults(options) {
@@ -15,21 +15,21 @@ export function dashboardParams(filters) {
     quarter: filters.period === "QUARTERLY" ? Number(filters.quarter) : undefined };
 }
 export function formatDashboardValue(value, unit) {
-  if (value == null) return "Chưa đủ dữ liệu";
+  if (value == null) return "Insufficient data";
   const options = unit === "PLAN" ? { maximumFractionDigits: 4 } : { style: "currency", currency: unit };
   return new Intl.NumberFormat("vi-VN", options).format(value);
 }
 export function expectedLabel(metric) {
   if (metric?.expected != null) return formatDashboardValue(metric.expected, metric.unit);
-  if (metric?.expectedStatus === "OVERLAPPING_PERIODS") return "Kỳ vọng chồng kỳ";
-  if (metric?.expectedStatus === "CURRENCY_UNVERIFIED") return "Chưa xác định Currency kỳ vọng";
-  if (metric?.expectedStatus === "CURRENCY_MISMATCH") return "Khác Currency kỳ vọng";
-  return "Chưa cấu hình đủ kỳ vọng";
+  if (metric?.expectedStatus === "OVERLAPPING_PERIODS") return "Overlapping expected periods";
+  if (metric?.expectedStatus === "CURRENCY_UNVERIFIED") return "Expected currency is unverified";
+  if (metric?.expectedStatus === "CURRENCY_MISMATCH") return "Expected currency mismatch";
+  return "Expected values are not configured";
 }
 export function periodLabel(selection) {
-  return selection.period === "MONTHLY" ? `T${selection.month}/${selection.year}` : selection.period === "QUARTERLY" ? `Q${selection.quarter}/${selection.year}` : String(selection.year);
+  return selection.period === "MONTHLY" ? `M${selection.month}/${selection.year}` : selection.period === "QUARTERLY" ? `Q${selection.quarter}/${selection.year}` : String(selection.year);
 }
-export function dashboardError(error) { return error?.response?.data?.message || error?.message || "Không tải được Dashboard"; }
+export function dashboardError(error) { return error?.response?.data?.message || error?.message || "Unable to load dashboard"; }
 export function dashboardChartValue(value) {
   if (value == null) return null;
   const number = Number(value);

@@ -1,10 +1,13 @@
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
+import { CoreLoadingState } from "@thinh-17/fe-core";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { CorePageHeader } from "@thinh-17/fe-core";
+
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 
 import { ROUTES } from "../../../../constants/routes.js";
 import { useDataAccessRuleDetail } from "../../hooks/useDataAccessRuleDetail.js";
-import { DataAccessRuleDetailForm } from "./DataAccessRuleDetailForm.jsx";
+import { DataAccessRuleDetailForm } from "../../components/DataAccessRuleDetailForm.jsx";
 
 export function DataAccessRuleEditPage() {
   const navigate = useNavigate();
@@ -15,8 +18,8 @@ export function DataAccessRuleEditPage() {
     <div className="eco-module-page data-access-rule-list-page">
       <CorePageHeader eyebrow="EcoFood Platform" title="Edit Data Access Rule" />
 
-      {isLoading && <p>Loading…</p>}
-      {isError && <p className="data-access-rule-list__error">Failed to load rule detail.</p>}
+      {isLoading && <CoreLoadingState title="Loading" />}
+      {isError && <FeedbackMessage>Failed to load rule detail.</FeedbackMessage>}
 
       {rule && (
         <DataAccessRuleDetailForm
