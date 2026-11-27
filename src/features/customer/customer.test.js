@@ -1,6 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { receiptToken, validateCustomerFlow, customerInvoicePath, customerMoney } from "./customer.lib.js";
+import { receiptToken, validateCustomerFlow, customerInvoicePath, customerMoney, customerProfilePayload, customerNavigation, customerSection } from "./customer.lib.js";
+
+test("Customer navigation offers profile and care without a receipt scanning tab", () => {
+  assert.deepEqual(customerNavigation.map((item) => item.path), ["/customer", "/customer/profile", "/customer/complaints"]);
+  assert.equal(customerSection("/customer/invoices/invoice-1"), "history");
+  assert.equal(customerSection("/customer/profile"), "profile");
+  assert.equal(customerSection("/customer/complaints"), "care");
+});
+
+test("Profile updates trim names and never submit email or identity fields", () => {
+  assert.deepEqual(customerProfilePayload({ firstName: " An ", lastName: " Nguyen ", email: "changed@example.com", username: "changed", tenantId: "other" },
+    { revision: 0, email: "verified@example.com" }), { firstName: "An", lastName: "Nguyen", revision: 0 });
+  assert.throws(() => customerProfilePayload({ firstName: " ", lastName: "Nguyen" }, { revision: 0 }), /required/);
+  assert.throws(() => customerProfilePayload({ firstName: "a".repeat(101), lastName: "Nguyen" }, { revision: 0 }), /100/);
+  assert.throws(() => customerProfilePayload({ firstName: "An", lastName: "Nguyen" }, {}), /Reload/);
+});
 
 test("receipt fragment requires an actual capability, never an Invoice ID or number", () => {
   assert.equal(receiptToken("#token=" + "t".repeat(43)), "t".repeat(43));

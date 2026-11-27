@@ -1,13 +1,25 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { complaintAccess, complaintTransitions, complaintError } from "./complaint.js";
+import { complaintAccess, complaintTransitions, complaintError, complaintTypes, complaintTypeLabel } from "./complaint.js";
 import { filterNavItems } from "../../app/navigation/navAccess.js";
+
+test("Complaint labels change without changing the backend type values", () => {
+  assert.deepEqual(complaintTypes, [
+    { value: "ECOSYSTEM", label: "App Platform" },
+    { value: "TENANT", label: "Service" },
+  ]);
+  assert.equal(complaintTypeLabel("ECOSYSTEM"), "App Platform");
+  assert.equal(complaintTypeLabel("TENANT"), "Service");
+  assert.equal(complaintTypeLabel("OTHER"), "OTHER");
+});
 
 test("Complaint workspace requires Admin role plus read permission", () => {
   assert.equal(complaintAccess({ roles: ["TENANT_ADMIN"], permissions: ["COMPLAINT_READ"] }).read, true);
   assert.equal(complaintAccess({ roles: ["ECO_ADMIN"], permissions: ["COMPLAINT_READ", "COMPLAINT_MANAGE"] }).manage, true);
   assert.equal(complaintAccess({ roles: ["CUSTOMER"], permissions: ["COMPLAINT_READ"] }).read, false);
   assert.equal(complaintAccess({ roles: ["TENANT_ADMIN"] }).read, false);
+  assert.equal(complaintAccess({ roles: ["TENANT_STAFF"], permissions: ["COMPLAINT_READ", "COMPLAINT_MANAGE"] }).read, true);
+  assert.equal(complaintAccess({ roles: ["TENANT_STAFF"], permissions: ["COMPLAINT_READ", "COMPLAINT_MANAGE", "COMPLAINT_ASSIGN"] }).assign, false);
 });
 test("Complaint lifecycle excludes escalation, reopen and arbitrary closure", () => {
   assert.deepEqual(complaintTransitions("SUBMITTED"), []);
@@ -23,7 +35,9 @@ test("Complaint navigation does not authorize Customers or users without permiss
   assert.equal(filterNavItems(items, [], ["COMPLAINT_READ"]).length, 1);
 });
 test("Complaint errors distinguish authorization and missing scoped resources", () => {
-  assert.match(complaintError({ response: { status: 403 } }), /quyền/);
-  assert.match(complaintError({ response: { status: 404 } }), /không khả dụng/);
-  assert.match(complaintError({ response: { status: 409 } }), /tải lại/);
+  assert.match(complaintError({ response: { status: 403 } }), /access/);
+  assert.match(complaintError({ response: { status: 404 } }), /unavailable/);
+  assert.match(complaintError({ response: { status: 409 } }), /Refresh/);
+  assert.match(complaintError({ response: { status: 429 } }), /limit of 3 complaints/);
+  assert.match(complaintError({ response: { status: 409, data: { message: "Complaint storage constraint conflict; check complaint collection indexes" } } }), /database constraint/);
 });

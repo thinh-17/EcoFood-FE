@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CoreButton, CoreCard, CoreEmptyState, CorePageHeader, CoreTable } from "@thinh-17/fe-core";
-import { FiFileText, FiUser, FiLink, FiLayers } from "react-icons/fi";
+import { CoreButton, CoreCard, CorePageHeader, CoreTable } from "@thinh-17/fe-core";
+import { FiFileText, FiLink } from "react-icons/fi";
 import { useAuthStore } from "../auth/store/authStore.js";
 import { customerApi as api } from "./customer.api.js";
-import { startCustomerAuth, finishCustomerAuth } from "./customerAuth.js";
+import { finishCustomerAuth } from "./customerAuth.js";
+import { CustomerLogin } from "./components/CustomerLogin.jsx";
+import { useCustomerProfile } from "./hooks/useCustomerProfile.js";
 import { customerMoney, customerError, receiptToken, customerInvoicePath } from "./customer.lib.js";
 import "./CustomerPages.css";
 
@@ -21,87 +23,6 @@ export function CustomerLoginPage() {
       />
       <CustomerLogin tenant={params.get("tenant") || tenant} />
     </main>
-  );
-}
-
-function CustomerLogin({ tenant, token = "", invoiceId = "" }) {
-  const [error, setError] = useState("");
-  // The external-customer QR's loginUrl carries no ?tenant= (every such
-  // Customer is created under the same onboarding Tenant) — resolve it here
-  // instead, rather than making the caller know about that convention.
-  const defaultTenant = useQuery({
-    queryKey: ["customer-default-tenant"],
-    queryFn: api.defaultTenant,
-    enabled: !tenant,
-    retry: false,
-  });
-  const effectiveTenant = tenant || defaultTenant.data?.tenantId;
-  const config = useQuery({
-    queryKey: ["customer-login", effectiveTenant],
-    queryFn: () => api.config(effectiveTenant),
-    enabled: !!effectiveTenant,
-    retry: false,
-  });
-
-  async function begin(register) {
-    try {
-      setError("");
-      await startCustomerAuth(config.data, register, token, invoiceId);
-    } catch (e) {
-      setError(customerError(e));
-    }
-  }
-
-  if (!effectiveTenant) {
-    if (defaultTenant.isFetching) {
-      return <p role="status">Loading sign-in configuration…</p>;
-    }
-    return (
-      <CoreEmptyState
-        icon={FiLayers}
-        title="Tenant not specified"
-        description={
-          defaultTenant.error
-            ? customerError(defaultTenant.error)
-            : "Open the Customer Portal from your tenant domain, or from an invoice link, so we can identify the Tenant."
-        }
-      />
-    );
-  }
-
-  return (
-    <CoreCard className="customer-panel">
-      {config.isFetching && <p role="status">Loading sign-in configuration…</p>}
-      {(config.error || error) && (
-        <p role="alert" className="customer-error">
-          {error || customerError(config.error)}
-        </p>
-      )}
-      {config.data && (
-        <>
-          <p>
-            {token
-              ? "Sign in as a Customer to confirm the invoice link and receive a confirmation email."
-              : "Sign-in and email verification are handled by Keycloak."}
-          </p>
-          <div className="customer-actions">
-            <CoreButton onClick={() => begin(false)}>
-              Log in{token ? " & link invoice" : ""}
-            </CoreButton>
-            <CoreButton
-              variant="secondary"
-              disabled={!config.data.registrationEnabled}
-              onClick={() => begin(true)}
-            >
-              Register as Customer
-            </CoreButton>
-          </div>
-          {!config.data.registrationEnabled && (
-            <small>This tenant hasn&apos;t enabled new Customer registration.</small>
-          )}
-        </>
-      )}
-    </CoreCard>
   );
 }
 
@@ -145,12 +66,7 @@ export function ReceiptPage() {
   const [busy, setBusy] = useState(false);
   const bearer = useAuthStore((s) => s.internalAccessToken);
   const navigate = useNavigate();
-  const profile = useQuery({
-    queryKey: ["customer", bearer, "profile"],
-    queryFn: api.profile,
-    enabled: !!bearer,
-    retry: false,
-  });
+  const profile = useCustomerProfile();
   useEffect(() => {
     window.history.replaceState({}, "", window.location.pathname + window.location.search);
     if (!token) return;
@@ -257,13 +173,7 @@ export function CustomerPortalPage() {
   const currentTenant = useAuthStore((s) => s.tenantId);
   const [params] = useSearchParams();
   const { invoiceId } = useParams();
-  const client = useQueryClient();
-  const profile = useQuery({
-    queryKey: ["customer", bearer, "profile"],
-    queryFn: api.profile,
-    enabled: !!bearer,
-    retry: false,
-  });
+  const profile = useCustomerProfile();
   const [page, setPage] = useState(0);
   const history = useQuery({
     queryKey: ["customer", bearer, "invoices", page],
@@ -295,33 +205,12 @@ export function CustomerPortalPage() {
   ];
 
   return (
-    <main className="eco-module-page customer-page">
+    <section className="eco-module-page customer-page">
       <CorePageHeader
         eyebrow="EcoFood Platform / Customer"
-        title="Customer Portal"
-        description="Your profile and the invoices linked to your account in the current Tenant."
+        title={invoiceId ? "Invoice details" : "Purchase History"}
+        description="View the invoices linked to your Customer account."
       />
-      <nav className="customer-nav">
-        <Link to="/customer">
-          <FiUser /> Profile & history
-        </Link>
-        <Link to="/customer/complaints">Customer Care</Link>
-        <Link to="/receipt">
-          <FiLink /> Scan a receipt link/QR to link it
-        </Link>
-        {bearer && (
-          <CoreButton
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              client.removeQueries({ queryKey: ["customer"] });
-              useAuthStore.getState().logout();
-            }}
-          >
-            Log out
-          </CoreButton>
-        )}
-      </nav>
       {!bearer && <CustomerLogin tenant={params.get("tenant") || currentTenant} invoiceId={invoiceId} />}
       {bearer && profile.isPending && <p role="status">Loading profile…</p>}
       {profile.error && (
@@ -376,14 +265,14 @@ export function CustomerPortalPage() {
             <>
               <InvoiceContent invoice={detail.data} />
               <Link to={`/customer/complaints?invoiceId=${encodeURIComponent(invoiceId)}`}>
-                File a complaint about this Tenant via this invoice
+                File a Service complaint about this invoice
               </Link>
               <p>The confirmation email is sent asynchronously after linking. Reopening this page won&apos;t resend it.</p>
             </>
           )}
         </>
       )}
-    </main>
+    </section>
   );
 }
 
@@ -409,6 +298,7 @@ export function InvoiceContent({ invoice }) {
   return (
     <CoreCard className="customer-panel">
       <h2>Invoice {invoice.invoiceNumber}</h2>
+      {(invoice.tenantId || invoice.tenantName) && <p>Submitted by tenant: {invoice.tenantName || invoice.tenantId}</p>}
       <p>Date: {date(invoice.transactionTime)}</p>
       {invoice.paymentStatus && <p>Status: {invoice.paymentStatus}</p>}
       <CoreTable columns={itemColumns} data={invoice.items || []} emptyTitle="No items on this invoice." />

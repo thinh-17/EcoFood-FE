@@ -1,0 +1,18 @@
+.customer-shell .customer-page, .customer-shell .complaint-page { max-width: 1200px; margin: 0 auto; padding: 0; }
+.customer-shell .eco-brand, .customer-shell .eco-nav-link, .customer-shell .eco-user-avatar { text-decoration: none; }
+.customer-shell .eco-sidebar__collapse { padding: 0; min-height: 27px; background: #33424c; color: #dce4e6; border: 0; }
+.customer-shell .eco-mobile-toggle { display: none; padding: 0; min-height: 34px; background: #edf3ef; color: #24594d; border: 0; }
+.customer-shell .eco-overlay { display: none; padding: 0; border: 0; border-radius: 0; background: rgba(15, 28, 24, .45); }
+.customer-shell .eco-sidebar__workspace { min-width: 0; }
+.customer-shell .eco-sidebar__workspace .eco-nav-label { min-width: 0; overflow: hidden; }
+.customer-shell .eco-sidebar__workspace small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.customer-shell .customer-shell-logout { width: 100%; display: flex; gap: 13px; justify-content: flex-start; border-color: #3c4d54; background: #2b3c45; color: #e7f0ec; }
+.customer-shell.eco-shell--collapsed .customer-shell-logout { justify-content: center; }
+.customer-shell .customer-shell-logout svg { flex-shrink: 0; }
+.customer-shell .eco-user-avatar:focus-visible, .customer-shell .eco-nav-link:focus-visible { outline: 2px solid #54af94; outline-offset: 3px; }
+@media (max-width: 800px) {
+  .customer-shell .eco-sidebar__collapse { display: none; }
+  .customer-shell .eco-mobile-toggle { display: grid; }
+  .customer-shell .eco-overlay { display: block; }
+  .customer-shell.eco-shell--collapsed .customer-shell-logout { justify-content: flex-start; }
+}

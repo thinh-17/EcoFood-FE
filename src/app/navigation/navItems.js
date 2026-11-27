@@ -18,7 +18,7 @@ import { ROUTES } from "../../constants/routes.js";
 export const navItems = [
   { id: "audit-log", label: "Audit Log", icon: FiShield, to: "/audit-log" },
   { id: "catalog-publications", label: "Publish External API", icon: FiLayers, to: "/catalog-publications" },
-  { id: "complaints", label: "Customer Care", icon: FiUserCheck, to: "/complaints" },
+  { id: "complaints", label: "Complaints", icon: FiUserCheck, to: "/complaints" },
   { id: "notifications", label: "Notifications", icon: FiUserCheck, to: ROUTES.NOTIFICATIONS },
   {
     id: "home",

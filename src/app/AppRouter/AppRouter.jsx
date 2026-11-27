@@ -6,6 +6,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { ROUTES } from "../../constants/routes.js";
 
 import { MainLayout } from "../../layouts/MainLayout/MainLayout.jsx";
+import { CustomerLayout } from "../../layouts/CustomerLayout/CustomerLayout.jsx";
 
 import { HomePage } from "../../features/home/pages/HomePage/HomePage.jsx";
 import { useAuthStore } from "../../features/auth/store/authStore.js";
@@ -40,12 +41,13 @@ import { RequireUsersAccess } from "../../features/auth/components/RequireUsersA
 import { CallbackPage } from "../../features/auth/pages/CallbackPage.jsx";
 import { AuthHandoffPage } from "../../features/auth/pages/AuthHandoffPage.jsx";
 import { CustomerLoginPage, CustomerCallbackPage, CustomerPortalPage, ReceiptPage } from "../../features/customer/CustomerPages.jsx";
+import { CustomerProfilePage } from "../../features/customer/pages/CustomerProfilePage/CustomerProfilePage.jsx";
 import { CustomerCarePage, ComplaintManagementPage } from "../../features/complaint/ComplaintPage.jsx";
 import { CatalogPage } from "../../features/catalog/CatalogPage.jsx";
 import { AuditLogPage } from "../../features/audit/pages/AuditLogPage.jsx";
 
-const BusinessDashboardPage = lazy(() => import("../../features/dashboard/pages/BusinessDashboardPage.jsx")
-  .then((module) => ({ default: module.BusinessDashboardPage })));
+const ManagerPage = lazy(() => import("../../features/manager/ManagerPage.jsx")
+  .then((module) => ({ default: module.ManagerPage })));
 
 /** A Customer who ends up on the staff shell's "/" (same internalAccessToken as everyone else) belongs on their own portal, not the staff Home. */
 function HomeRoute() {
@@ -66,9 +68,12 @@ export function AppRouter() {
       <Route path="receipt" element={<ReceiptPage />} />
       <Route path="customer/login" element={<CustomerLoginPage />} />
       <Route path="customer/callback" element={<CustomerCallbackPage />} />
-      <Route path="customer" element={<CustomerPortalPage />} />
-      <Route path="customer/complaints" element={<CustomerCarePage />} />
-      <Route path="customer/invoices/:invoiceId" element={<CustomerPortalPage />} />
+      <Route element={<CustomerLayout />}>
+        <Route path="customer" element={<CustomerPortalPage />} />
+        <Route path="customer/profile" element={<CustomerProfilePage />} />
+        <Route path="customer/complaints" element={<CustomerCarePage />} />
+        <Route path="customer/invoices/:invoiceId" element={<CustomerPortalPage />} />
+      </Route>
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/auth-handoff" element={<AuthHandoffPage />} />
 
@@ -119,7 +124,7 @@ export function AppRouter() {
 
         <Route
           path="manager"
-          element={<Suspense fallback={<p role="status">Đang tải Dashboard…</p>}><BusinessDashboardPage /></Suspense>}
+          element={<Suspense fallback={<p role="status">Đang tải Manager…</p>}><ManagerPage /></Suspense>}
         />
 
         <Route
