@@ -1,0 +1,11 @@
+.dashboard-tenant-picker { width: 260px; max-width: 100%; }
+.dashboard-tenant-picker details { position: relative; }
+.dashboard-tenant-picker summary { padding: 10px 32px 10px 12px; border: 1px solid #d4dde3; border-radius: 6px; background: white; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dashboard-tenant-picker summary:focus-visible { outline: 2px solid #177967; outline-offset: 2px; }
+.dashboard-tenant-picker__panel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; width: max(100%, 280px); max-width: calc(100vw - 48px); padding: 12px; border: 1px solid #d4dde3; border-radius: 8px; background: white; box-shadow: 0 8px 24px #25364a20; }
+.dashboard-tenant-picker__panel label { display: flex; align-items: center; gap: 10px; padding: 10px 4px; cursor: pointer; }
+.dashboard-tenant-picker__panel input[type=checkbox] { accent-color: #177967; flex: none; }
+.dashboard-tenant-picker__all { border-bottom: 1px solid #e5e9ee; font-weight: 600; }
+.dashboard-tenant-picker__options { max-height: 260px; overflow-y: auto; }
+.dashboard-tenant-picker__disabled { color: #758193; cursor: not-allowed !important; }
+.dashboard-tenant-picker__options small { display: block; margin-top: 3px; font-size: 11px; }

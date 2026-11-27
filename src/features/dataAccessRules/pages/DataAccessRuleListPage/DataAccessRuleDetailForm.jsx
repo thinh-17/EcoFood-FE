@@ -1,6 +1,7 @@
+import { ENTITY_TYPE_OPTIONS, ruleEntityTypes } from "../../lib/entityTypes.js";
 import { useState } from "react";
 
-import { CoreFormActions, CoreMultiSelect, CoreSelect, CoreTabs } from "@thinh-17/fe-core";
+import { CoreFormActions, CoreMultiSelect, CoreTabs } from "@thinh-17/fe-core";
 
 import { useAllUsersForPicker } from "../../hooks/useAllUsersForPicker.js";
 import { useUpdateDataAccessRule } from "../../hooks/useUpdateDataAccessRule.js";
@@ -10,19 +11,12 @@ const TABS = [
   { id: "users", label: "Users" },
 ];
 
-// Same hardcoded list as DataAccessRuleDetailPage's create form — no
-// backend entity-type catalog exists yet.
-const ENTITY_TYPE_OPTIONS = [
-  { value: "ALL_DASHBOARDS", label: "All Dashboards" },
-  { value: "BUSINESS_DASHBOARD", label: "Business Dashboard" },
-  { value: "INVOICE_DASHBOARD", label: "Invoice Dashboard" },
-  { value: "CUSTOMER_DASHBOARD", label: "Customer Dashboard" },
-];
 
 function validate(form) {
   const errors = {};
   if (!form.ruleName.trim()) errors.ruleName = "Rule Name is required.";
   if (!form.description.trim()) errors.description = "Description is required.";
+  if (!form.accessEntityTypes.length) errors.accessEntityTypes = "Select at least one dashboard.";
   return errors;
 }
 
@@ -40,12 +34,12 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
   const [form, setForm] = useState({
     ruleName: rule.ruleName ?? "",
     description: rule.description ?? "",
-    accessEntityType: rule.accessEntityType ?? "",
+    accessEntityTypes: ruleEntityTypes(rule),
   });
   const [userIds, setUserIds] = useState(rule.userIds ?? []);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  const { data: users, isLoading: isUsersLoading } = useAllUsersForPicker(rule.businessEntityId, form.accessEntityType);
+  const { data: users, isLoading: isUsersLoading } = useAllUsersForPicker(rule.businessEntityId);
   const updateRule = useUpdateDataAccessRule();
 
   const userOptions = (users ?? []).map((user) => ({
@@ -78,7 +72,7 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
     const payload = {
       ruleName: form.ruleName.trim(),
       description: form.description.trim(),
-      accessEntityType: form.accessEntityType || undefined,
+      accessEntityTypes: form.accessEntityTypes,
       accessLevel: "FULL_ACCESS",
       limitedEntityIds: [],
       userIds,
@@ -128,13 +122,14 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
 
           <label className="fe-field">
             Entity Type
-            <CoreSelect
-              value={form.accessEntityType}
-              onChange={updateField("accessEntityType")}
+            <CoreMultiSelect
+                selected={form.accessEntityTypes}
+                onChange={updateField("accessEntityTypes")}
               options={ENTITY_TYPE_OPTIONS}
-              placeholder="Select an entity type..."
+              placeholder="Select dashboard types..."
               disabled={!rule.editable}
             />
+              {fieldErrors.accessEntityTypes && <span className="dar-error">{fieldErrors.accessEntityTypes}</span>}
           </label>
 
           <label className="fe-field">

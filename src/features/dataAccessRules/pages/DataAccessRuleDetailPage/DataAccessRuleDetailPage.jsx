@@ -1,3 +1,4 @@
+import { ENTITY_TYPE_OPTIONS } from "../../lib/entityTypes.js";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -15,20 +16,12 @@ const TABS = [
   { id: "users", label: "Users" },
 ];
 
-// Hardcoded for now — no backend entity-type catalog exists yet (frontend-
-// first, per explicit instruction). Swap for a real fetched list once one does.
-const ENTITY_TYPE_OPTIONS = [
-  { value: "ALL_DASHBOARDS", label: "All Dashboards" },
-  { value: "BUSINESS_DASHBOARD", label: "Business Dashboard" },
-  { value: "INVOICE_DASHBOARD", label: "Invoice Dashboard" },
-  { value: "CUSTOMER_DASHBOARD", label: "Customer Dashboard" },
-];
 
 const INITIAL_FORM = {
   businessEntityId: "",
   ruleName: "",
   description: "",
-  accessEntityType: "",
+  accessEntityTypes: [],
 };
 
 function validate(form) {
@@ -36,6 +29,7 @@ function validate(form) {
   if (!form.businessEntityId) errors.businessEntityId = "Business Entity is required.";
   if (!form.ruleName.trim()) errors.ruleName = "Rule Name is required.";
   if (!form.description.trim()) errors.description = "Description is required.";
+  if (!form.accessEntityTypes.length) errors.accessEntityTypes = "Select at least one dashboard.";
   return errors;
 }
 
@@ -56,7 +50,7 @@ export function DataAccessRuleDetailPage() {
   const [fieldErrors, setFieldErrors] = useState({});
 
   const { data: tenants, isLoading: isTenantsLoading } = useAllTenants();
-  const { data: users, isLoading: isUsersLoading } = useAllUsersForPicker(form.businessEntityId, form.accessEntityType);
+  const { data: users, isLoading: isUsersLoading } = useAllUsersForPicker(form.businessEntityId);
   const createRule = useCreateDataAccessRule();
 
   const tenantOptions = (tenants ?? []).map((tenant) => ({
@@ -71,7 +65,7 @@ export function DataAccessRuleDetailPage() {
 
   function updateField(field) {
     return (value) => {
-      if (field === "businessEntityId" && form.accessEntityType !== "Product") setUserIds([]);
+      if (field === "businessEntityId") setUserIds([]);
       setForm((prev) => ({ ...prev, [field]: value }));
     };
   }
@@ -94,7 +88,7 @@ export function DataAccessRuleDetailPage() {
       businessEntityId: form.businessEntityId,
       ruleName: form.ruleName.trim(),
       description: form.description.trim(),
-      accessEntityType: form.accessEntityType || undefined,
+      accessEntityTypes: form.accessEntityTypes,
       accessLevel: "FULL_ACCESS",
       limitedEntityIds: [],
       userIds,
@@ -159,12 +153,13 @@ export function DataAccessRuleDetailPage() {
 
             <label className="fe-field">
               Entity Type
-              <CoreSelect
-                value={form.accessEntityType}
-                onChange={updateField("accessEntityType")}
+              <CoreMultiSelect
+                selected={form.accessEntityTypes}
+                onChange={updateField("accessEntityTypes")}
                 options={ENTITY_TYPE_OPTIONS}
-                placeholder="Select an entity type..."
+                placeholder="Select dashboard types..."
               />
+              {fieldErrors.accessEntityTypes && <span className="dar-error">{fieldErrors.accessEntityTypes}</span>}
             </label>
           </section>
 
