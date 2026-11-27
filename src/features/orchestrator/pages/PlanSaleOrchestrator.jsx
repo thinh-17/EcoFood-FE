@@ -1,13 +1,16 @@
+import { FeedbackMessage } from "../../../components/FeedbackMessage.jsx";
+import { CoreLoadingState } from "@thinh-17/fe-core";
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CoreButton, CoreExpansionPanel, CoreToggle } from "@thinh-17/fe-core";
+import { CoreExpansionPanel, CoreToggle } from "@thinh-17/fe-core";
+import { CoreButton } from "@thinh-17/fe-core";
 import { useTouched } from "../../../hooks/useTouched.js";
 import { errorMessage } from "../../proposition/lib/proposition.js";
 import { getSaleOrchestrator, saveSaleOrchestrator } from "../api/planSale.api.js";
 import { defaultInvoiceHolder, defaultPlanItems, field, samplePayload } from "../lib/planSale.js";
-import { PlanMultiPicker } from "./PlanMultiPicker.jsx";
-import { PayloadPreview } from "./PayloadPreview.jsx";
-import { SaleConfigurationFieldTable } from "./SaleConfigurationFieldTable.jsx";
+import { PlanMultiPicker } from "../components/PlanMultiPicker.jsx";
+import { PayloadPreview } from "../components/PayloadPreview.jsx";
+import { SaleConfigurationFieldTable } from "../components/SaleConfigurationFieldTable.jsx";
 import "./PlanSaleOrchestrator.css";
 
 // Backs the Proposition's "Sale Orchestrator" directory tab — same
@@ -28,15 +31,15 @@ export function SaleOrchestratorEditor({ proposition, id, plans, onSaved, onCanc
     refetchOnReconnect: false,
   });
   if (id && query.isPending)
-    return <p role="status">Loading this Sale Orchestrator…</p>;
+    return <CoreLoadingState title="Loading this Sale Orchestrator" />;
   if (id && query.isError)
     return (
-      <p role="alert" className="sale-error">
+      <FeedbackMessage error={query.error}>
         {errorMessage(query.error)}{" "}
         <button type="button" onClick={() => query.refetch()}>
           Retry
         </button>
-      </p>
+      </FeedbackMessage>
     );
   return (
     <SaleOrchestratorForm
@@ -152,9 +155,9 @@ function SaleOrchestratorForm({ row, proposition, plans, onSaved, onCancel }) {
         </p>
       )}
       {error && (
-        <p role="alert" className="sale-error">
+        <FeedbackMessage error={error}>
           {error}
-        </p>
+        </FeedbackMessage>
       )}
       <label className={`sale-field${nameInvalid ? " fe-field-invalid" : ""}`}>
         <span>Name</span>

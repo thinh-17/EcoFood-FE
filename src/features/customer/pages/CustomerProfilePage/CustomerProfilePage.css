@@ -2,8 +2,8 @@
 .customer-profile-form { display: grid; gap: 20px; }
 .customer-profile-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
 .customer-profile-fields label { display: grid; gap: 8px; }
-.customer-profile-fields input[readonly] { background: #f3f6f5; color: #64746e; cursor: default; }
-.customer-profile-hint { margin: 0; color: #64746e; font-size: 13px; }
-.customer-profile-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 18px; border-top: 1px solid #edf0ee; }
+.customer-profile-fields input[readonly] { background: var(--fnb-canvas); color: var(--fnb-muted); cursor: default; }
+.customer-profile-hint { margin: 0; color: var(--fnb-muted); font-size: 13px; }
+.customer-profile-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 18px; border-top: 1px solid var(--fnb-line); }
 .customer-success { color: #166557; background: #e6f4ec; padding: 14px 18px; border-radius: 8px; }
 @media (max-width: 640px) { .customer-profile-fields { grid-template-columns: minmax(0, 1fr); } }

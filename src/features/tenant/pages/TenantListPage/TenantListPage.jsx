@@ -1,7 +1,9 @@
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CoreCard, CorePageHeader, CoreTable } from "@thinh-17/fe-core";
+import { CoreCard, CoreTable } from "@thinh-17/fe-core";
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 
 import { ROUTES } from "../../../../constants/routes.js";
 import { useTenantDirectory } from "../../hooks/useTenantDirectory.js";
@@ -57,9 +59,9 @@ export function TenantListPage() {
       />
 
       {isError && (
-        <p className="tenant-list__error" role="alert">
+        <FeedbackMessage>
           {error?.response?.data?.message || "Failed to load tenants."}
-        </p>
+        </FeedbackMessage>
       )}
 
       <CoreCard>

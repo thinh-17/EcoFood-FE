@@ -1,0 +1,469 @@
+ECOFOOD FRONTEND REDESIGN - BAN GIAO
+
+Pham vi: frontend/ va corefe/; khong thay backend/, corebe/, API, schema, auth, tenant context, cong thuc tinh toan, RBAC hay Data Access Rules.
+Navbar Product Library chi tai su dung canViewProducts/canUsePropositions cua trang de an cac link khong du quyen. Route guards giu nguyen.
+
+THAY DOI
+- Light mode, blue enterprise tokens, common FE Core styles, feature forms/tables/tabs.
+- Administrative sidebar groups, no global top header, Account > Current Tenant > Log out.
+- Scoped notification popup, shared query/cache/polling and detail dialog; full history and retry behavior retained.
+- Responsive Home news grid; selectable KPI cards; independent Customer Portal.
+- Shared styles and reusable UI are owned by corefe. Frontend imports the public @thinh-17/fe-core API; the former CSS snapshot and sync script have been removed.
+- Vite uses scripts/core-workspace-entry.js when adjacent corefe source exists. It overrides only maintained shared components and retains installed package APIs absent from this core source (Select, Toggle, ExpansionPanel). No package versions changed.
+- In this workspace: npm run dev in frontend; core build is not required for source updates. Standalone frontend builds require a published core package containing the new exports. Package release/version work is left to the user.
+
+KHAC BIET NGHIEP VU DA GIU NGUYEN
+- Manager tabs currently use DASHBOARD_READ/TRANSACTION_READ permissions, not a new role-only model.
+- Roles and Permissions directories are currently flat lists without pagination; no unsupported pagination was added.
+- Account remains a placeholder. Data Access Rule entity options remain limited by the existing data source.
+- No reference image was attached in the conversation; visual implementation follows the supplied tokens and written specification.
+
+KIEM TRA
+- frontend: npm run lint completed, with 11 existing warnings in TenantProvider, Role forms and legacy dashboard code.
+- frontend: npm run build passed; bundle-size warning above 500 kB remains.
+- corefe: npm run build passed.
+- 78 unit tests passed (node --test over src/**/*.test.js).
+- 16 Chromium UI scenarios passed (17 Node test entries including parent).
+- UI tests mock API responses only inside the test fixture; live backend/Keycloak integration was not exercised.
+- UI entry: src/testing/redesign/redesign.ui.test.mjs; fixture HTML is not included in the production bundle.
+- UI screenshots: frontend/test-results/redesign/ (generated, ignored by Git).
+- Playwright installed only under frontend/.cache/ui and Chromium under frontend/.cache/browsers. No manifest or lockfile changed.
+- corefe npm ci reported one high severity audit finding in existing dependencies; no dependency upgrade or audit fix was performed.
+
+CHAY LAI UI TEST (PowerShell, sau khi cai Playwright vao cache)
+npm run dev -- --host 127.0.0.1 --port 5190 --strictPort
+In a second terminal:
+$env:PLAYWRIGHT_BROWSERS_PATH = "D:\DoAnTotNghiep\frontend\.cache\browsers"
+node --test src/testing/redesign/redesign.ui.test.mjs
+
+UI POLISH FOLLOW-UP
+- Manager now uses a management-controls icon, with unique navigation icons retained.
+- Complaint details have a title/status header, identifier and customer/handler metadata, description, response section and a responsive activity timeline.
+- Timeline events have readable labels, status badges, dates, assignment metadata and original response notes. API enums, event payloads and notes are unchanged.
+- Shared Back links return create/detail/edit pages to the correct tab. Proposition child views return to the proposition list, with existing Cancel behavior retained.
+- Core table pagination and cursor-style pagination now share spacing, alignment, colors, hover, focus and disabled styling. No page totals are guessed.
+- Application-owned Vietnamese UI captions, built-in demo labels, validation/loading captions and fallbacks have been translated into English. User/API-provided content remains unchanged.
+- CoreButton/CoreFormActions are imported directly from the public core package API; no frontend Button/FormActions duplicate remains. Core source loading captions are English; the workspace bridge uses these source implementations.
+- Screenshots: frontend/test-results/redesign/complaint-detail-desktop.png and complaint-detail-mobile.png.
+
+FEATURE ARCHITECTURE FOLLOW-UP
+- Every feature contains pages/, lib/, hooks/, context/, components/, api/. hooks/ is retained as requested.
+- 71 existing files moved into their corresponding feature folders, with consumer imports updated. Business forms/components moved out of pages; API modules and helpers moved into api/lib. Existing store/config/mock directories remain where required.
+- Unused mandatory folders contain .gitkeep only; no artificial contexts, providers, hooks or API logic were added.
+- Core owns CoreBackButton, CorePagination, CoreStatusBadge, CoreTimeline and their CSS. CoreTable reuses CorePagination. Existing component interfaces are retained; new components are additive exports.
+- Frontend BackButton is a router adapter; StatusBadge maps business enums; PageHeader integrates sidebar/navigation; ComplaintHistory maps complaint events into CoreTimeline slots. Core contains no application routes, domain enums, auth or tenant logic.
+- Validation after migration: frontend/corefe builds passed; 78 unit tests and 12 browser scenarios passed; lint completed with 11 existing warnings. Live backend and Keycloak flows were not exercised.
+
+DI CHUYEN FILE (old -> new)
+frontend/src/features/catalog/catalog.api.js -> frontend/src/features/catalog/api/catalog.api.js
+frontend/src/features/catalog/catalog.js -> frontend/src/features/catalog/lib/catalog.js
+frontend/src/features/catalog/catalog.test.js -> frontend/src/features/catalog/lib/catalog.test.js
+frontend/src/features/catalog/CatalogPage.css -> frontend/src/features/catalog/pages/CatalogPage.css
+frontend/src/features/catalog/CatalogPage.jsx -> frontend/src/features/catalog/pages/CatalogPage.jsx
+frontend/src/features/complaint/complaint.api.js -> frontend/src/features/complaint/api/complaint.api.js
+frontend/src/features/complaint/complaint.js -> frontend/src/features/complaint/lib/complaint.js
+frontend/src/features/complaint/complaint.test.js -> frontend/src/features/complaint/lib/complaint.test.js
+frontend/src/features/complaint/complaintHistory.js -> frontend/src/features/complaint/lib/complaintHistory.js
+frontend/src/features/complaint/ComplaintHistory.jsx -> frontend/src/features/complaint/components/ComplaintHistory.jsx
+frontend/src/features/complaint/complaintHistory.test.js -> frontend/src/features/complaint/lib/complaintHistory.test.js
+frontend/src/features/complaint/ComplaintPage.css -> frontend/src/features/complaint/pages/ComplaintPage.css
+frontend/src/features/complaint/ComplaintPage.jsx -> frontend/src/features/complaint/pages/ComplaintPage.jsx
+frontend/src/features/customer/customer.api.js -> frontend/src/features/customer/api/customer.api.js
+frontend/src/features/customer/customer.lib.js -> frontend/src/features/customer/lib/customer.lib.js
+frontend/src/features/customer/customer.test.js -> frontend/src/features/customer/lib/customer.test.js
+frontend/src/features/customer/customerAuth.js -> frontend/src/features/customer/lib/customerAuth.js
+frontend/src/features/customer/CustomerPages.css -> frontend/src/features/customer/pages/CustomerPages.css
+frontend/src/features/customer/CustomerPages.jsx -> frontend/src/features/customer/pages/CustomerPages.jsx
+frontend/src/features/dashboard/pages/DashboardPage/components/DashboardBuilder/DashboardBuilder.css -> frontend/src/features/dashboard/components/DashboardBuilder/DashboardBuilder.css
+frontend/src/features/dashboard/pages/DashboardPage/components/DashboardBuilder/DashboardBuilder.jsx -> frontend/src/features/dashboard/components/DashboardBuilder/DashboardBuilder.jsx
+frontend/src/features/dashboard/pages/DashboardPage/components/DashboardWidgets/DashboardWidgets.css -> frontend/src/features/dashboard/components/DashboardWidgets/DashboardWidgets.css
+frontend/src/features/dashboard/pages/DashboardPage/components/DashboardWidgets/DashboardWidgets.jsx -> frontend/src/features/dashboard/components/DashboardWidgets/DashboardWidgets.jsx
+frontend/src/features/dashboard/pages/DashboardPage/components/InsightsCarousel/InsightsCarousel.css -> frontend/src/features/dashboard/components/InsightsCarousel/InsightsCarousel.css
+frontend/src/features/dashboard/pages/DashboardPage/components/InsightsCarousel/InsightsCarousel.jsx -> frontend/src/features/dashboard/components/InsightsCarousel/InsightsCarousel.jsx
+frontend/src/features/dashboard/pages/DashboardPage/components/MetricCard/MetricCard.css -> frontend/src/features/dashboard/components/MetricCard/MetricCard.css
+frontend/src/features/dashboard/pages/DashboardPage/components/MetricCard/MetricCard.jsx -> frontend/src/features/dashboard/components/MetricCard/MetricCard.jsx
+frontend/src/features/manager/manager.css -> frontend/src/features/manager/pages/manager.css
+frontend/src/features/manager/manager.lib.js -> frontend/src/features/manager/lib/manager.lib.js
+frontend/src/features/manager/manager.test.js -> frontend/src/features/manager/lib/manager.test.js
+frontend/src/features/manager/ManagerPage.jsx -> frontend/src/features/manager/pages/ManagerPage.jsx
+frontend/src/features/notification/notification.api.js -> frontend/src/features/notification/api/notification.api.js
+frontend/src/features/notification/notification.js -> frontend/src/features/notification/lib/notification.js
+frontend/src/features/notification/notification.test.js -> frontend/src/features/notification/lib/notification.test.js
+frontend/src/features/notification/NotificationPage.css -> frontend/src/features/notification/pages/NotificationPage.css
+frontend/src/features/notification/NotificationPage.jsx -> frontend/src/features/notification/pages/NotificationPage.jsx
+frontend/src/features/transaction/invoice.api.js -> frontend/src/features/transaction/api/invoice.api.js
+frontend/src/features/transaction/invoice.css -> frontend/src/features/transaction/pages/invoice.css
+frontend/src/features/transaction/invoice.lib.js -> frontend/src/features/transaction/lib/invoice.lib.js
+frontend/src/features/transaction/invoice.test.js -> frontend/src/features/transaction/lib/invoice.test.js
+frontend/src/features/transaction/InvoiceListPage.jsx -> frontend/src/features/transaction/pages/InvoiceListPage.jsx
+frontend/src/features/notification/components/recentNotifications.js -> frontend/src/features/notification/lib/recentNotifications.js
+frontend/src/features/notification/components/recentNotifications.test.js -> frontend/src/features/notification/lib/recentNotifications.test.js
+frontend/src/features/orchestrator/pages/PayloadPreview.jsx -> frontend/src/features/orchestrator/components/PayloadPreview.jsx
+frontend/src/features/orchestrator/pages/PlanMultiPicker.jsx -> frontend/src/features/orchestrator/components/PlanMultiPicker.jsx
+frontend/src/features/orchestrator/pages/SaleConfigurationFieldTable.jsx -> frontend/src/features/orchestrator/components/SaleConfigurationFieldTable.jsx
+frontend/src/features/product/pages/ProductCategoryInput.jsx -> frontend/src/features/product/components/ProductCategoryInput.jsx
+frontend/src/features/product/pages/ProductCostingPanel.jsx -> frontend/src/features/product/components/ProductCostingPanel.jsx
+frontend/src/features/product/pages/ProductDetail.jsx -> frontend/src/features/product/components/ProductDetail.jsx
+frontend/src/features/product/pages/ProductForm.jsx -> frontend/src/features/product/components/ProductForm.jsx
+frontend/src/features/product/pages/ProductStatus.jsx -> frontend/src/features/product/components/ProductStatus.jsx
+frontend/src/features/product/pages/ProductSuggestionInput.jsx -> frontend/src/features/product/components/ProductSuggestionInput.jsx
+frontend/src/features/product/pages/ProductSummary.jsx -> frontend/src/features/product/components/ProductSummary.jsx
+frontend/src/features/product/pages/ProductUnitInput.jsx -> frontend/src/features/product/components/ProductUnitInput.jsx
+frontend/src/features/proposition/pages/PlanDetail.jsx -> frontend/src/features/proposition/components/PlanDetail.jsx
+frontend/src/features/proposition/pages/PlanForm.jsx -> frontend/src/features/proposition/components/PlanForm.jsx
+frontend/src/features/proposition/pages/PlanSourceVersionPicker.jsx -> frontend/src/features/proposition/components/PlanSourceVersionPicker.jsx
+frontend/src/features/proposition/pages/PlanStatus.jsx -> frontend/src/features/proposition/components/PlanStatus.jsx
+frontend/src/features/proposition/pages/PropositionDetail.jsx -> frontend/src/features/proposition/components/PropositionDetail.jsx
+frontend/src/features/proposition/pages/PropositionFields.jsx -> frontend/src/features/proposition/components/PropositionFields.jsx
+frontend/src/features/proposition/pages/PropositionForm.jsx -> frontend/src/features/proposition/components/PropositionForm.jsx
+frontend/src/features/dataAccessRules/pages/DataAccessRuleListPage/DataAccessRuleDetailForm.jsx -> frontend/src/features/dataAccessRules/components/DataAccessRuleDetailForm.jsx
+frontend/src/features/permission/pages/PermissionListPage/PermissionCreateForm.jsx -> frontend/src/features/permission/components/PermissionCreateForm.jsx
+frontend/src/features/permission/pages/PermissionListPage/PermissionDetailForm.jsx -> frontend/src/features/permission/components/PermissionDetailForm.jsx
+frontend/src/features/role/pages/RoleListPage/RoleCreateForm.jsx -> frontend/src/features/role/components/RoleCreateForm.jsx
+frontend/src/features/role/pages/RoleListPage/RoleDetailForm.jsx -> frontend/src/features/role/components/RoleDetailForm.jsx
+frontend/src/features/role/pages/RoleListPage/RolePermissionsForm.jsx -> frontend/src/features/role/components/RolePermissionsForm.jsx
+frontend/src/features/tenant/pages/TenantListPage/TenantEditForm.jsx -> frontend/src/features/tenant/components/TenantEditForm.jsx
+frontend/src/features/user/pages/UserListPage/AccessPermissionsSection.jsx -> frontend/src/features/user/components/AccessPermissionsSection.jsx
+frontend/src/features/user/pages/UserListPage/UserCreateForm.jsx -> frontend/src/features/user/components/UserCreateForm.jsx
+frontend/src/features/user/pages/UserListPage/UserDetailForm.jsx -> frontend/src/features/user/components/UserDetailForm.jsx
+
+LOADING AND NOT FOUND FOLLOW-UP
+- /404 renders the redesigned branded NotFoundPage using CoreNotFoundState. The existing wildcard-to-Home behavior for sub-tenant suffixes is preserved, as requested.
+- LoadingPage uses CoreLoadingState; both UI components and their CSS live in corefe. The frontend wrapper supplies app layout; router and data fetching remain in frontend.
+- Static data-loading messages now use the shared loading state in tables, details, dashboards, popup, auth bootstrap and route Suspense. Inline variants fit selectors and tenant switcher; native option/input placeholder text and button pending states retain their appropriate controls.
+- Loading UI is responsive, announces status accessibly and respects reduced-motion preferences. It does not change API requests or add artificial delays.
+- Browser checks cover /404 and Home navigation, existing tenant fallback, pending-to-empty table transition, viewport overflow and reduced motion. No files deleted for this follow-up.
+
+CUSTOMER COMPLAINT UPDATES
+- Customer Portal now includes a Complaint updates bell. Its popup displays actual ACCEPTED/ASSIGNED, team responses, status changes, resolution and closure events returned by the customer-owned complaint API. Selecting an item opens existing Customer Care details; View all complaints returns to the complaint list.
+- Shared popup shell and keyboard/outside-click behavior live in corefe CorePopover. Feature mapping, hook and UI live in complaint/lib, hooks and components. No backend/corebe files were changed.
+- Polling every 15 seconds uses the existing customer complaint API and shares the first-page cache with Customer Care. Keys include token/account and verified customer tenant. No admin Notification endpoints, unread counts, mark-as-read operations or fabricated notifications were introduced.
+- Backend inspection confirmed ACCEPTED events exist in complaint history; current email event sources support only COMPLAINT_CREATED and COMPLAINT_RESOLVED. This UI displays complaint activity; it does not add acceptance email delivery or server push.
+- 78 unit tests and 16 browser scenarios passed, including customer acceptance, detail navigation, empty/denied states, mobile popup and existing flows. Backend/Keycloak live integration was not exercised.
+
+TEP TAO MOI (172)
+corefe/src/components/CoreBackButton/CoreBackButton.css
+corefe/src/components/CoreBackButton/CoreBackButton.jsx
+corefe/src/components/CoreLoadingState/CoreLoadingState.css
+corefe/src/components/CoreLoadingState/CoreLoadingState.jsx
+corefe/src/components/CoreNotFoundState/CoreNotFoundState.css
+corefe/src/components/CoreNotFoundState/CoreNotFoundState.jsx
+corefe/src/components/CorePagination/CorePagination.css
+corefe/src/components/CorePagination/CorePagination.jsx
+corefe/src/components/CorePopover/CorePopover.css
+corefe/src/components/CorePopover/CorePopover.jsx
+corefe/src/components/CoreStatusBadge/CoreStatusBadge.css
+corefe/src/components/CoreStatusBadge/CoreStatusBadge.jsx
+corefe/src/components/CoreTimeline/CoreTimeline.css
+corefe/src/components/CoreTimeline/CoreTimeline.jsx
+corefe/src/styles/tokens.css
+frontend/public/ecofood-logo.svg
+frontend/redesign-changes.txt
+frontend/scripts/core-workspace-entry.js
+frontend/src/app/navigation/backDestination.js
+frontend/src/app/navigation/backDestination.test.js
+frontend/src/app/navigation/navSections.js
+frontend/src/app/navigation/navSections.test.js
+frontend/src/components/BackButton.jsx
+frontend/src/components/EcoFoodBrand.jsx
+frontend/src/components/PageHeader.css
+frontend/src/components/PageHeader.jsx
+frontend/src/components/StatusBadge.jsx
+frontend/src/features/audit/api/.gitkeep
+frontend/src/features/audit/components/.gitkeep
+frontend/src/features/audit/context/.gitkeep
+frontend/src/features/audit/hooks/.gitkeep
+frontend/src/features/auth/context/.gitkeep
+frontend/src/features/catalog/api/catalog.api.js
+frontend/src/features/catalog/components/.gitkeep
+frontend/src/features/catalog/context/.gitkeep
+frontend/src/features/catalog/hooks/.gitkeep
+frontend/src/features/catalog/lib/catalog.js
+frontend/src/features/catalog/lib/catalog.test.js
+frontend/src/features/catalog/pages/CatalogPage.css
+frontend/src/features/catalog/pages/CatalogPage.jsx
+frontend/src/features/complaint/api/complaint.api.js
+frontend/src/features/complaint/components/ComplaintHistory.jsx
+frontend/src/features/complaint/components/CustomerComplaintUpdates.css
+frontend/src/features/complaint/components/CustomerComplaintUpdates.jsx
+frontend/src/features/complaint/context/.gitkeep
+frontend/src/features/complaint/hooks/.gitkeep
+frontend/src/features/complaint/hooks/useCustomerComplaintUpdates.js
+frontend/src/features/complaint/lib/complaint.js
+frontend/src/features/complaint/lib/complaint.test.js
+frontend/src/features/complaint/lib/complaintHistory.js
+frontend/src/features/complaint/lib/complaintHistory.test.js
+frontend/src/features/complaint/lib/customerComplaintUpdates.js
+frontend/src/features/complaint/lib/customerComplaintUpdates.test.js
+frontend/src/features/complaint/pages/ComplaintPage.css
+frontend/src/features/complaint/pages/ComplaintPage.jsx
+frontend/src/features/customer/api/customer.api.js
+frontend/src/features/customer/context/.gitkeep
+frontend/src/features/customer/lib/customer.lib.js
+frontend/src/features/customer/lib/customer.test.js
+frontend/src/features/customer/lib/customerAuth.js
+frontend/src/features/customer/pages/CustomerPages.css
+frontend/src/features/customer/pages/CustomerPages.jsx
+frontend/src/features/dashboard/components/DashboardBuilder/DashboardBuilder.css
+frontend/src/features/dashboard/components/DashboardBuilder/DashboardBuilder.jsx
+frontend/src/features/dashboard/components/DashboardWidgets/DashboardWidgets.css
+frontend/src/features/dashboard/components/DashboardWidgets/DashboardWidgets.jsx
+frontend/src/features/dashboard/components/InsightsCarousel/InsightsCarousel.css
+frontend/src/features/dashboard/components/InsightsCarousel/InsightsCarousel.jsx
+frontend/src/features/dashboard/components/MetricCard/MetricCard.css
+frontend/src/features/dashboard/components/MetricCard/MetricCard.jsx
+frontend/src/features/dashboard/context/.gitkeep
+frontend/src/features/dataAccessRules/components/DataAccessRuleDetailForm.jsx
+frontend/src/features/dataAccessRules/context/.gitkeep
+frontend/src/features/dataAccessRules/lib/.gitkeep
+frontend/src/features/enterprise/components/.gitkeep
+frontend/src/features/enterprise/context/.gitkeep
+frontend/src/features/enterprise/lib/.gitkeep
+frontend/src/features/enterprise/pages/.gitkeep
+frontend/src/features/feedback/api/.gitkeep
+frontend/src/features/feedback/components/.gitkeep
+frontend/src/features/feedback/context/.gitkeep
+frontend/src/features/feedback/hooks/.gitkeep
+frontend/src/features/feedback/lib/.gitkeep
+frontend/src/features/feedback/pages/.gitkeep
+frontend/src/features/group/components/.gitkeep
+frontend/src/features/group/context/.gitkeep
+frontend/src/features/group/lib/.gitkeep
+frontend/src/features/group/pages/.gitkeep
+frontend/src/features/home/components/.gitkeep
+frontend/src/features/home/context/.gitkeep
+frontend/src/features/home/lib/.gitkeep
+frontend/src/features/manager/api/.gitkeep
+frontend/src/features/manager/components/.gitkeep
+frontend/src/features/manager/context/.gitkeep
+frontend/src/features/manager/hooks/.gitkeep
+frontend/src/features/manager/lib/manager.lib.js
+frontend/src/features/manager/lib/manager.test.js
+frontend/src/features/manager/pages/ManagerPage.jsx
+frontend/src/features/manager/pages/manager.css
+frontend/src/features/modules/api/.gitkeep
+frontend/src/features/modules/components/.gitkeep
+frontend/src/features/modules/context/.gitkeep
+frontend/src/features/modules/hooks/.gitkeep
+frontend/src/features/modules/lib/.gitkeep
+frontend/src/features/notification/api/notification.api.js
+frontend/src/features/notification/components/NotificationBell.jsx
+frontend/src/features/notification/components/NotificationDetailDialog.jsx
+frontend/src/features/notification/components/NotificationPopup.css
+frontend/src/features/notification/context/.gitkeep
+frontend/src/features/notification/hooks/useNotificationHistory.js
+frontend/src/features/notification/lib/notification.js
+frontend/src/features/notification/lib/notification.test.js
+frontend/src/features/notification/lib/recentNotifications.js
+frontend/src/features/notification/lib/recentNotifications.test.js
+frontend/src/features/notification/pages/NotificationPage.css
+frontend/src/features/notification/pages/NotificationPage.jsx
+frontend/src/features/orchestrator/components/PayloadPreview.jsx
+frontend/src/features/orchestrator/components/PlanMultiPicker.jsx
+frontend/src/features/orchestrator/components/SaleConfigurationFieldTable.jsx
+frontend/src/features/orchestrator/context/.gitkeep
+frontend/src/features/permission/components/PermissionCreateForm.jsx
+frontend/src/features/permission/components/PermissionDetailForm.jsx
+frontend/src/features/permission/context/.gitkeep
+frontend/src/features/permission/lib/.gitkeep
+frontend/src/features/product/components/ProductCategoryInput.jsx
+frontend/src/features/product/components/ProductCostingPanel.jsx
+frontend/src/features/product/components/ProductDetail.jsx
+frontend/src/features/product/components/ProductForm.jsx
+frontend/src/features/product/components/ProductStatus.jsx
+frontend/src/features/product/components/ProductSuggestionInput.jsx
+frontend/src/features/product/components/ProductSummary.jsx
+frontend/src/features/product/components/ProductUnitInput.jsx
+frontend/src/features/product/context/.gitkeep
+frontend/src/features/product/hooks/.gitkeep
+frontend/src/features/proposition/components/PlanDetail.jsx
+frontend/src/features/proposition/components/PlanForm.jsx
+frontend/src/features/proposition/components/PlanSourceVersionPicker.jsx
+frontend/src/features/proposition/components/PlanStatus.jsx
+frontend/src/features/proposition/components/PropositionDetail.jsx
+frontend/src/features/proposition/components/PropositionFields.jsx
+frontend/src/features/proposition/components/PropositionForm.jsx
+frontend/src/features/proposition/context/.gitkeep
+frontend/src/features/receipt/api/.gitkeep
+frontend/src/features/receipt/components/.gitkeep
+frontend/src/features/receipt/context/.gitkeep
+frontend/src/features/receipt/hooks/.gitkeep
+frontend/src/features/receipt/lib/.gitkeep
+frontend/src/features/receipt/pages/.gitkeep
+frontend/src/features/role/components/RoleCreateForm.jsx
+frontend/src/features/role/components/RoleDetailForm.jsx
+frontend/src/features/role/components/RolePermissionsForm.jsx
+frontend/src/features/role/context/.gitkeep
+frontend/src/features/role/lib/.gitkeep
+frontend/src/features/tenant/components/TenantEditForm.jsx
+frontend/src/features/transaction/api/invoice.api.js
+frontend/src/features/transaction/components/.gitkeep
+frontend/src/features/transaction/context/.gitkeep
+frontend/src/features/transaction/hooks/.gitkeep
+frontend/src/features/transaction/lib/invoice.lib.js
+frontend/src/features/transaction/lib/invoice.test.js
+frontend/src/features/transaction/pages/InvoiceListPage.jsx
+frontend/src/features/transaction/pages/invoice.css
+frontend/src/features/user/components/AccessPermissionsSection.jsx
+frontend/src/features/user/components/UserCreateForm.jsx
+frontend/src/features/user/components/UserDetailForm.jsx
+frontend/src/features/user/context/.gitkeep
+frontend/src/features/user/lib/.gitkeep
+frontend/src/layouts/MainLayout/SidebarContext.js
+frontend/src/pages/LoadingPage/LoadingPage.css
+frontend/src/pages/LoadingPage/LoadingPage.jsx
+frontend/src/testing/redesign/harness.html
+frontend/src/testing/redesign/redesign.ui.test.mjs
+
+TEP SUA DOI (81)
+corefe/src/components/CoreButton/CoreButton.css
+corefe/src/components/CoreButton/CoreButton.jsx
+corefe/src/components/CoreCard/CoreCard.css
+corefe/src/components/CoreEmptyState/CoreEmptyState.css
+corefe/src/components/CoreEmptyState/CoreEmptyState.jsx
+corefe/src/components/CoreModal/CoreModal.css
+corefe/src/components/CoreMultiSelect/CoreMultiSelect.css
+corefe/src/components/CorePageHeader/CorePageHeader.css
+corefe/src/components/CoreSelect/CoreSelect.css
+corefe/src/components/CoreTable/CoreTable.css
+corefe/src/components/CoreTable/CoreTable.jsx
+corefe/src/components/CoreTabs/CoreTabs.css
+corefe/src/index.js
+frontend/index.html
+frontend/src/app/AppRouter/AppRouter.jsx
+frontend/src/app/navigation/navAccess.js
+frontend/src/app/navigation/navItems.js
+frontend/src/features/audit/pages/AuditLogPage.jsx
+frontend/src/features/audit/pages/audit.css
+frontend/src/features/auth/components/AuthBootstrap.jsx
+frontend/src/features/auth/components/RequireAuth.jsx
+frontend/src/features/auth/components/SessionTimeoutDialog.jsx
+frontend/src/features/auth/pages/AuthHandoffPage.jsx
+frontend/src/features/auth/pages/CallbackPage.jsx
+frontend/src/features/customer/components/CustomerLogin.jsx
+frontend/src/features/customer/components/CustomerProfileForm.jsx
+frontend/src/features/customer/hooks/useCustomerProfile.js
+frontend/src/features/customer/pages/CustomerProfilePage/CustomerProfilePage.css
+frontend/src/features/customer/pages/CustomerProfilePage/CustomerProfilePage.jsx
+frontend/src/features/dashboard/config/widgetRegistry.js
+frontend/src/features/dashboard/lib/businessDashboard.js
+frontend/src/features/dashboard/lib/businessDashboard.test.js
+frontend/src/features/dashboard/mocks/dashboard.mock.js
+frontend/src/features/dashboard/mocks/dashboardLayout.mock.js
+frontend/src/features/dashboard/pages/BusinessDashboardPage.css
+frontend/src/features/dashboard/pages/BusinessDashboardPage.jsx
+frontend/src/features/dashboard/pages/DashboardPage/DashboardPage.jsx
+frontend/src/features/dataAccessRules/pages/DataAccessRuleDetailPage/DataAccessRuleDetailPage.css
+frontend/src/features/dataAccessRules/pages/DataAccessRuleDetailPage/DataAccessRuleDetailPage.jsx
+frontend/src/features/dataAccessRules/pages/DataAccessRuleListPage/DataAccessRuleEditPage.jsx
+frontend/src/features/dataAccessRules/pages/DataAccessRuleListPage/DataAccessRuleListPage.css
+frontend/src/features/dataAccessRules/pages/DataAccessRuleListPage/DataAccessRuleListPage.jsx
+frontend/src/features/home/mock/news.mock.js
+frontend/src/features/home/pages/HomePage/HomePage.css
+frontend/src/features/home/pages/HomePage/HomePage.jsx
+frontend/src/features/modules/pages/ModulePage/ModulePage.css
+frontend/src/features/modules/pages/ModulePage/ModulePage.jsx
+frontend/src/features/orchestrator/pages/PlanSaleOrchestrator.css
+frontend/src/features/orchestrator/pages/PlanSaleOrchestrator.jsx
+frontend/src/features/permission/pages/PermissionListPage/PermissionDetailPage.jsx
+frontend/src/features/permission/pages/PermissionListPage/PermissionListPage.css
+frontend/src/features/permission/pages/PermissionListPage/PermissionListPage.jsx
+frontend/src/features/product/lib/product.js
+frontend/src/features/product/pages/ProductCreatePage.jsx
+frontend/src/features/product/pages/ProductDetailPage.jsx
+frontend/src/features/product/pages/ProductListPage.css
+frontend/src/features/product/pages/ProductListPage.jsx
+frontend/src/features/proposition/pages/PropositionPage.css
+frontend/src/features/proposition/pages/PropositionPage.jsx
+frontend/src/features/role/pages/RoleListPage/RoleDetailPage.jsx
+frontend/src/features/role/pages/RoleListPage/RoleListPage.css
+frontend/src/features/role/pages/RoleListPage/RoleListPage.jsx
+frontend/src/features/tenant/components/TenantSwitcher.css
+frontend/src/features/tenant/components/TenantSwitcher.jsx
+frontend/src/features/tenant/pages/TenantListPage/TenantDetailPage.jsx
+frontend/src/features/tenant/pages/TenantListPage/TenantListPage.css
+frontend/src/features/tenant/pages/TenantListPage/TenantListPage.jsx
+frontend/src/features/tenant/pages/TenantOnboardingPage/TenantOnboardingPage.css
+frontend/src/features/tenant/pages/TenantOnboardingPage/TenantOnboardingPage.jsx
+frontend/src/features/user/pages/UserListPage/UserDetailPage.jsx
+frontend/src/features/user/pages/UserListPage/UserListPage.css
+frontend/src/features/user/pages/UserListPage/UserListPage.jsx
+frontend/src/index.css
+frontend/src/layouts/CustomerLayout/CustomerLayout.css
+frontend/src/layouts/CustomerLayout/CustomerLayout.jsx
+frontend/src/layouts/MainLayout/MainLayout.css
+frontend/src/layouts/MainLayout/MainLayout.jsx
+frontend/src/main.jsx
+frontend/src/pages/NotFoundPage/NotFoundPage.css
+frontend/src/pages/NotFoundPage/NotFoundPage.jsx
+frontend/vite.config.js
+
+TEP XOA O VI TRI CU (DI CHUYEN VAO CAU TRUC FEATURE) (66)
+frontend/src/features/catalog/CatalogPage.css
+frontend/src/features/catalog/CatalogPage.jsx
+frontend/src/features/catalog/catalog.api.js
+frontend/src/features/catalog/catalog.js
+frontend/src/features/catalog/catalog.test.js
+frontend/src/features/complaint/ComplaintPage.css
+frontend/src/features/complaint/ComplaintPage.jsx
+frontend/src/features/complaint/complaint.api.js
+frontend/src/features/complaint/complaint.js
+frontend/src/features/complaint/complaint.test.js
+frontend/src/features/customer/CustomerPages.css
+frontend/src/features/customer/CustomerPages.jsx
+frontend/src/features/customer/customer.api.js
+frontend/src/features/customer/customer.lib.js
+frontend/src/features/customer/customer.test.js
+frontend/src/features/customer/customerAuth.js
+frontend/src/features/dashboard/pages/DashboardPage/components/DashboardBuilder/DashboardBuilder.css
+frontend/src/features/dashboard/pages/DashboardPage/components/DashboardBuilder/DashboardBuilder.jsx
+frontend/src/features/dashboard/pages/DashboardPage/components/DashboardWidgets/DashboardWidgets.css
+frontend/src/features/dashboard/pages/DashboardPage/components/DashboardWidgets/DashboardWidgets.jsx
+frontend/src/features/dashboard/pages/DashboardPage/components/InsightsCarousel/InsightsCarousel.css
+frontend/src/features/dashboard/pages/DashboardPage/components/InsightsCarousel/InsightsCarousel.jsx
+frontend/src/features/dashboard/pages/DashboardPage/components/MetricCard/MetricCard.css
+frontend/src/features/dashboard/pages/DashboardPage/components/MetricCard/MetricCard.jsx
+frontend/src/features/dataAccessRules/pages/DataAccessRuleListPage/DataAccessRuleDetailForm.jsx
+frontend/src/features/manager/ManagerPage.jsx
+frontend/src/features/manager/manager.css
+frontend/src/features/manager/manager.lib.js
+frontend/src/features/manager/manager.test.js
+frontend/src/features/notification/NotificationPage.css
+frontend/src/features/notification/NotificationPage.jsx
+frontend/src/features/notification/notification.api.js
+frontend/src/features/notification/notification.js
+frontend/src/features/notification/notification.test.js
+frontend/src/features/orchestrator/pages/PayloadPreview.jsx
+frontend/src/features/orchestrator/pages/PlanMultiPicker.jsx
+frontend/src/features/orchestrator/pages/SaleConfigurationFieldTable.jsx
+frontend/src/features/permission/pages/PermissionListPage/PermissionCreateForm.jsx
+frontend/src/features/permission/pages/PermissionListPage/PermissionDetailForm.jsx
+frontend/src/features/product/pages/ProductCategoryInput.jsx
+frontend/src/features/product/pages/ProductCostingPanel.jsx
+frontend/src/features/product/pages/ProductDetail.jsx
+frontend/src/features/product/pages/ProductForm.jsx
+frontend/src/features/product/pages/ProductStatus.jsx
+frontend/src/features/product/pages/ProductSuggestionInput.jsx
+frontend/src/features/product/pages/ProductSummary.jsx
+frontend/src/features/product/pages/ProductUnitInput.jsx
+frontend/src/features/proposition/pages/PlanDetail.jsx
+frontend/src/features/proposition/pages/PlanForm.jsx
+frontend/src/features/proposition/pages/PlanSourceVersionPicker.jsx
+frontend/src/features/proposition/pages/PlanStatus.jsx
+frontend/src/features/proposition/pages/PropositionDetail.jsx
+frontend/src/features/proposition/pages/PropositionFields.jsx
+frontend/src/features/proposition/pages/PropositionForm.jsx
+frontend/src/features/role/pages/RoleListPage/RoleCreateForm.jsx
+frontend/src/features/role/pages/RoleListPage/RoleDetailForm.jsx
+frontend/src/features/role/pages/RoleListPage/RolePermissionsForm.jsx
+frontend/src/features/tenant/pages/TenantListPage/TenantEditForm.jsx
+frontend/src/features/transaction/InvoiceListPage.jsx
+frontend/src/features/transaction/invoice.api.js
+frontend/src/features/transaction/invoice.css
+frontend/src/features/transaction/invoice.lib.js
+frontend/src/features/transaction/invoice.test.js
+frontend/src/features/user/pages/UserListPage/AccessPermissionsSection.jsx
+frontend/src/features/user/pages/UserListPage/UserCreateForm.jsx
+frontend/src/features/user/pages/UserListPage/UserDetailForm.jsx
+
+Untracked corefe/src/core.zip existed before this task and was not modified. No commit, push, package version update or publish was performed.

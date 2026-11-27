@@ -3,8 +3,8 @@
   padding: 24px;
   border-radius: 10px;
   background: #fff;
-  border: 1px solid var(--fnb-line, #e9eded);
-  color: #172b25;
+  border: 1px solid var(--fnb-line, #e5eaf1);
+  color: var(--fnb-ink);
 }
 .sale-heading {
   display: flex;
@@ -20,7 +20,7 @@
 .sale-heading p,
 .sale-muted {
   margin: 0;
-  color: #60716b;
+  color: var(--fnb-muted);
   font-size: 14px;
 }
 .sale-notice {
@@ -55,7 +55,7 @@
 }
 .sale-field--inline span {
   font-weight: 600;
-  color: #1b2933;
+  color: #17263b;
 }
 .sale-form-actions {
   display: flex;
@@ -92,22 +92,22 @@
 .sale-field-table__row--head {
   font-size: 14px;
   font-weight: 700;
-  color: #1b2933;
+  color: #17263b;
   border-bottom: none;
   padding-bottom: 8px;
 }
 .sale-field-table__underline {
   display: block;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--fnb-line, #dce5df);
-  color: #172b25;
+  border-bottom: 1px solid var(--fnb-line, #e5eaf1);
+  color: var(--fnb-ink);
   font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .sale-field-table__plain {
-  color: #3c4a46;
+  color: var(--fnb-ink);
   font-size: 14px;
 }
 .sale-field-table__description {
@@ -117,22 +117,22 @@
   justify-content: space-between;
   gap: 8px;
   padding: 8px 10px;
-  background: #f4f6f5;
-  border-bottom: 1px solid var(--fnb-line, #dce5df);
+  background: var(--fnb-canvas);
+  border-bottom: 1px solid var(--fnb-line, #e5eaf1);
   border-radius: 4px 4px 0 0;
-  color: #172b25;
+  color: var(--fnb-ink);
   font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .sale-field-table__description-input {
-  background: #f4f6f5 !important;
+  background: var(--fnb-canvas) !important;
   border-radius: 4px 4px 0 0 !important;
 }
 .sale-field-table__pencil {
   flex-shrink: 0;
-  color: #60716b;
+  color: var(--fnb-muted);
   font-size: 13px;
 }
 .sale-field-table__remove {
@@ -145,8 +145,8 @@
 .sale-field-table__add {
   align-self: flex-start;
   border: 0;
-  background: #e5eee7;
-  color: #21533e;
+  background: var(--fnb-accent-soft);
+  color: var(--fnb-accent);
   border-radius: 6px;
   padding: 8px 12px;
   cursor: pointer;
@@ -155,7 +155,7 @@
 }
 .sale-preview-body {
   margin-top: 8px;
-  border: 1px solid var(--fnb-line, #dce5df);
+  border: 1px solid var(--fnb-line, #e5eaf1);
   border-radius: 6px;
   overflow: hidden;
 }
@@ -165,8 +165,8 @@
   justify-content: space-between;
   gap: 12px;
   padding: 6px 10px;
-  background: #edebe9;
-  border-bottom: 1px solid var(--fnb-line, #dce5df);
+  background: var(--fnb-canvas);
+  border-bottom: 1px solid var(--fnb-line, #e5eaf1);
 }
 .sale-preview-tabs {
   display: flex;
@@ -180,15 +180,15 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
-  color: #53645a;
+  color: var(--fnb-muted);
 }
 .sale-preview-tabs button[aria-pressed="true"] {
-  background: #21533e;
+  background: var(--fnb-accent);
   color: #fff;
 }
 .sale-preview-copy {
-  background: #e4e2e0;
-  color: #172b25;
+  background: var(--fnb-accent-soft);
+  color: var(--fnb-ink);
 }
 .sale-preview pre {
   margin: 0;
@@ -207,3 +207,5 @@
     max-width: none;
   }
 }
+
+.sale-panel { border-radius: 8px; }.sale-preview pre { background: var(--fnb-canvas); }.sale-form-actions { justify-content: flex-end; flex-wrap: wrap; border-top: 1px solid var(--fnb-line); padding-top: 20px; }.sale-field-table__row--head { background: var(--fnb-canvas); padding: 12px 8px; font-size: 12px; color: var(--fnb-muted); }.sale-field-table__row { gap: 16px; }.sale-field { max-width: none; }.sale-preview-tabs button:focus-visible, .sale-preview-copy:focus-visible { outline: 2px solid var(--fnb-accent); outline-offset: 2px; }

@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { LoadingPage } from "../../../pages/LoadingPage/LoadingPage.jsx";
+import { FeedbackMessage } from "../../../components/FeedbackMessage.jsx";
 import { useNavigate } from "react-router-dom";
 
 import { useAuthStore } from "../store/authStore.js";
 import { ROUTES } from "../../../constants/routes.js";
 
 export function CallbackPage() {
-  const [status, setStatus] = useState("Đang xác thực đăng nhập…");
+  const [status, setStatus] = useState(null);
   const handleCallback = useAuthStore((s) => s.handleCallback);
   const navigate = useNavigate();
   // guards against StrictMode's double-invoke redeeming the code twice
@@ -23,13 +25,14 @@ export function CallbackPage() {
         // always land on the homepage after a successful login
         navigate(ROUTES.HOME, { replace: true });
       })
-      .catch((err) => setStatus(`Đăng nhập thất bại: ${err.message}`));
+      .catch((err) => setStatus(`Sign-in failed: ${err.message}`));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  if (!status) return <LoadingPage fullscreen title="Verifying sign-in" description="Connecting you to your EcoFood workspace." />;
   return (
-    <div className="flex min-h-screen items-center justify-center text-sm text-gray-600">
+    <FeedbackMessage tone="warning">
       {status}
-    </div>
+    </FeedbackMessage>
   );
 }

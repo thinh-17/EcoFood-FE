@@ -4,11 +4,9 @@ import { useNavigate } from "react-router-dom";
 
 import { FiTool } from "react-icons/fi";
 
-import {
-  CoreButton,
-  CorePageHeader,
-  CoreEmptyState,
-} from "@thinh-17/fe-core";
+import { CoreEmptyState } from "@thinh-17/fe-core";
+import { CoreButton } from "@thinh-17/fe-core";
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 
 import { ROUTES } from "../../../../constants/routes.js";
 

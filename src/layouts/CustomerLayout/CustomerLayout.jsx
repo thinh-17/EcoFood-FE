@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { CoreButton, useDisclosure } from "@thinh-17/fe-core";
-import { FiGrid, FiMenu, FiX, FiChevronsLeft, FiChevronsRight, FiFileText, FiUser, FiMessageSquare, FiLogOut } from "react-icons/fi";
+import { useDisclosure } from "@thinh-17/fe-core";
+import { CoreButton } from "@thinh-17/fe-core";
+import { FiMenu, FiX, FiChevronsLeft, FiChevronsRight, FiFileText, FiUser, FiMessageSquare, FiLogOut } from "react-icons/fi";
+import { EcoFoodBrand } from "../../components/EcoFoodBrand.jsx";
 import { useAuthStore } from "../../features/auth/store/authStore.js";
 import { useCustomerProfile } from "../../features/customer/hooks/useCustomerProfile.js";
-import { customerNavigation, customerSection } from "../../features/customer/customer.lib.js";
+import { CustomerComplaintUpdates } from "../../features/complaint/components/CustomerComplaintUpdates.jsx";
+import { customerNavigation, customerSection } from "../../features/customer/lib/customer.lib.js";
 import "../MainLayout/MainLayout.css";
 import "./CustomerLayout.css";
 
@@ -36,8 +39,7 @@ export function CustomerLayout() {
     <aside className="eco-sidebar">
       <div className="eco-sidebar__brand">
         <Link to={path("/customer")} className="eco-brand" onClick={mobile.close}>
-          <span className="eco-brand__icon"><FiGrid size={22} /></span>
-          <span className="eco-brand__name eco-nav-label"><strong>EcoFood</strong><small>CUSTOMER PORTAL</small></span>
+          <EcoFoodBrand subtitle="CUSTOMER PORTAL" />
         </Link>
         <CoreButton className="eco-sidebar__collapse" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={() => setCollapsed((value) => !value)}>{collapsed ? <FiChevronsRight size={18} /> : <FiChevronsLeft size={18} />}</CoreButton>
@@ -70,6 +72,7 @@ export function CustomerLayout() {
           <div className="eco-breadcrumb"><span>Customer Portal</span><span aria-hidden="true">/</span>
             <strong>{customerNavigation.find((item) => item.id === active)?.label}</strong></div>
         </div>
+        {token && profile.isSuccess && <CustomerComplaintUpdates key={`${token}/${tenant}`} token={token} tenantId={tenant} />}
         <Link className="eco-user-avatar" to={path("/customer/profile")} title={name} aria-label="Open my profile">{initials}</Link>
       </header>
       <main className="eco-content"><Outlet key={token} /></main>

@@ -45,4 +45,5 @@
 
 @media (max-width: 600px) {
   .audit-filters { grid-template-columns: minmax(0, 1fr); }
-}
+}.audit-page .fe-card { padding: 20px; }.audit-page .fe-table { min-width: 580px; }.audit-error { color: var(--fnb-error); }
+@media (max-width: 600px) { .audit-page .fe-card { padding: 16px; } }

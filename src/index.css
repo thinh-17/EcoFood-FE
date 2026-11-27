@@ -2,20 +2,37 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
 :root {
   font-family: 'DM Sans', Arial, sans-serif;
-  color: #1b2933;
-  background: #f5f6f6;
+  color: #17263b;
+  background: #f4f7fb;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --fnb-ink: #1b2933;
-  --fnb-muted: #74818a;
-  --fnb-accent: #087f6e;
-  --fnb-accent-hover: #076759;
+  color-scheme: light;
+  font-size: 14px;
+  line-height: 1.5;
+  --fnb-ink: #17263b;
+  --fnb-muted: #64748b;
+  --fnb-text-muted: #94a3b8;
+  --fnb-accent: #075acd;
+  --fnb-accent-hover: #064cb1;
+  --fnb-accent-soft: #e8f1fd;
+  --fnb-sidebar: #eff3f9;
   --fnb-paper: #fff;
-  --fnb-canvas: #f5f6f6;
-  --fnb-line: #e9eded;
-  --fnb-error: #c0442b;
-  --fnb-error-soft: #fdeceb;
+  --fnb-canvas: #f4f7fb;
+  --fnb-line: #e5eaf1;
+  --fnb-error: #dc2626;
+  --fnb-error-soft: #fef2f2;
+  --fnb-success: #16a34a;
+  --fnb-warning: #d97706;
+  --fnb-info: #2563eb;
+  --fnb-radius: 8px;
+  --fnb-space-1: 4px;
+  --fnb-space-2: 8px;
+  --fnb-space-3: 12px;
+  --fnb-space-4: 16px;
+  --fnb-space-5: 20px;
+  --fnb-space-6: 24px;
+  --fnb-space-8: 32px;
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { min-width: 320px; }
@@ -23,6 +40,9 @@ body { margin: 0; min-width: 320px; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
+img { max-width: 100%; }
+textarea { resize: vertical; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--fnb-accent); }
 :focus-visible { outline: 2px solid var(--fnb-accent); outline-offset: 3px; }
 
 /* Shared "live" required-field validation marker — applied to a field's
@@ -41,6 +61,6 @@ button:disabled { cursor: not-allowed; }
 .fe-field-error {
   display: block;
   color: var(--fnb-error);
-  font-size: 11px;
+  font-size: 12px;
   margin-top: 4px;
 }

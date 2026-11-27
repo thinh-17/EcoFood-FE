@@ -1,6 +1,6 @@
 .prop-page {
   --prop-accent: var(--fnb-accent, #087f6e);
-  color: var(--fnb-ink, #243a32);
+  color: var(--fnb-ink, #17263b);
   padding: 24px;
   min-width: 0;
 }
@@ -50,7 +50,7 @@
 .prop-page textarea {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid var(--fnb-line, #dce5df);
+  border: 1px solid var(--fnb-line, #e5eaf1);
   border-radius: 7px;
   padding: 10px 12px;
   font: inherit;
@@ -81,12 +81,12 @@
 .prop-panel {
   padding: 24px;
   margin: 20px 0;
-  border: 1px solid var(--fnb-line, #dce5df);
+  border: 1px solid var(--fnb-line, #e5eaf1);
   border-radius: 12px;
   background: white;
 }
 .prop-overview {
-  background: linear-gradient(180deg, #f6faf8 0%, #ffffff 140px);
+  background: var(--fnb-paper);
 }
 .prop-overview-header {
   display: flex;
@@ -99,7 +99,7 @@
   font-size: 22px;
 }
 .prop-overview-description {
-  color: var(--fnb-muted, #718078);
+  color: var(--fnb-muted, #64748b);
   margin: 10px 0 20px;
   max-width: 70ch;
 }
@@ -114,13 +114,13 @@
   flex-direction: column;
   gap: 6px;
   padding: 14px 16px;
-  border: 1px solid var(--fnb-line, #dce5df);
+  border: 1px solid var(--fnb-line, #e5eaf1);
   border-radius: 10px;
   background: #fff;
 }
 .prop-stat-label {
   font-size: 12px;
-  color: var(--fnb-muted, #718078);
+  color: var(--fnb-muted, #64748b);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -131,7 +131,7 @@
 }
 .prop-overview-details {
   padding-top: 16px;
-  border-top: 1px solid var(--fnb-line, #dce5df);
+  border-top: 1px solid var(--fnb-line, #e5eaf1);
 }
 .prop-form > fieldset {
   border: 0;
@@ -144,7 +144,7 @@
 .prop-form h2:not(:first-child) {
   margin: 16px 0 0;
   padding-top: 20px;
-  border-top: 1px solid var(--fnb-line, #dce5df);
+  border-top: 1px solid var(--fnb-line, #e5eaf1);
 }
 .prop-grid,
 .prop-facts {
@@ -160,13 +160,13 @@
 }
 .prop-page small,
 .prop-muted {
-  color: var(--fnb-muted, #718078);
+  color: var(--fnb-muted, #64748b);
   font-weight: 400;
   font-size: 13px;
   line-height: 1.6;
 }
 .prop-source {
-  background: #f3f8f6;
+  background: var(--fnb-canvas);
   padding: 14px;
   border-radius: 8px;
   overflow-wrap: anywhere;
@@ -190,7 +190,7 @@
 .prop-table-wrap {
   overflow-x: auto;
   background: white;
-  border: 1px solid var(--fnb-line, #dce5df);
+  border: 1px solid var(--fnb-line, #e5eaf1);
   border-radius: 10px;
 }
 .prop-table {
@@ -200,15 +200,15 @@
   text-align: left;
 }
 .prop-table th {
-  background: #f6f8f7;
-  color: var(--fnb-muted, #617268);
+  background: var(--fnb-canvas);
+  color: var(--fnb-muted, #64748b);
   font-weight: 500;
   padding: 15px;
   white-space: nowrap;
 }
 .prop-table td {
   padding: 16px 15px;
-  border-top: 1px solid var(--fnb-line, #dce5df);
+  border-top: 1px solid var(--fnb-line, #e5eaf1);
 }
 .prop-link {
   border: 0;
@@ -222,7 +222,7 @@
 .prop-empty {
   padding: 24px;
   text-align: center;
-  color: var(--fnb-muted, #718078);
+  color: var(--fnb-muted, #64748b);
 }
 /* Same pill-with-dot shape/colors as Product's .product-status family. */
 .prop-status-pill {
@@ -263,7 +263,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid var(--fnb-line, #dce5df);
+  border: 1px solid var(--fnb-line, #e5eaf1);
   border-radius: 7px;
   padding: 8px 32px 8px 12px;
   background: #fff;
@@ -273,7 +273,7 @@
   position: relative;
 }
 .prop-version-picker__trigger:disabled {
-  color: var(--fnb-muted, #718078);
+  color: var(--fnb-muted, #64748b);
   background: #f5f7f6;
 }
 .prop-version-picker__chevron {
@@ -281,7 +281,7 @@
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--fnb-muted, #718078);
+  color: var(--fnb-muted, #64748b);
 }
 .prop-version-picker__options {
   position: absolute;
@@ -293,7 +293,7 @@
   padding: 4px;
   list-style: none;
   background: #fff;
-  border: 1px solid var(--fnb-line, #dce5df);
+  border: 1px solid var(--fnb-line, #e5eaf1);
   border-radius: 6px;
   box-shadow: 0 8px 24px #20375820;
   max-height: 240px;
@@ -311,16 +311,16 @@
 }
 .prop-version-picker__options [role="option"]:hover,
 .prop-version-picker__options [aria-selected="true"] {
-  background: #edf5f1;
+  background: var(--fnb-accent-soft);
 }
 .prop-version-picker__empty {
   padding: 10px 12px;
-  color: var(--fnb-muted, #718078);
+  color: var(--fnb-muted, #64748b);
   font-size: 13px;
 }
 .prop-facts dt {
   font-size: 12px;
-  color: var(--fnb-muted, #718078);
+  color: var(--fnb-muted, #64748b);
   margin-bottom: 6px;
   text-transform: capitalize;
 }
@@ -340,11 +340,11 @@
   display: flex;
   flex-wrap: wrap;
   gap: 24px;
-  background: #f0f8f6;
+  background: var(--fnb-accent-soft);
   padding: 18px;
   border-radius: 8px;
   font-size: 12px;
-  color: var(--fnb-muted, #617268);
+  color: var(--fnb-muted, #64748b);
 }
 .prop-preview strong {
   display: block;
@@ -353,12 +353,12 @@
   margin-top: 6px;
 }
 .prop-plan {
-  border-top: 1px solid var(--fnb-line, #dce5df);
+  border-top: 1px solid var(--fnb-line, #e5eaf1);
   padding: 12px 0;
 }
 .prop-confirm,
 .prop-subcard {
-  border: 1px solid #cbded0;
+  border: 1px solid var(--fnb-line);
   border-radius: 8px;
   padding: 16px;
   margin: 12px 0;
@@ -401,15 +401,15 @@
   display: grid;
   grid-template-columns: 200px minmax(0, 1fr);
   margin: 20px 0;
-  border: 1px solid var(--fnb-line, #dce5df);
+  border: 1px solid var(--fnb-line, #e5eaf1);
   border-radius: 12px;
   background: white;
   overflow: hidden;
   min-height: 460px;
 }
 .prop-stepper {
-  border-right: 1px solid var(--fnb-line, #dce5df);
-  background: #f8faf9;
+  border-right: 1px solid var(--fnb-line, #e5eaf1);
+  background: var(--fnb-canvas);
   padding: 24px 16px;
   min-width: 0;
 }
@@ -448,10 +448,10 @@
   height: 27px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--fnb-line, #dce5df);
+  border: 1px solid var(--fnb-line, #e5eaf1);
   border-radius: 50%;
   background: #fff;
-  color: var(--fnb-muted, #718078);
+  color: var(--fnb-muted, #64748b);
   font-weight: 700;
 }
 .prop-stepper li.is-current button.prop-step-button {
@@ -465,7 +465,7 @@
   border-color: var(--prop-accent);
 }
 .prop-stepper p {
-  color: var(--fnb-muted, #718078);
+  color: var(--fnb-muted, #64748b);
   font-size: 12px;
   line-height: 1.7;
   margin-top: 24px;
@@ -489,7 +489,7 @@
 }
 .prop-wizard-heading p {
   margin: 0;
-  color: var(--fnb-muted, #718078);
+  color: var(--fnb-muted, #64748b);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -505,12 +505,12 @@
 .prop-wizard-fields h3:not(:first-child) {
   margin-top: 6px;
   padding-top: 20px;
-  border-top: 1px solid var(--fnb-line, #dce5df);
+  border-top: 1px solid var(--fnb-line, #e5eaf1);
 }
 .prop-wizard-actions {
   margin-top: 22px;
   padding-top: 18px;
-  border-top: 1px solid var(--fnb-line, #dce5df);
+  border-top: 1px solid var(--fnb-line, #e5eaf1);
   justify-content: flex-end;
 }
 @media (max-width: 800px) {
@@ -519,7 +519,7 @@
   }
   .prop-stepper {
     border-right: 0;
-    border-bottom: 1px solid var(--fnb-line, #dce5df);
+    border-bottom: 1px solid var(--fnb-line, #e5eaf1);
     padding: 12px;
   }
   .prop-stepper ol {
@@ -536,7 +536,7 @@
   }
   .prop-stepper button.prop-step-button {
     white-space: nowrap;
-    font-size: 11px;
+    font-size: 12px;
   }
   .prop-wizard-content {
     padding: 18px 12px;
@@ -560,7 +560,7 @@
   .prop-ingredient-row {
     grid-template-columns: 1fr 1fr;
     padding-bottom: 12px;
-    border-bottom: 1px solid var(--fnb-line, #dce5df);
+    border-bottom: 1px solid var(--fnb-line, #e5eaf1);
   }
   .prop-form,
   .prop-panel {
@@ -570,3 +570,8 @@
     align-items: flex-start;
   }
 }
+
+.prop-page { padding: 0; }.prop-wizard { border-radius: 8px; overflow: visible; }.prop-wizard-heading h2 { font-size: 20px; }.prop-wizard-fields input:disabled, .prop-wizard-fields textarea:disabled, .prop-wizard-fields select:disabled { background: var(--fnb-canvas); color: var(--fnb-muted); cursor: not-allowed; }
+.prop-page .fe-table { min-width: 640px; }.prop-toolbar { margin-top: 0; }.prop-overview-stats { gap: 24px; }.prop-stat { border: 0; border-radius: 0; padding: 8px 0; }.prop-stat-label { text-transform: none; letter-spacing: 0; }
+.prop-page .fe-tabs__tab { border-radius: 0; }.prop-panel { border-radius: 8px; }.prop-wizard-actions { background: white; }.prop-wizard .prop-stepper { border-radius: 8px 0 0 8px; }
+@media (max-width: 800px) { .prop-page { padding: 0; }.prop-wizard .prop-stepper { border-radius: 8px 8px 0 0; }.prop-section-heading, .prop-section-heading-actions { flex-wrap: wrap; } }

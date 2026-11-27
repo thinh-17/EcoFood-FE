@@ -22,5 +22,8 @@
 .tenant-edit-form__contact-detail {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #eef2f0;
+  border-top: 1px solid var(--fnb-line);
 }
+
+.tenant-edit-form__footer { margin: 24px 0 0; padding: 16px 0 0; }.tenant-edit-form { background: white; border: 1px solid var(--fnb-line); border-radius: 8px; padding: 24px; }.tenant-list-page .fe-table { min-width: 600px; }
+@media (max-width: 600px) { .tenant-edit-form { padding: 16px; } }

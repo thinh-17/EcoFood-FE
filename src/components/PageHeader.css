@@ -1,0 +1,5 @@
+.eco-page-heading { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 24px; min-width: 0; }
+.eco-page-back { margin-bottom: 16px; }
+.eco-page-heading > .fe-page-header { flex: 1; margin-bottom: 0; }
+.eco-page-toggle { display: none; width: 36px; height: 36px; flex-shrink: 0; place-items: center; background: white; border: 1px solid var(--fnb-line); border-radius: 8px; color: var(--fnb-ink); }
+@media (max-width: 800px) { .eco-page-toggle { display: grid; } }

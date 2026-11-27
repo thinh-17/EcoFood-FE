@@ -1,10 +1,13 @@
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
+import { CoreLoadingState } from "@thinh-17/fe-core";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { CorePageHeader } from "@thinh-17/fe-core";
+
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 
 import { ROUTES } from "../../../../constants/routes.js";
 import { useRoleDetail } from "../../hooks/useRoleDetail.js";
-import { RoleDetailForm } from "./RoleDetailForm.jsx";
+import { RoleDetailForm } from "../../components/RoleDetailForm.jsx";
 
 export function RoleDetailPage() {
   const navigate = useNavigate();
@@ -15,8 +18,8 @@ export function RoleDetailPage() {
     <div className="eco-module-page role-list-page">
       <CorePageHeader eyebrow="EcoFood Platform" title="Edit Role" />
 
-      {isLoading && <p>Loading…</p>}
-      {isError && <p className="role-list__error">Failed to load role detail.</p>}
+      {isLoading && <CoreLoadingState title="Loading" />}
+      {isError && <FeedbackMessage>Failed to load role detail.</FeedbackMessage>}
 
       {role && (
         <RoleDetailForm

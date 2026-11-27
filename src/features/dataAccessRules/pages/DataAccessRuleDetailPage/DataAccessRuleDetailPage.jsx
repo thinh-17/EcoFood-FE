@@ -1,7 +1,10 @@
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CoreFormActions, CoreMultiSelect, CorePageHeader, CoreSelect, CoreTabs } from "@thinh-17/fe-core";
+import { CoreMultiSelect, CoreSelect, CoreTabs } from "@thinh-17/fe-core";
+import { CoreFormActions } from "@thinh-17/fe-core";
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 import { FiInfo } from "react-icons/fi";
 
 import { ROUTES } from "../../../../constants/routes.js";
@@ -248,9 +251,9 @@ export function DataAccessRuleDetailPage() {
       )}
 
       {createRule.isError && (
-        <p className="dar-error" role="alert">
+        <FeedbackMessage error={createRule.error}>
           {createRule.error?.response?.data?.message || "Failed to save the data access rule."}
-        </p>
+        </FeedbackMessage>
       )}
 
       <div className="dar-actions">

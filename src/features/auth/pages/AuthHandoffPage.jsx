@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { LoadingPage } from "../../../pages/LoadingPage/LoadingPage.jsx";
 import { useNavigate } from "react-router-dom";
 
 import { useAuthStore } from "../store/authStore.js";
@@ -8,7 +9,7 @@ import { ROUTES } from "../../../constants/routes.js";
 export function AuthHandoffPage() {
   const completeHandoff = useAuthStore((s) => s.completeHandoff);
   const navigate = useNavigate();
-  const [status, setStatus] = useState("Đang hoàn tất chuyển tenant…");
+  const [status, setStatus] = useState("Completing tenant switch…");
   const hasRun = useRef(false);
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export function AuthHandoffPage() {
     const refreshToken = params.get("refreshToken");
 
     if (!accessToken || !refreshToken) {
-      setStatus("Thiếu token chuyển tenant — quay lại trang chủ.");
+      setStatus("Tenant switch token is missing. Return to Home.");
       navigate(ROUTES.HOME, { replace: true });
       return;
     }
@@ -40,6 +41,6 @@ export function AuthHandoffPage() {
   }, []);
 
   return (
-    <div className="flex min-h-screen items-center justify-center text-sm text-gray-600">{status}</div>
+    <LoadingPage fullscreen title={status} description="Preparing your selected tenant workspace." />
   );
 }

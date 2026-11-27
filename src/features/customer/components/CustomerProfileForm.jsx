@@ -1,6 +1,8 @@
+import { FeedbackMessage } from "../../../components/FeedbackMessage.jsx";
 import { useState } from "react";
-import { CoreCard, CoreFormActions } from "@thinh-17/fe-core";
-import { customerProfilePayload } from "../customer.lib.js";
+import { CoreCard } from "@thinh-17/fe-core";
+import { CoreFormActions } from "@thinh-17/fe-core";
+import { customerProfilePayload } from "../lib/customer.lib.js";
 
 export function CustomerProfileForm({ profile, busy, save, reset }) {
   const [firstName, setFirstName] = useState(profile.firstName || "");
@@ -28,7 +30,7 @@ export function CustomerProfileForm({ profile, busy, save, reset }) {
         <label className="fe-field">Username<input className="fe-input" readOnly value={profile.username || ""} /></label>
       </div>
       <p id="customer-email-help" className="customer-profile-hint">Email and sign-in details are managed by your identity provider.</p>
-      {validation && <p className="customer-error" role="alert">{validation}</p>}
+      {validation && <FeedbackMessage tone="warning">{validation}</FeedbackMessage>}
       <div className="customer-profile-actions"><CoreFormActions cancelLabel="Reset" onCancel={cancel}
         confirmLabel="Save changes" confirmType="submit" confirmLoading={busy} confirmDisabled={!changed} /></div>
     </form>

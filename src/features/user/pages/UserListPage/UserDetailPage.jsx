@@ -1,10 +1,13 @@
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
+import { CoreLoadingState } from "@thinh-17/fe-core";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { CorePageHeader } from "@thinh-17/fe-core";
+
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 
 import { ROUTES } from "../../../../constants/routes.js";
 import { useUserDetail } from "../../hooks/useUserDetail.js";
-import { UserDetailForm } from "./UserDetailForm.jsx";
+import { UserDetailForm } from "../../components/UserDetailForm.jsx";
 
 export function UserDetailPage() {
   const navigate = useNavigate();
@@ -15,8 +18,8 @@ export function UserDetailPage() {
     <div className="eco-module-page user-list-page">
       <CorePageHeader eyebrow="EcoFood Platform" title="Edit User" />
 
-      {isLoading && <p>Loading…</p>}
-      {isError && <p className="user-list__error">Failed to load user detail.</p>}
+      {isLoading && <CoreLoadingState title="Loading" />}
+      {isError && <FeedbackMessage>Failed to load user detail.</FeedbackMessage>}
 
       {user && (
         <UserDetailForm

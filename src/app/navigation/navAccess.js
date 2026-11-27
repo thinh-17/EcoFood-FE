@@ -5,10 +5,12 @@ import {
   canSeeTenantOnboarding,
   canSeeUsersTab,
 } from "../../features/auth/lib/accessControl.js";
-import { canUseNotificationRole } from "../../features/notification/notification.js";
-import { catalogAccess } from "../../features/catalog/catalog.js";
+import { canUseNotificationRole } from "../../features/notification/lib/notification.js";
+import { catalogAccess } from "../../features/catalog/lib/catalog.js";
 import { canReadAudit } from "../../features/audit/lib/auditAccess.js";
-import { complaintAccess } from "../../features/complaint/complaint.js";
+import { canViewProducts } from "../../features/product/lib/product.js";
+import { canUsePropositions } from "../../features/proposition/lib/proposition.js";
+import { complaintAccess } from "../../features/complaint/lib/complaint.js";
 
 // One visibility rule per gated top-level nav item id — ungated items (not
 // listed here) are always visible. See app/docs/ACL_ROLE_MODEL.md.
@@ -24,6 +26,8 @@ const VISIBILITY_RULES = {
 // everyone except the ECO actor, while Data Access Rules stays _ADMIN-only
 // for any actor and "Users" itself stays ungated here).
 const CHILD_VISIBILITY_RULES = {
+  products: canViewProducts,
+  propositions: canUsePropositions,
   "tenant-onboarding": canSeeTenantOnboarding,
   roles: canSeeRolesAndPermissionsSubTabs,
   permissions: canSeeRolesAndPermissionsSubTabs,

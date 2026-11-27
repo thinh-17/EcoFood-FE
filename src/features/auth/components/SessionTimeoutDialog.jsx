@@ -1,4 +1,5 @@
-import { CoreButton, CoreModal } from "@thinh-17/fe-core";
+import { CoreModal } from "@thinh-17/fe-core";
+import { CoreButton } from "@thinh-17/fe-core";
 
 export function SessionTimeoutDialog({ secondsLeft, onContinue, onLogout }) {
   return (
