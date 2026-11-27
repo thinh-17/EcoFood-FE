@@ -1,22 +1,25 @@
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
+import { CoreLoadingState } from "@thinh-17/fe-core";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { CorePageHeader } from "@thinh-17/fe-core";
+
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 
 import { ROUTES } from "../../../../constants/routes.js";
 import { usePermissionDetail } from "../../hooks/usePermissionDetail.js";
-import { PermissionDetailForm } from "./PermissionDetailForm.jsx";
+import { PermissionDetailForm } from "../../components/PermissionDetailForm.jsx";
 
 export function PermissionDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { data: permission, isLoading, isError } = usePermissionDetail(id);
+  const { data: permission, isLoading, isError, error } = usePermissionDetail(id);
 
   return (
     <div className="eco-module-page permission-list-page">
       <CorePageHeader eyebrow="EcoFood Platform" title="Edit Permission" />
 
-      {isLoading && <p>Loading…</p>}
-      {isError && <p className="permission-list__error">Failed to load permission detail.</p>}
+      {isLoading && <CoreLoadingState title="Loading" />}
+      {isError && <FeedbackMessage error={error}>Failed to load permission detail.</FeedbackMessage>}
 
       {permission && (
         <PermissionDetailForm

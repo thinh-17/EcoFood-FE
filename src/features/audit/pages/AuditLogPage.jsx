@@ -1,6 +1,12 @@
+import { FeedbackMessage } from "../../../components/FeedbackMessage.jsx";
+import { CoreLoadingState } from "@thinh-17/fe-core";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CoreButton, CoreCard, CoreFormActions, CoreModal, CorePageHeader, CoreSelect, CoreTable } from "@thinh-17/fe-core";
+import { CoreCard, CoreModal, CoreSelect, CoreTable } from "@thinh-17/fe-core";
+import { CoreButton, CoreFormActions } from "@thinh-17/fe-core";
+import { PageHeader as CorePageHeader } from "../../../components/PageHeader.jsx";
+import { StatusBadge } from "../../../components/StatusBadge.jsx";
+import { CorePagination as Pagination } from "@thinh-17/fe-core";
 import { apiClient, unwrapData } from "../../../services/apiClient.js";
 import { useAuthStore } from "../../auth/store/authStore.js";
 import { decodeJwt } from "../../auth/lib/jwt.js";
@@ -18,7 +24,7 @@ const columns = [
   { header: "Action", accessorKey: "action" },
   { header: "Module", accessorKey: "module" },
   { header: "Timestamp", accessorKey: "timestamp", cell: ({ getValue }) => formatTime(getValue()) },
-  { header: "Outcome", accessorKey: "outcome" },
+  { header: "Outcome", accessorKey: "outcome", cell: ({ getValue }) => <StatusBadge status={getValue()} /> },
 ];
 const read = (path, params, signal) => apiClient.get(path, { params, signal }).then(unwrapData);
 
@@ -35,7 +41,7 @@ export function AuditLogPage() {
   try { claims = decodeJwt(token) || {}; } catch { /* Invalid sessions cannot access this view. */ }
   return canReadAudit(claims.roles, claims.permissions)
     ? <Workspace key={token} scope={token} />
-    : <main className="eco-module-page audit-page"><CorePageHeader eyebrow="EcoFood Platform" title="Audit Log" /><p className="audit-error" role="alert">Access denied.</p></main>;
+    : <main className="eco-module-page audit-page"><CorePageHeader eyebrow="EcoFood Platform" title="Audit Log" /><FeedbackMessage tone="warning">Access denied.</FeedbackMessage></main>;
 }
 
 function Workspace({ scope }) {
@@ -99,21 +105,17 @@ function Workspace({ scope }) {
         </div>
       </form>
     </CoreCard>
-    {validation && <p className="audit-error" role="alert">{validation}</p>}
-    {events.isError && <p className="audit-error" role="alert">{errorText(events.error)}</p>}
+    {validation && <FeedbackMessage tone="warning">{validation}</FeedbackMessage>}
+    {events.isError && <FeedbackMessage error={events.error}>{errorText(events.error)}</FeedbackMessage>}
     {!events.isError && <CoreCard>
       <CoreTable columns={columns} data={events.data?.content ?? []} loading={events.isPending}
         onRowClick={(row) => setSelected(row.id)} emptyTitle="No audit logs found." />
-      <nav className="audit-pagination" aria-label="Audit log pagination">
-        <CoreButton size="sm" variant="secondary" disabled={!page} onClick={() => changePage(page - 1)}>Previous</CoreButton>
-        <span>Page {page + 1}</span>
-        <CoreButton size="sm" variant="secondary" disabled={!events.data?.hasNext} onClick={() => changePage(page + 1)}>Next</CoreButton>
-      </nav>
+      <Pagination page={page} hasNext={events.data?.hasNext} onPageChange={changePage} disabled={events.isFetching} label="Audit log pagination" />
     </CoreCard>}
     <CoreModal isOpen={!!selected && !events.isError} onClose={() => setSelected("")} title="Event details"
       footer={<CoreButton variant="secondary" onClick={() => setSelected("")}>Close</CoreButton>}>
-      {detail.isPending && <p role="status">Loading event…</p>}
-      {detail.isError && <p className="audit-error" role="alert">{errorText(detail.error)}</p>}
+      {detail.isPending && <CoreLoadingState title="Loading event" />}
+      {detail.isError && <FeedbackMessage error={detail.error}>{errorText(detail.error)}</FeedbackMessage>}
       {detail.data && !detail.isError && <div className="fe-detail-grid">
         {[
           ["Actor", detail.data.actorId],

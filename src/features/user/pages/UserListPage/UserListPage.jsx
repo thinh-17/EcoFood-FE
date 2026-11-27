@@ -1,11 +1,14 @@
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CoreButton, CoreCard, CoreModal, CorePageHeader, CoreTable, useDisclosure } from "@thinh-17/fe-core";
+import { CoreCard, CoreModal, CoreTable, useDisclosure } from "@thinh-17/fe-core";
+import { CoreButton } from "@thinh-17/fe-core";
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 
 import { ROUTES } from "../../../../constants/routes.js";
 import { useUserDirectory } from "../../hooks/useUserDirectory.js";
-import { UserCreateForm } from "./UserCreateForm.jsx";
+import { UserCreateForm } from "../../components/UserCreateForm.jsx";
 import "./UserListPage.css";
 
 const PAGE_SIZE = 20;
@@ -62,9 +65,9 @@ export function UserListPage() {
       />
 
       {isError && (
-        <p className="user-list__error" role="alert">
+        <FeedbackMessage>
           {error?.response?.data?.message || "Failed to load users."}
-        </p>
+        </FeedbackMessage>
       )}
 
       <CoreCard>

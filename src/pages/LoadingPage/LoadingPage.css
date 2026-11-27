@@ -1,0 +1,2 @@
+.eco-loading-page { display: grid; align-items: center; width: 100%; min-width: 0; }
+.eco-loading-page--fullscreen { min-height: 100dvh; background: var(--fnb-canvas); padding: 24px; }

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
+import { LoadingPage } from "../../../pages/LoadingPage/LoadingPage.jsx";
 
 import { useAuthStore } from "../store/authStore.js";
 import { useIdleTimeout } from "../hooks/useIdleTimeout.js";
@@ -38,9 +39,7 @@ export function RequireAuth({ children }) {
 
   if (!isValid()) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">
-        Đang chuyển hướng đến trang đăng nhập…
-      </div>
+      <LoadingPage fullscreen title="Redirecting to sign in" description="Connecting you to secure sign-in." />
     );
   }
 

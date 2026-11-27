@@ -1,10 +1,13 @@
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
+import { CoreLoadingState } from "@thinh-17/fe-core";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { CorePageHeader } from "@thinh-17/fe-core";
+
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 
 import { ROUTES } from "../../../../constants/routes.js";
 import { useTenantDetail } from "../../hooks/useTenantDetail.js";
-import { TenantEditForm } from "./TenantEditForm.jsx";
+import { TenantEditForm } from "../../components/TenantEditForm.jsx";
 
 export function TenantDetailPage() {
   const navigate = useNavigate();
@@ -15,8 +18,8 @@ export function TenantDetailPage() {
     <div className="eco-module-page tenant-list-page">
       <CorePageHeader eyebrow="EcoFood Platform" title="Edit Tenant" />
 
-      {isLoading && <p>Loading…</p>}
-      {isError && <p className="tenant-list__error">Failed to load tenant detail.</p>}
+      {isLoading && <CoreLoadingState title="Loading" />}
+      {isError && <FeedbackMessage>Failed to load tenant detail.</FeedbackMessage>}
 
       {tenant && (
         <TenantEditForm

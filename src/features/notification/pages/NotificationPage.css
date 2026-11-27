@@ -1,0 +1,10 @@
+.notification-page { color: var(--fnb-ink); min-width: 0; }
+.notification-description { max-width: 100ch; color: var(--fnb-muted); font-size: 13px; margin: 0 0 24px; }
+.notification-filters { display: flex; gap: 16px; flex-wrap: wrap; padding: 20px; margin: 0 0 20px; background: white; border: 1px solid var(--fnb-line); border-radius: 8px; }
+.notification-page label { display: flex; flex-direction: column; gap: 8px; font-size: 13px; flex: 1; min-width: 160px; }
+.notification-page input, .notification-page select { min-height: 40px; border: 1px solid var(--fnb-line); border-radius: 6px; padding: 8px 12px; color: inherit; background: white; font: inherit; width: 100%; min-width: 0; }
+.notification-page a, .notification-detail a { color: var(--fnb-accent); }
+.notification-page .fe-table { min-width: 720px; }.notification-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }.notification-row-actions a { font-size: 12px; white-space: nowrap; }
+.notification-error { color: var(--fnb-error); background: var(--fnb-error-soft); padding: 16px; border-radius: 8px; }
+.notification-pagination { display: flex; gap: 12px; align-items: center; justify-content: flex-end; flex-wrap: wrap; margin-top: 16px; color: var(--fnb-muted); font-size: 12px; }
+@media (max-width: 650px) { .notification-filters { padding: 16px; }.notification-page label { flex-basis: 100%; } }

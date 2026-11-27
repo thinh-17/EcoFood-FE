@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { CorePageHeader } from "@thinh-17/fe-core";
+
+import { PageHeader as CorePageHeader } from "../../../components/PageHeader.jsx";
 import { ROUTES } from "../../../constants/routes.js";
 import { useAuthStore } from "../../auth/store/authStore.js";
 import { useCurrentRoles } from "../../auth/hooks/useCurrentRoles.js";
 import { canManageProducts } from "../lib/product.js";
-import { ProductDetail } from "./ProductDetail.jsx";
+import { ProductDetail } from "../components/ProductDetail.jsx";
 
 export function ProductDetailPage() {
   const navigate = useNavigate();

@@ -1,4 +1,3 @@
-import { RequireManager, InvoiceDashboardPage, CustomerDashboardPage } from "../../features/dashboard/pages/ManagerDashboardPages.jsx";
 import "./AppRouter.css";
 import { lazy, Suspense } from "react";
 
@@ -118,12 +117,10 @@ export function AppRouter() {
           </Route>
         </Route>
 
-        <Route element={<RequireManager />}>
-          <Route path="manager" element={<Navigate to="/manager/business" replace />} />
-          <Route path="manager/business" element={<Suspense fallback={<p>Loading…</p>}><BusinessDashboardPage /></Suspense>} />
-          <Route path="manager/invoices" element={<InvoiceDashboardPage />} />
-          <Route path="manager/customers" element={<CustomerDashboardPage />} />
-        </Route>
+        <Route
+          path="manager"
+          element={<Suspense fallback={<p role="status">Đang tải Dashboard…</p>}><BusinessDashboardPage /></Suspense>}
+        />
 
         <Route
           path="product-library"

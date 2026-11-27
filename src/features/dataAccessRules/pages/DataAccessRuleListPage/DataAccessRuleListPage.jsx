@@ -1,7 +1,10 @@
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CoreButton, CoreCard, CorePageHeader, CoreTable } from "@thinh-17/fe-core";
+import { CoreCard, CoreTable } from "@thinh-17/fe-core";
+import { CoreButton } from "@thinh-17/fe-core";
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 
 import { ROUTES } from "../../../../constants/routes.js";
 import { useDataAccessRuleDirectory } from "../../hooks/useDataAccessRuleDirectory.js";
@@ -59,9 +62,9 @@ export function DataAccessRuleListPage() {
       />
 
       {isError && (
-        <p className="data-access-rule-list__error" role="alert">
+        <FeedbackMessage>
           {error?.response?.data?.message || "Failed to load data access rules."}
-        </p>
+        </FeedbackMessage>
       )}
 
       <CoreCard>
