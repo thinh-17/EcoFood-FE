@@ -1,0 +1,11 @@
+.eco-account-page {
+  width: 100%;
+  max-width: 1250px;
+  margin: 0 auto;
+}
+
+.eco-account-page .account-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
