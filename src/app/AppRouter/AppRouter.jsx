@@ -16,7 +16,7 @@ import { ProductListPage } from "../../features/product/pages/ProductListPage.js
 import { ProductCreatePage } from "../../features/product/pages/ProductCreatePage.jsx";
 import { ProductDetailPage } from "../../features/product/pages/ProductDetailPage.jsx";
 import { PropositionPage } from "../../features/proposition/pages/PropositionPage.jsx";
-import { NotificationPage } from "../../features/notification/NotificationPage.jsx";
+import { NotificationPage } from "../../features/notification/pages/NotificationPage.jsx";
 
 import { TenantOnboardingPage } from "../../features/tenant/pages/TenantOnboardingPage/TenantOnboardingPage.jsx";
 import { TenantListPage } from "../../features/tenant/pages/TenantListPage/TenantListPage.jsx";
@@ -39,10 +39,11 @@ import { RequireRolesAndPermissionsAccess } from "../../features/auth/components
 import { RequireUsersAccess } from "../../features/auth/components/RequireUsersAccess.jsx";
 import { CallbackPage } from "../../features/auth/pages/CallbackPage.jsx";
 import { AuthHandoffPage } from "../../features/auth/pages/AuthHandoffPage.jsx";
-import { CustomerLoginPage, CustomerCallbackPage, CustomerPortalPage, ReceiptPage } from "../../features/customer/CustomerPages.jsx";
-import { CustomerCarePage, ComplaintManagementPage } from "../../features/complaint/ComplaintPage.jsx";
-import { CatalogPage } from "../../features/catalog/CatalogPage.jsx";
+import { CustomerLoginPage, CustomerCallbackPage, CustomerPortalPage, ReceiptPage } from "../../features/customer/pages/CustomerPages.jsx";
+import { CustomerCarePage, ComplaintManagementPage } from "../../features/complaint/pages/ComplaintPage.jsx";
+import { CatalogPage } from "../../features/catalog/pages/CatalogPage.jsx";
 import { AuditLogPage } from "../../features/audit/pages/AuditLogPage.jsx";
+import { RequireManager, InvoiceDashboardPage, CustomerDashboardPage } from "../../features/dashboard/pages/ManagerDashboardPages.jsx";
 
 const BusinessDashboardPage = lazy(() => import("../../features/dashboard/pages/BusinessDashboardPage.jsx")
   .then((module) => ({ default: module.BusinessDashboardPage })));
@@ -117,10 +118,12 @@ export function AppRouter() {
           </Route>
         </Route>
 
-        <Route
-          path="manager"
-          element={<Suspense fallback={<p role="status">Đang tải Dashboard…</p>}><BusinessDashboardPage /></Suspense>}
-        />
+        <Route element={<RequireManager />}>
+          <Route path="manager" element={<Navigate to={{ pathname: "/manager/business", search: location.search, hash: location.hash }} replace />} />
+          <Route path="manager/business" element={<Suspense fallback={<p role="status">Đang tải Dashboard…</p>}><BusinessDashboardPage /></Suspense>} />
+          <Route path="manager/invoices" element={<InvoiceDashboardPage />} />
+          <Route path="manager/customers" element={<CustomerDashboardPage />} />
+        </Route>
 
         <Route
           path="product-library"

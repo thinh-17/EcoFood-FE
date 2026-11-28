@@ -1,8 +1,9 @@
 .business-dashboard { padding: 24px; color: #25364a; }
-.business-dashboard button, .business-dashboard select { border: 1px solid #ccd5df; border-radius: 6px; padding: 9px 12px; background: white; color: inherit; font: inherit; }
 .business-refresh { display: inline-flex; align-items: center; gap: 8px; margin: 12px 0; cursor: pointer; }
 .business-filters { display: flex; flex-wrap: wrap; gap: 14px; margin: 12px 0 22px; }
-.business-dashboard label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.business-filter { display: flex; flex-direction: column; gap: 6px; font-size: 14px; min-width: 150px; }
+.business-cards > .fe-card, .business-charts > .fe-card { margin-top: 0; }
+.business-actions { display: flex; justify-content: flex-end; margin-bottom: 16px; }
 .business-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin: 18px 0; }
 .business-card, .business-charts article, .business-breakdown { background: white; border-radius: 8px; padding: 20px; min-width: 0; }
 .business-card h2, .business-charts h2, .business-breakdown h2 { font-size: 16px; margin: 0 0 16px; }

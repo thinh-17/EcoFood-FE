@@ -1,10 +1,10 @@
-import { ENTITY_TYPE_OPTIONS, ruleEntityTypes } from "../../lib/entityTypes.js";
+import { ENTITY_TYPE_OPTIONS, ruleEntityTypes } from "../lib/entityTypes.js";
 import { useState } from "react";
 
 import { CoreFormActions, CoreMultiSelect, CoreTabs } from "@thinh-17/fe-core";
 
-import { useAllUsersForPicker } from "../../hooks/useAllUsersForPicker.js";
-import { useUpdateDataAccessRule } from "../../hooks/useUpdateDataAccessRule.js";
+import { useAllUsersForPicker } from "../hooks/useAllUsersForPicker.js";
+import { useUpdateDataAccessRule } from "../hooks/useUpdateDataAccessRule.js";
 
 const TABS = [
   { id: "configuration", label: "Rule Configuration" },

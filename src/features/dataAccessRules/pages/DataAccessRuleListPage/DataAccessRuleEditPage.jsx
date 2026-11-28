@@ -7,7 +7,7 @@ import { CoreButton, CoreCard, CorePageHeader } from "@thinh-17/fe-core";
 
 import { ROUTES } from "../../../../constants/routes.js";
 import { useDataAccessRuleDetail } from "../../hooks/useDataAccessRuleDetail.js";
-import { DataAccessRuleDetailForm } from "./DataAccessRuleDetailForm.jsx";
+import { DataAccessRuleDetailForm } from "../../components/DataAccessRuleDetailForm.jsx";
 
 export function DataAccessRuleEditPage() {
   const navigate = useNavigate();

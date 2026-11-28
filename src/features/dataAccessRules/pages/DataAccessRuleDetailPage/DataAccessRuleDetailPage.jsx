@@ -6,7 +6,8 @@ import { CoreFormActions, CoreMultiSelect, CorePageHeader, CoreSelect, CoreTabs 
 import { FiInfo } from "react-icons/fi";
 
 import { ROUTES } from "../../../../constants/routes.js";
-import { useAllTenants } from "../../../tenant/hooks/useAllTenants.js";
+import { useRuleTenants } from "../../hooks/useRuleTenants.js";
+import { tenantLabel } from "../../../../lib/tenantLabel.js";
 import { useAllUsersForPicker } from "../../hooks/useAllUsersForPicker.js";
 import { useCreateDataAccessRule } from "../../hooks/useCreateDataAccessRule.js";
 import "./DataAccessRuleDetailPage.css";
@@ -49,13 +50,13 @@ export function DataAccessRuleDetailPage() {
   const [userIds, setUserIds] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  const { data: tenants, isLoading: isTenantsLoading } = useAllTenants();
+  const { data: tenants, isLoading: isTenantsLoading, isError: tenantsError } = useRuleTenants();
   const { data: users, isLoading: isUsersLoading } = useAllUsersForPicker(form.businessEntityId);
   const createRule = useCreateDataAccessRule();
 
   const tenantOptions = (tenants ?? []).map((tenant) => ({
     value: tenant.id,
-    label: `${tenant.tenantName} (${tenant.realm})`,
+    label: tenantLabel(tenant),
   }));
   const userOptions = (users ?? []).map((user) => ({
     value: user.id,
@@ -112,6 +113,7 @@ export function DataAccessRuleDetailPage() {
 
           <section className="dar-section">
             <h2 className="dar-section__title">Business Entity Selection</h2>
+            {tenantsError && <p className="dar-error" role="alert">Unable to load business entities.</p>}
 
             <label className="fe-field">
               Business Entity

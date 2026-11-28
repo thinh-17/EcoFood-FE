@@ -1,3 +1,5 @@
+import { navItems } from "./navItems.js";
+import { canReadBusinessDashboard } from "../../features/dashboard/lib/businessDashboard.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { navigationSections, activeNavigationPath } from "./navSections.js";
@@ -13,7 +15,7 @@ const source = [
 ];
 test("section presentation preserves existing authorization and hides empty groups", () => {
   const sections = navigationSections(filterNavItems(source, ["TENANT_EMPLOYEE"], []));
-  assert.deepEqual(sections.map((s) => s.id), ["overview"]);
+  assert.deepEqual(sections.map((s) => s.id), ["overview", "products"]);
   assert.deepEqual(sections[0].items.map((item) => item.id), ["home"]);
   const admin = navigationSections(filterNavItems(source, ["TENANT_ADMIN"], ["DASHBOARD_READ", "COMPLAINT_READ", "AUDIT_LOG_READ"]));
   const ids = admin.flatMap((section) => section.items.map((item) => item.id));
@@ -29,4 +31,18 @@ test("nested detail pages activate only their most specific navigation item", ()
   assert.equal(activeNavigationPath("/partner/tenants/42", links), "/partner/tenants");
   assert.equal(activeNavigationPath("/users-unknown", links), undefined);
   assert.equal(activeNavigationPath("/", links), "/");
+});
+
+test("live Manager navigation exposes all three dashboard links for valid roles", () => {
+  for (const role of ["TENANT_ADMIN", "ENTERPRISE_DASHBOARD_MANAGER"]) {
+    const sections = navigationSections(filterNavItems(navItems, [role], []));
+    const manager = sections.find((section) => section.id === "manager");
+    assert.ok(manager);
+    assert.deepEqual(manager.items.map((item) => item.to), ["/manager/business", "/manager/invoices", "/manager/customers"]);
+    assert.equal(canReadBusinessDashboard({ roles: [role], permissions: [] }), true);
+  }
+});
+test("Manager remains hidden for invalid roles even with a Dashboard permission", () => {
+  const sections = navigationSections(filterNavItems(navItems, ["TENANT_EMPLOYEE"], ["DASHBOARD_READ"]));
+  assert.equal(sections.some((section) => section.id === "manager"), false);
 });

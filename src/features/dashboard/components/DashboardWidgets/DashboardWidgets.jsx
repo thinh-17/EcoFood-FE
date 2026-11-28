@@ -2,7 +2,7 @@ import { CoreButton, CoreCard } from "@thinh-17/fe-core";
 import "./DashboardWidgets.css";
 import { FiArrowUpRight, FiAlertCircle, FiCheckCircle, FiCoffee } from "react-icons/fi";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { widgetRegistry } from "../../../../config/widgetRegistry.js";
+import { widgetRegistry } from "../../config/widgetRegistry.js";
 
 const money = (value) => new Intl.NumberFormat("en-US").format(value || 0) + " ₫";
 const KPI = {

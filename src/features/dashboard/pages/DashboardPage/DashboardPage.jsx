@@ -9,8 +9,8 @@ import {
 import { useMyTenants } from "../../../tenant/hooks/useMyTenants.js";
 import { useDashboard } from "../../hooks/useDashboard.js";
 import { getDashboardArticles } from "../../api/dashboard.api.js";
-import { DashboardBuilder } from "./components/DashboardBuilder/DashboardBuilder.jsx";
-import { InsightsCarousel } from "./components/InsightsCarousel/InsightsCarousel.jsx";
+import { DashboardBuilder } from "../../components/DashboardBuilder/DashboardBuilder.jsx";
+import { InsightsCarousel } from "../../components/InsightsCarousel/InsightsCarousel.jsx";
 
 function formatTime(value) {
   return new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }).format(new Date(value));

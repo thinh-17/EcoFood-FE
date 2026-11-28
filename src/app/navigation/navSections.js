@@ -1,6 +1,7 @@
 // Categorization only: visibility is evaluated by the existing filterNavItems first.
 const SECTIONS = [
   ["overview", "Overview", ["home", "manager"]],
+  ["manager", "Manager", ["business-dashboard", "invoice-dashboard", "customer-dashboard"]],
   ["partners", "Partner Management", ["tenant", "tenant-onboarding"]],
   ["products", "Product Library", ["products", "propositions"]],
   ["service", "Customer Service", ["complaints"]],

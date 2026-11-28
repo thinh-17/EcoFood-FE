@@ -5,8 +5,8 @@ import ReactGridLayout, { useContainerWidth } from "react-grid-layout";
 import { FiEdit3, FiPlus, FiSave, FiX, FiRotateCcw, FiLock } from "react-icons/fi";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
-import { widgetRegistry, createDefaultDashboard } from "../../../../config/widgetRegistry.js";
-import { useDashboardLayout } from "../../../../hooks/useDashboardLayout.js";
+import { widgetRegistry, createDefaultDashboard } from "../../config/widgetRegistry.js";
+import { useDashboardLayout } from "../../hooks/useDashboardLayout.js";
 import { DashboardWidget } from "../DashboardWidgets/DashboardWidgets.jsx";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));

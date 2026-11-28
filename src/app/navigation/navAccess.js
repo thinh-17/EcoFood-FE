@@ -6,8 +6,8 @@ import {
   canSeeTenantOnboarding,
   canSeeUsersTab,
 } from "../../features/auth/lib/accessControl.js";
-import { canUseNotificationRole } from "../../features/notification/notification.js";
-import { catalogAccess } from "../../features/catalog/catalog.js";
+import { canUseNotificationRole } from "../../features/notification/lib/notification.js";
+import { catalogAccess } from "../../features/catalog/lib/catalog.js";
 import { canReadAudit } from "../../features/audit/lib/auditAccess.js";
 
 // One visibility rule per gated top-level nav item id — ungated items (not
