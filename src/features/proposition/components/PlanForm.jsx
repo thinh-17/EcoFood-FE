@@ -9,6 +9,7 @@ import { useTouched } from "../../../hooks/useTouched.js";
 import {
   cloneFromSource,
   errorMessage,
+  missingPlanCosts,
   planFormState,
   planPayload,
 } from "../lib/proposition.js";
@@ -44,6 +45,10 @@ export function PlanForm({
   const [form, setForm] = useState(() => planFormState(plan, p));
   const [step, setStep] = useState(0);
   const [validation, setValidation] = useState("");
+  // Set once a save is attempted without every required cost; a field stops
+  // being highlighted as soon as the user fills it in.
+  const [costErrorsShown, setCostErrorsShown] = useState(false);
+  const invalidCosts = costErrorsShown ? missingPlanCosts(form.costing) : [];
   const { touched, touch, touchAll } = useTouched();
   useEffect(() => { onStepChange?.(step); }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
   const set = (field, value) => setForm((current) => ({ ...current, [field]: value }));
@@ -104,6 +109,11 @@ export function PlanForm({
       mutation.mutate(body);
     } catch (error) {
       setValidation(error.message);
+      if (error.costFields?.length) {
+        // Costs live on the last step — show it so the highlighted fields are visible.
+        setCostErrorsShown(true);
+        setStep(PLAN_STEPS.length - 1);
+      }
     }
   }
   const busy = mutation.isPending;
@@ -341,7 +351,7 @@ export function PlanForm({
                 <CurrencySelect value={form.currency} onChange={(value) => set("currency", value)} />
                 <small>Applies to all costs and the selling price. Changing currency does not convert amounts.</small>
               </label>
-              <ProductCostingPanel currency={form.currency} costing={form.costing} onChange={(value) => set("costing", value)} showBasePrice={false} />
+              <ProductCostingPanel currency={form.currency} costing={form.costing} onChange={(value) => set("costing", value)} showBasePrice={false} invalidFields={invalidCosts} />
               <div className="prop-subcard">
                 <strong>Selling price</strong>
                 <div className="prop-grid">

@@ -2,7 +2,15 @@ import {
   quarterlyRevenueRows,
   quarterlyRevenueTotal,
 } from "./quarterlyMetrics.js";
-import { calculateProductCost } from "../../product/lib/product.js";
+import { COST_FIELDS, calculateProductCost } from "../../product/lib/product.js";
+
+// The five cost components a Plan must always carry on create and edit
+// (0 is a real zero, not "missing"). Mirrors the backend's
+// PropositionValidation.planCosting.
+export const PLAN_COST_KEYS = Object.keys(COST_FIELDS);
+const isCostEmpty = (value) => value === "" || value == null;
+export const missingPlanCosts = (costing) =>
+  PLAN_COST_KEYS.filter((key) => isCostEmpty(costing?.[key]));
 
 export const canUsePropositions = (roles) =>
   (roles ?? []).some((role) =>
@@ -279,11 +287,15 @@ export function planFormState(plan, p, sourceProcess) {
       (p.availableCurrencies.includes(p.definition.currency)
         ? p.definition.currency
         : (p.availableCurrencies[0] ?? "USD")),
+    // A brand-new Plan starts with all five costs empty so the user must
+    // enter each one. An existing Plan shows what it stored; a legacy Plan
+    // with no stored ingredient cost shows 0 (treated as a real 0).
     costing: {
-      packagingCost: costing?.packagingCost ?? 0,
-      laborCost: costing?.laborCost ?? 0,
-      operationCost: costing?.operationCost ?? 0,
-      marketingFee: costing?.marketingFee ?? 0,
+      ingredientCost: plan ? (costing?.ingredientCost ?? 0) : "",
+      packagingCost: costing?.packagingCost ?? "",
+      laborCost: costing?.laborCost ?? "",
+      operationCost: costing?.operationCost ?? "",
+      marketingFee: costing?.marketingFee ?? "",
       targetMargin: costing?.targetMargin ?? 0,
       tax: costing?.tax ?? 0,
     },
@@ -329,6 +341,16 @@ export function planPayload(form, p) {
         "Each recipe step requires a name and a whole, non-negative duration.",
       );
   }
+  const missingCosts = missingPlanCosts(form.costing);
+  if (missingCosts.length) {
+    const error = new Error(
+      `Enter every required cost (0 is allowed): ${missingCosts.map((key) => COST_FIELDS[key]).join(", ")}.`,
+    );
+    error.costFields = missingCosts;
+    throw error;
+  }
+  if (PLAN_COST_KEYS.some((key) => !(Number.isFinite(Number(form.costing[key])) && Number(form.costing[key]) >= 0)))
+    throw new Error("Costs must be non-negative numbers.");
   const result = {
     expectedRevision: p.revision,
     productVersion: Number(form.productVersion),
@@ -359,10 +381,11 @@ export function planPayload(form, p) {
         : [],
     },
     costing: {
-      packagingCost: form.costing.packagingCost,
-      laborCost: form.costing.laborCost,
-      operationCost: form.costing.operationCost,
-      marketingFee: form.costing.marketingFee,
+      ingredientCost: Number(form.costing.ingredientCost),
+      packagingCost: Number(form.costing.packagingCost),
+      laborCost: Number(form.costing.laborCost),
+      operationCost: Number(form.costing.operationCost),
+      marketingFee: Number(form.costing.marketingFee),
       targetMargin: form.costing.targetMargin,
       tax: form.costing.tax,
       currency: form.currency,

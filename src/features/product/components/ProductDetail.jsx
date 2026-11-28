@@ -11,6 +11,10 @@ import { canEditProduct, PRODUCT_STATUSES, productDate, productError } from "../
 import { ProductForm } from "./ProductForm.jsx";
 import { ProductStatus } from "./ProductStatus.jsx";
 import { productFromProcess } from "../lib/product.js";
+import { FiCheckCircle, FiCircle, FiClock, FiEdit3, FiXCircle } from "react-icons/fi";
+
+// Presentation only — each version chip's icon by status (colours live in ProductListPage.css).
+const VERSION_STATUS_ICONS = { DRAFT: FiEdit3, PENDING_REVIEW: FiClock, APPROVED: FiCheckCircle, REJECTED: FiXCircle };
 
 export function ProductDetail({ id, scope, canManage = true, onClose, onNotice }) {
   const client = useQueryClient();
@@ -113,14 +117,17 @@ export function ProductDetail({ id, scope, canManage = true, onClose, onNotice }
           {history.data && history.data.map((version) => {
             const selectable = processes.some((process) => process.version === version.version);
             const isCurrent = version.version === product.version;
+            const label = PRODUCT_STATUSES[version.status] ?? version.status;
+            const Icon = VERSION_STATUS_ICONS[version.status] ?? FiCircle;
             return <button
               key={version.version}
               type="button"
-              className={`product-status product-status--${version.status?.toLowerCase()} ${isCurrent ? "is-current" : ""}`}
+              className={`product-version-chip product-version-chip--${version.status?.toLowerCase() ?? "unknown"}${isCurrent ? " is-current" : ""}`}
               disabled={!selectable}
-              aria-label={`View version ${version.version}`}
+              aria-pressed={isCurrent}
+              aria-label={`View version ${version.version} (${label})${isCurrent ? ", currently viewing" : ""}`}
               onClick={() => setSelectedVersion(version.version)}
-            ><span aria-hidden="true" />v{version.version} · {PRODUCT_STATUSES[version.status] ?? version.status}</button>;
+            ><Icon className="product-version-chip__icon" aria-hidden="true" /><strong>v{version.version}</strong><span className="product-version-chip__status">{label}</span>{isCurrent && <span className="product-version-chip__viewing">Viewing</span>}</button>;
           })}
         </div>
         <div className="product-version-bar__actions">

@@ -11,13 +11,16 @@ export function useTenantDirectory({ page, size, sort, search, hasSearched }) {
   const debouncedSearch = useDebouncedValue(search, 400);
 
   return useQuery({
-    queryKey: ["tenants", "directory", page, size, sort, hasSearched ? debouncedSearch : null],
+    // Backs only the Tenant tab: an Enterprise sees its whole branch,
+    // Regional Enterprises and their sub-tenants included.
+    queryKey: ["tenants", "directory", "with-regional", page, size, sort, hasSearched ? debouncedSearch : null],
     queryFn: () =>
       getTenantDirectory({
         page,
         size,
         sort,
         search: hasSearched ? debouncedSearch : undefined,
+        includeRegional: true,
       }),
     placeholderData: keepPreviousData,
   });

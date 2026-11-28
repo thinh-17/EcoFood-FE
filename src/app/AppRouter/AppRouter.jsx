@@ -123,7 +123,6 @@ export function AppRouter() {
         />
         <Route path="manager/business" element={<Navigate to="/manager" replace />} />
         <Route path="manager/invoices" element={<Navigate to="/manager?tab=invoices" replace />} />
-        <Route path="manager/customers" element={<Navigate to="/manager?tab=customers" replace />} />
 
         <Route
           path="product-library"
@@ -132,7 +131,14 @@ export function AppRouter() {
         <Route path="product-library/products" element={<ProductListPage />} />
         <Route path="product-library/products/new" element={<ProductCreatePage />} />
         <Route path="product-library/products/:id" element={<ProductDetailPage />} />
-        <Route path="product-library/propositions" element={<PropositionPage />} />
+        <Route path="product-library/propositions" element={<PropositionPage view="list" />} />
+        <Route path="product-library/propositions/new" element={<PropositionPage view="create" />} />
+        <Route path="product-library/propositions/:propositionId" element={<PropositionPage view="detail" />} />
+        <Route path="product-library/propositions/:propositionId/edit" element={<PropositionPage view="edit" />} />
+        <Route path="product-library/propositions/:propositionId/plans/new" element={<PropositionPage view="plan" />} />
+        <Route path="product-library/propositions/:propositionId/plans/:planId" element={<PropositionPage view="plan" />} />
+        <Route path="product-library/propositions/:propositionId/sale-orchestrators/new" element={<PropositionPage view="sale-orchestrator" />} />
+        <Route path="product-library/propositions/:propositionId/sale-orchestrators/:orchestratorId" element={<PropositionPage view="sale-orchestrator" />} />
 
         <Route element={<RequireUsersAccess />}>
           <Route path="users" element={<UserListPage />} />

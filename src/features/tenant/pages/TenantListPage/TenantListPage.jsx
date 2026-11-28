@@ -7,6 +7,7 @@ import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.
 
 import { ROUTES } from "../../../../constants/routes.js";
 import { useTenantDirectory } from "../../hooks/useTenantDirectory.js";
+import { tenantBelongsTo } from "../../lib/tenantDirectory.js";
 import "./TenantListPage.css";
 
 const PAGE_SIZE = 20;
@@ -15,6 +16,20 @@ const COLUMNS = [
   { accessorKey: "tenantName", header: "Tenant Name", meta: { sortable: true, sortField: "tenantName" } },
   { accessorKey: "partnerTypeCode", header: "Partner Type" },
   { accessorKey: "tenantType", header: "Tenant Type" },
+  {
+    id: "belongsTo",
+    header: "Belongs to",
+    cell: ({ row }) => {
+      const parent = tenantBelongsTo(row.original);
+      if (!parent) return <span className="tenant-list__muted">—</span>;
+      return (
+        <span className="tenant-list__parent">
+          <span>{parent.name}</span>
+          {parent.relation && <small>{parent.relation}</small>}
+        </span>
+      );
+    },
+  },
   { accessorKey: "domainUrl", header: "Domain" },
 ];
 

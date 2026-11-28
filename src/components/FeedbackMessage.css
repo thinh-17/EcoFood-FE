@@ -1,0 +1,50 @@
+/* "View error" / "View warning" trigger — tone-coloured like the app's status
+   badges (fe-status) and sized like its small buttons (fe-button--sm). The
+   icon sits under the button's own padding so the whole pill stays clickable. */
+.eco-feedback-trigger {
+  --eco-feedback-color: var(--fnb-error, #dc2626);
+  --eco-feedback-ink: #b91c1c;
+  --eco-feedback-bg: var(--fnb-error-soft, #fef2f2);
+  --eco-feedback-border: #fecaca;
+  --eco-feedback-hover: #fee2e2;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  vertical-align: middle;
+}
+.eco-feedback-trigger--warning {
+  --eco-feedback-color: var(--fnb-warning, #d97706);
+  --eco-feedback-ink: #92400e;
+  --eco-feedback-bg: #fffbeb;
+  --eco-feedback-border: #fde68a;
+  --eco-feedback-hover: #fef3c7;
+}
+.eco-feedback-trigger__icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translateY(-50%);
+  color: var(--eco-feedback-color);
+  pointer-events: none;
+}
+.eco-feedback-trigger > .fe-button,
+.eco-feedback-trigger > .fe-button.fe-button--secondary {
+  min-height: 32px;
+  padding: 6px 12px 6px 32px;
+  border-color: var(--eco-feedback-border);
+  border-radius: var(--fnb-radius, 8px);
+  background: var(--eco-feedback-bg);
+  color: var(--eco-feedback-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.eco-feedback-trigger > .fe-button:hover:not(:disabled) {
+  background: var(--eco-feedback-hover);
+  color: var(--eco-feedback-ink);
+}
+.eco-feedback-trigger > .fe-button:focus-visible {
+  outline-color: var(--eco-feedback-color);
+}
