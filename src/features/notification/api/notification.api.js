@@ -2,6 +2,8 @@ import { apiClient, unwrapData } from "../../../services/apiClient.js";
 
 const base = "/api/v1/notifications";
 export const notificationsApi = {
+  unreadCount: () => apiClient.get(`${base}/unread-count`).then(unwrapData),
+  markRead: (id) => apiClient.post(`${base}/${encodeURIComponent(id)}/read`).then(unwrapData),
   capabilities: () => apiClient.get(`${base}/capabilities`).then(unwrapData),
   options: () => apiClient.get(`${base}/options`).then(unwrapData),
   rules: () => apiClient.get(`${base}/rules`).then(unwrapData),

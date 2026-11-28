@@ -123,8 +123,6 @@ test("an existing Plan's own saved costing/content round-trips through form stat
     },
     regionIds: ["SOUTH"],
     tenantIds: ["partner"],
-    startDate: null,
-    endDate: null,
   };
   const form = planFormState(plan, p);
   assert.equal(form.productVersion, 5);

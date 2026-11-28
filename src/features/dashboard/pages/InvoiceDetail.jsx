@@ -17,7 +17,7 @@ export function InvoiceDetail({ scope, tenantId, id, onBack }) {
   const detail = query.data, invoice = detail?.invoice;
   const fields = detail ? [
     ["Invoice ID", invoice.id], ["Tenant", detail.tenantCode],
-    ["Received at", invoiceDate(detail.receivedAt)], ["Type", detail.type],
+    ["Received at", invoiceDate(detail.receivedAt)],
     ["Total amount", invoice.totalAmount], ["Currency", invoice.currency],
     ["Proposition", detail.propositions?.map((p) => p.name ? `${p.name} (${p.id})` : p.id).join(", ") || invoice.propositionId],
     ["POS", detail.posId], ["Distribution partner", detail.distributionPartnerId], ["Submitted by", detail.submittedBy],
@@ -27,7 +27,7 @@ export function InvoiceDetail({ scope, tenantId, id, onBack }) {
     {query.isPending && <p role="status">Loading invoice details…</p>}
     {query.isError && <p role="alert">{query.error?.response?.data?.message || "Unable to load this invoice."}</p>}
     {detail && <CoreCard>
-      <h2>Invoice {invoice.invoiceNumber || invoice.id}</h2>
+      <h2>Invoice {invoice.id}</h2>
       <CoreTabs className="invoice-dashboard__tabs" tabs={TABS} activeId={tab} onChange={setTab} />
       {tab === "overview" && <dl className="invoice-dashboard__details">{fields.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value ?? "—"}</dd></div>)}</dl>}
       {tab === "items" && <CoreTable columns={detail.planLines?.length ? PLAN_COLUMNS : ITEM_COLUMNS}

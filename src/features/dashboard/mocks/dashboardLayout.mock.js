@@ -16,7 +16,7 @@ export async function saveMockDashboardDefinition(tenantId, definition) {
   await wait();
   if (definition.scopeId !== tenantId) throw new Error("Invalid tenant");
   const existing = await getMockDashboardDefinition(tenantId);
-  if (definition.revision !== existing.revision) throw new Error("The dashboard was changed in another session. Please refresh.");
+  if (definition.revision !== existing.revision) throw new Error("The dashboard was changed in another session. Refresh to continue.");
   const saved = { ...definition, revision: existing.revision + 1, updatedAt: new Date().toISOString() };
   localStorage.setItem(key(tenantId), JSON.stringify(saved));
   return saved;
@@ -32,7 +32,7 @@ const data = {
       { name: "Milk coffee", quantity: 95 }, { name: "Peach tea", quantity: 73 },
       { name: "Pork banh mi", quantity: 59 }, { name: "Matcha latte", quantity: 41 },
     ],
-    alerts: ["2 ingredients need restocking", "3 customer feedback items pending"],
+    alerts: ["2 ingredients need restocking", "3 customer responses pending"],
   },
   "tenant-002": {
     revenue7Days: [
@@ -41,9 +41,9 @@ const data = {
     ],
     topProducts: [
       { name: "Peach tea", quantity: 66 }, { name: "White coffee", quantity: 53 },
-      { name: "Black coffee", quantity: 47 }, { name: "Pastries", quantity: 30 },
+      { name: "Black coffee", quantity: 47 }, { name: "Pastry", quantity: 30 },
     ],
-    alerts: ["1 customer feedback item pending"],
+    alerts: ["1 customer response pending"],
   },
 };
 export async function getMockDashboardWidgetData(tenantId) {

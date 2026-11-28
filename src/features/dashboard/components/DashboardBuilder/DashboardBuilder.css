@@ -4,6 +4,11 @@
 .wb-toolbar h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: -.5px; }
 .wb-subtext { color: #7a898f; font-size: 12px; margin: 4px 0 0; line-height: 1.65; }
 .wb-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.wb-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #fff; color: #496068; border: 0; border-radius: 7px; font-size: 12px; font-weight: 700; padding: 11px 13px; }
+.wb-btn:hover { background: #eaf1ed; }
+.wb-btn:disabled { opacity: .5; }
+.wb-btn-primary { background: #087f6e; color: white; }
+.wb-btn-primary:hover { background: #076759; }
 .wb-readonly { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #79888d; }
 .wb-notice { background: #e8f4ed; color: #1a6c4c; padding: 10px 14px; border-radius: 6px; font-size: 12px; margin: 11px 0; }
 .wb-palette { background: #fff; border-radius: 9px; padding: 19px 20px; margin-bottom: 16px; }

@@ -120,7 +120,7 @@ function CreateForm({ initialInvoice, busy, save, cancel }) {
     <BackButton onClick={cancel} disabled={busy}>Back to complaints</BackButton>
     <h2>New complaint</h2><p>You can have up to 3 active complaints at a time. Resolved and closed complaints do not count toward this limit.</p><label>Complaint type<CoreSelect value={type} onChange={(value) => change(setType, value)} options={complaintTypes} /></label>
     {type === "TENANT" && <><label>Your invoice<CoreSelect value={invoiceId} onChange={(value) => change(setInvoice, value)} placeholder="Select an invoice"
-      options={(invoices.data?.content ?? []).map((invoice) => ({ value: invoice.id, label: invoice.invoiceNumber }))} /></label>
+      options={(invoices.data?.content ?? []).map((invoice) => ({ value: invoice.id, label: invoice.id }))} /></label>
       {invoices.isPending && <CoreLoadingState title="Loading invoices" />}{invoices.error && <FeedbackMessage error={invoices.error}>{complaintError(invoices.error)}</FeedbackMessage>}{invoices.data && !invoices.data.content.length && <p>You need an invoice to submit a service complaint.</p>}
       <Pagination page={invoicePage} hasNext={invoices.data?.hasNext} onPageChange={setInvoicePage} disabled={invoices.isFetching} label="Invoice selection pagination" />
     </>}

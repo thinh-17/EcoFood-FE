@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import { useDeleteDataAccessRule } from "../../hooks/useDeleteDataAccessRule.js";
 
-import { CoreButton, CoreCard, CorePageHeader } from "@thinh-17/fe-core";
+import { CoreButton, CoreCard } from "@thinh-17/fe-core";
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 
 import { ROUTES } from "../../../../constants/routes.js";
 import { useDataAccessRuleDetail } from "../../hooks/useDataAccessRuleDetail.js";

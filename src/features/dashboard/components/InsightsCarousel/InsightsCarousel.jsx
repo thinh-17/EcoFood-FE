@@ -1,4 +1,3 @@
-import { CoreButton, CoreCard } from "@thinh-17/fe-core";
 import "./InsightsCarousel.css";
 import { useRef } from "react";
 import { FiArrowLeft, FiArrowRight, FiBookOpen } from "react-icons/fi";
@@ -8,12 +7,12 @@ export function InsightsCarousel({ articles }) {
   const scroll = (direction) => scrollerRef.current?.scrollBy({ left: direction * 300, behavior: "smooth" });
 
   return (
-    <CoreCard className="insights-panel">
+    <section className="insights-panel">
       <div className="section-heading">
         <div><span className="eyebrow">INSIGHTS</span><h2>F&B industry insights</h2></div>
         <div className="carousel-actions">
-          <CoreButton variant="secondary" type="button" onClick={() => scroll(-1)} aria-label="Previous article"><FiArrowLeft /></CoreButton>
-          <CoreButton variant="secondary" type="button" onClick={() => scroll(1)} aria-label="Next article"><FiArrowRight /></CoreButton>
+          <button type="button" onClick={() => scroll(-1)} aria-label="Previous article"><FiArrowLeft /></button>
+          <button type="button" onClick={() => scroll(1)} aria-label="Next article"><FiArrowRight /></button>
         </div>
       </div>
       <div className="insight-track" ref={scrollerRef}>
@@ -30,6 +29,6 @@ export function InsightsCarousel({ articles }) {
           </article>
         ))}
       </div>
-    </CoreCard>
+    </section>
   );
 }

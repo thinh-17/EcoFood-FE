@@ -1,4 +1,5 @@
-import { CoreButton } from "@thinh-17/fe-core";
+import { FeedbackMessage } from "../../../../components/FeedbackMessage.jsx";
+import { CoreLoadingState } from "@thinh-17/fe-core";
 import "./DashboardBuilder.css";
 import { useEffect, useMemo, useState } from "react";
 import ReactGridLayout, { useContainerWidth } from "react-grid-layout";
@@ -73,33 +74,33 @@ export function DashboardBuilder({ tenantId, canEdit, summary, activities }) {
   };
 
   if (!tenantId) return <p className="wb-subtext">Select a tenant to view the dashboard.</p>;
-  if (definition.isLoading) return <p className="wb-subtext">Loading dashboard layout...</p>;
-  if (definition.isError) return <p role="alert" className="wb-error">Unable to load layout: {definition.error.message}</p>;
+  if (definition.isLoading) return <CoreLoadingState title="Loading dashboard layout" />;
+  if (definition.isError) return <FeedbackMessage error={definition.error}>Unable to load layout: {definition.error.message}</FeedbackMessage>;
 
   return <section className="dashboard-builder" aria-label="Custom dashboard">
     <div className="wb-toolbar">
       <div><span className="wb-eyebrow">CUSTOM DASHBOARD</span><h2>{current?.name || "Dashboard"}</h2>
-        <p className="wb-subtext">{editable ? "Drag a widget header to move it, or the bottom-right corner to resize it. Click Save to apply." : "Layouts are saved separately for each tenant."}</p>
+        <p className="wb-subtext">{editable ? "Drag a widget header to move it, or its bottom-right corner to resize. Select Save to apply changes." : "Each tenant has its own saved layout."}</p>
       </div>
       <div className="wb-actions">
         {editable ? <>
-          <CoreButton variant="secondary" onClick={() => setPaletteOpen((v) => !v)}><FiPlus /> Add widget</CoreButton>
-          <CoreButton variant="secondary" onClick={reset}><FiRotateCcw /> Reset to default</CoreButton>
-          <CoreButton variant="secondary" onClick={cancel}><FiX /> Cancel</CoreButton>
-          <CoreButton variant="primary" disabled={save.isPending || isMobile} onClick={persist}><FiSave /> {save.isPending ? "Saving" : "Save layout"}</CoreButton>
-        </> : canEdit ? <CoreButton variant="primary" onClick={begin}><FiEdit3 /> Edit dashboard</CoreButton> : <span className="wb-readonly"><FiLock /> You have view-only access to this dashboard</span>}
+          <button className="wb-btn wb-btn-neutral" onClick={() => setPaletteOpen((v) => !v)}><FiPlus /> Add widget</button>
+          <button className="wb-btn wb-btn-neutral" onClick={reset}><FiRotateCcw /> Reset to default</button>
+          <button className="wb-btn wb-btn-neutral" onClick={cancel}><FiX /> Cancel</button>
+          <button className="wb-btn wb-btn-primary" disabled={save.isPending || isMobile} onClick={persist}><FiSave /> {save.isPending ? "Saving" : "Save layout"}</button>
+        </> : canEdit ? <button className="wb-btn wb-btn-primary" onClick={begin}><FiEdit3 /> Edit dashboard</button> : <span className="wb-readonly"><FiLock /> Read-only dashboard access</span>}
       </div>
     </div>
     {notice && <p className="wb-notice" role="status">{notice}</p>}
     {editable && isMobile && <p className="wb-notice">Drag and drop requires a screen at least 800px wide. You can still view the dashboard on mobile.</p>}
     {editable && paletteOpen && <div className="wb-palette" aria-label="Widget library">
-      <div className="wb-palette-header"><strong>Widget library</strong><CoreButton type="button" onClick={() => setPaletteOpen(false)} aria-label="Close">×</CoreButton></div>
+      <div className="wb-palette-header"><strong>Widget library</strong><button type="button" onClick={() => setPaletteOpen(false)} aria-label="Close">×</button></div>
       <div className="wb-palette-items">{Object.entries(widgetRegistry).map(([type, info]) => {
         const Icon = info.icon;
-        return <CoreButton key={type} type="button" className="wb-palette-item" onClick={() => addWidget(type)}><Icon size={19} /><span>{info.title}</span><FiPlus /></CoreButton>;
+        return <button key={type} type="button" className="wb-palette-item" onClick={() => addWidget(type)}><Icon size={19} /><span>{info.title}</span><FiPlus /></button>;
       })}</div>
     </div>}
-    {widgetData.isError && <p className="wb-error" role="alert">Unable to load widget data.</p>}
+    {widgetData.isError && <FeedbackMessage>Unable to load widget data.</FeedbackMessage>}
     <div className={editable ? "wb-grid-container wb-grid-editing" : "wb-grid-container"} ref={containerRef}>
       {isMobile ? <div className="wb-mobile-grid">{widgets.map((w) => <div key={w.id} style={{ minHeight: w.type.startsWith("kpi.") ? 160 : 290 }}><DashboardWidget widget={w} summary={summary} activities={activities} data={widgetData.data} editable={false} /></div>)}</div>
         : mounted && <ReactGridLayout

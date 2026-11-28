@@ -2,12 +2,12 @@ import { FiDollarSign, FiShoppingBag, FiCoffee, FiMessageSquare, FiTrendingUp, F
 
 // Whitelist: layout từ server chỉ lưu type/config, KHÔNG chứa component code hay API URL tùy ý.
 export const widgetRegistry = {
-  "kpi.revenue": { title: "Today's revenue", icon: FiDollarSign, size: { w: 3, h: 2 }, minW: 2, minH: 2 },
+  "kpi.revenue": { title: "Revenue today", icon: FiDollarSign, size: { w: 3, h: 2 }, minW: 2, minH: 2 },
   "kpi.orders": { title: "Orders", icon: FiShoppingBag, size: { w: 3, h: 2 }, minW: 2, minH: 2 },
   "kpi.products": { title: "Active products", icon: FiCoffee, size: { w: 3, h: 2 }, minW: 2, minH: 2 },
   "kpi.feedback": { title: "Pending feedback", icon: FiMessageSquare, size: { w: 3, h: 2 }, minW: 2, minH: 2 },
-  "chart.revenue": { title: "Revenue over 7 days", icon: FiTrendingUp, size: { w: 8, h: 5 }, minW: 5, minH: 4 },
-  "list.products": { title: "Best-selling products", icon: FiAward, size: { w: 4, h: 5 }, minW: 3, minH: 4 },
+  "chart.revenue": { title: "7-day revenue", icon: FiTrendingUp, size: { w: 8, h: 5 }, minW: 5, minH: 4 },
+  "list.products": { title: "Top-selling products", icon: FiAward, size: { w: 4, h: 5 }, minW: 3, minH: 4 },
   "list.activities": { title: "Latest activity", icon: FiList, size: { w: 8, h: 4 }, minW: 4, minH: 3 },
   "list.alerts": { title: "Operational alerts", icon: FiBell, size: { w: 4, h: 4 }, minW: 3, minH: 3 },
 };

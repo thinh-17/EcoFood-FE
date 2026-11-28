@@ -21,7 +21,7 @@ export function DashboardTenantPicker({ tenants, selected, onChange }) {
           {tenants.filter((tenant) => tenantLabel(tenant).toLowerCase().includes(search.toLowerCase())).map((tenant) =>
             <label key={tenant.id} className={tenant.accessible === false ? "dashboard-tenant-picker__disabled" : ""}>
               <input type="checkbox" checked={selected.includes(tenant.id)} disabled={tenant.accessible === false} onChange={() => toggle(tenant.id)} />
-              <span>{tenantLabel(tenant)}{tenant.accessible === false && <small>No data access</small>}</span>
+              <span>{tenantLabel(tenant)}{tenant.accessible === false && <small>No access</small>}</span>
             </label>)}
         </div>
       </div>

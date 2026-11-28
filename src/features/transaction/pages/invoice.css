@@ -1,4 +1,5 @@
 .invoice-page { padding: 24px; color: #25364a; }
+.invoice-tenant-filter { margin: 16px 0; }
 .invoice-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 16px 0; flex-wrap: wrap; }
 .invoice-toolbar label { display: flex; align-items: center; gap: 10px; }
 .invoice-toolbar select { padding: 8px 12px; border: 1px solid #ccd5df; border-radius: 6px; background: white; color: inherit; font: inherit; }

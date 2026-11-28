@@ -1,7 +1,10 @@
+import { canAccessManager } from "../../dashboard/lib/dashboardAccess.js";
+
 export function managerTabs(claims = {}) {
-  const permissions = Array.isArray(claims.permissions) ? claims.permissions : [];
+  if (!canAccessManager(claims.roles)) return [];
   return [
-    { id: "dashboard", label: "Dashboard", permission: "DASHBOARD_READ" },
-    { id: "invoices", label: "Invoice", permission: "TRANSACTION_READ" },
-  ].filter((tab) => permissions.includes(tab.permission));
+    { id: "dashboard", label: "Dashboard" },
+    { id: "invoices", label: "Invoice" },
+    { id: "customers", label: "Customer" },
+  ];
 }

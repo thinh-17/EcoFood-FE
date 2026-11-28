@@ -2,7 +2,7 @@ import { FeedbackMessage } from "../../../components/FeedbackMessage.jsx";
 import { CoreLoadingState } from "@thinh-17/fe-core";
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CoreModal } from "@thinh-17/fe-core";
 import { CoreButton } from "@thinh-17/fe-core";
 import { StatusBadge } from "../../../components/StatusBadge.jsx";
@@ -11,10 +11,16 @@ import { notificationComplaintPath, notificationError } from "../lib/notificatio
 import "./NotificationPopup.css";
 
 export function NotificationDetailDialog({ id, root, onClose }) {
+  const client = useQueryClient();
+  const { mutate: markRead } = useMutation({ mutationFn: api.markRead,
+    onSuccess: () => client.invalidateQueries({ queryKey: [...root, "unread-count"] }) });
   const closeRef = useRef(onClose);
   useEffect(() => { closeRef.current = onClose; }, [onClose]);
   const detail = useQuery({ queryKey: [...root, "detail", id], queryFn: () => api.detail(id),
     enabled: !!id, refetchInterval: 15000, staleTime: 10000 });
+  useEffect(() => {
+    if (id && detail.data?.id === id && !detail.isError) markRead(id);
+  }, [id, detail.data?.id, detail.isError, markRead]);
   useEffect(() => {
     if (!id) return;
     const previous = document.activeElement;

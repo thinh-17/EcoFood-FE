@@ -14,7 +14,7 @@ test("null is missing, real zero remains zero and profit can be negative", () =>
   assert.equal(formatDashboardValue(null, "USD"), "Insufficient data");
   assert.notEqual(formatDashboardValue("0", "USD"), "Insufficient data");
   assert.match(formatDashboardValue("-20.50", "USD"), /-/);
-  assert.equal(formatDashboardValue("10", "USD"), "$10.00");
+  assert.equal(formatDashboardValue("10", "USD"), "10,00\u00a0US$");
   assert.match(formatDashboardValue("10", "VND"), /₫/);
   assert.equal(expectedLabel({ expected: null, expectedStatus: "OVERLAPPING_PERIODS" }), "Overlapping expected periods");
 });
@@ -23,7 +23,7 @@ test("period and currency parameters retain selected scope without Plan inferenc
   assert.deepEqual(dashboardParams(filters), { tenantId: "a", propositionTotal: false, propositionId: "p", currency: "USD", year: 2026, period: "MONTHLY", month: 2, quarter: undefined });
   const total = dashboardParams({ ...filters, tenantId: "__TOTAL__", period: "YEARLY" });
   assert.equal(total.tenantId, undefined); assert.equal(total.propositionTotal, true); assert.equal(total.month, undefined); assert.equal(total.quarter, undefined);
-  assert.equal(periodLabel({ year: 2026, period: "QUARTERLY", quarter: 2 }), "Quarter 2/2026");
+  assert.equal(periodLabel({ year: 2026, period: "QUARTERLY", quarter: 2 }), "Q2/2026");
 });
 test("charts leave missing/non-finite values absent instead of creating zero or Infinity", () => {
   assert.equal(dashboardChartValue(null), null); assert.equal(dashboardChartValue("0"), 0);

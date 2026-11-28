@@ -1,22 +1,18 @@
-.business-dashboard { padding: 24px; color: #25364a; }
-.business-refresh { display: inline-flex; align-items: center; gap: 8px; margin: 12px 0; cursor: pointer; }
-.business-filters { display: flex; flex-wrap: wrap; gap: 14px; margin: 12px 0 22px; }
-.business-filter { display: flex; flex-direction: column; gap: 6px; font-size: 14px; min-width: 150px; }
-.business-cards > .fe-card, .business-charts > .fe-card { margin-top: 0; }
-.business-actions { display: flex; justify-content: flex-end; margin-bottom: 16px; }
-.business-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin: 18px 0; }
-.business-card, .business-charts article, .business-breakdown { background: white; border-radius: 8px; padding: 20px; min-width: 0; }
-.business-card h2, .business-charts h2, .business-breakdown h2 { font-size: 16px; margin: 0 0 16px; }
-.business-card strong { font-size: 25px; overflow-wrap: anywhere; }
-.business-card p { font-size: 14px; margin: 10px 0; }
-.business-card small, .business-sync { color: #617084; font-size: 13px; }
-.business-favorable { color: #176c4f; }.business-unfavorable, .business-warning { color: #9b4911; }.business-neutral { color: #617084; }
-.business-kpi-select { max-width: 360px; margin: 24px 0 16px; }
-.business-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-.business-chart { height: 290px; min-width: 0; }
-.business-tooltip { background: white; padding: 12px; border: 1px solid #ccd5df; font-size: 13px; }
-.business-error { padding: 14px; color: #9d2837; background: #fff0f1; border-radius: 6px; }
-.business-breakdown { margin: 20px 0; }.business-table { overflow-x: auto; }.business-table table { width: 100%; min-width: 580px; border-collapse: collapse; text-align: left; }.business-table th, .business-table td { padding: 12px; border-bottom: 1px solid #e5eaf0; }
-.business-dashboard select:focus-visible, .business-dashboard button:focus-visible { outline: 2px solid #177967; outline-offset: 2px; }
-@media(max-width: 1100px) { .business-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }.business-charts { grid-template-columns: minmax(0, 1fr); } }
-@media(max-width: 600px) { .business-dashboard { padding: 12px; }.business-cards { grid-template-columns: minmax(0, 1fr); }.business-filters label { width: 100%; }.business-dashboard select { max-width: 100%; } }
+.business-dashboard { color: var(--fnb-ink); min-width: 0; }
+.business-actions { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+.business-dashboard .dashboard-tenant-picker { width: 100%; }
+.business-dashboard .dashboard-tenant-picker__panel label { flex-direction: row; }
+.business-dashboard select, .business-refresh { min-height: 40px; border: 1px solid var(--fnb-line); border-radius: 6px; padding: 8px 12px; background: white; color: inherit; font: inherit; }
+.business-refresh { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 20px; }.business-refresh:hover { background: var(--fnb-accent-soft); color: var(--fnb-accent); }
+.business-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 20px; margin-bottom: 24px; background: white; border: 1px solid var(--fnb-line); border-radius: 8px; }.business-dashboard label { display: flex; flex-direction: column; gap: 8px; font-size: 13px; min-width: 0; }.business-dashboard select { min-width: 0; max-width: 100%; width: 100%; }
+.business-period { font-size: 12px; color: var(--fnb-muted); }.business-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 16px 0 24px; }
+.business-card, .business-charts article, .business-breakdown { background: white; border: 1px solid var(--fnb-line); border-radius: 8px; padding: 20px; min-width: 0; }
+.business-card { cursor: pointer; transition: border-color .15s; }.business-card:hover { border-color: #a8c7f4; }.business-card--selected { border-color: var(--fnb-accent); box-shadow: inset 0 3px 0 var(--fnb-accent); }.business-card:focus-visible { outline: 2px solid var(--fnb-accent); outline-offset: 3px; }
+.business-card h2 { font-size: 13px; font-weight: 500; color: var(--fnb-muted); margin: 0 0 12px; }.business-card strong { display: block; font-size: clamp(24px, 2.3vw, 30px); font-weight: 650; letter-spacing: -.5px; overflow-wrap: anywhere; }.business-card p { font-size: 12px; margin: 10px 0 0; }.business-card small, .business-sync { color: var(--fnb-muted); font-size: 12px; }.business-card small { display: block; margin-top: 8px; }
+.business-favorable { color: #15803d; }.business-unfavorable, .business-warning { color: #92400e; }.business-neutral { color: var(--fnb-muted); }.business-kpi-select { max-width: 320px; margin: 0 0 20px; }
+.business-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }.business-charts h2, .business-breakdown h2 { font-size: 16px; font-weight: 600; margin: 0 0 16px; }.business-chart { height: 290px; min-width: 0; margin-top: 12px; font-size: 12px; }.business-tooltip { background: white; padding: 12px; border: 1px solid var(--fnb-line); border-radius: 8px; font-size: 12px; }.business-error { padding: 16px; color: var(--fnb-error); background: var(--fnb-error-soft); border-radius: 8px; }
+.business-breakdown { margin: 24px 0; }.business-table { overflow-x: auto; }.business-table table { width: 100%; min-width: 580px; border-collapse: collapse; text-align: left; }.business-table th, .business-table td { padding: 14px 16px; border-bottom: 1px solid var(--fnb-line); }.business-table th { color: var(--fnb-muted); background: var(--fnb-canvas); font-size: 12px; font-weight: 600; }.business-table td:not(:first-child), .business-table th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 1200px) { .business-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1000px) { .business-charts { grid-template-columns: minmax(0, 1fr); }.business-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .business-filters { grid-template-columns: minmax(0, 1fr); padding: 16px; }.business-cards { gap: 12px; }.business-card { padding: 16px; }.business-card strong { font-size: 24px; }.business-chart { height: 250px; } }
+@media (max-width: 380px) { .business-cards { grid-template-columns: minmax(0, 1fr); } }

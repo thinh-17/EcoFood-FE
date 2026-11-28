@@ -2,7 +2,8 @@ import { ENTITY_TYPE_OPTIONS } from "../../lib/entityTypes.js";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CoreFormActions, CoreMultiSelect, CorePageHeader, CoreSelect, CoreTabs } from "@thinh-17/fe-core";
+import { CoreFormActions, CoreMultiSelect, CoreSelect, CoreTabs } from "@thinh-17/fe-core";
+import { PageHeader as CorePageHeader } from "../../../../components/PageHeader.jsx";
 import { FiInfo } from "react-icons/fi";
 
 import { ROUTES } from "../../../../constants/routes.js";

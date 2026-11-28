@@ -3,23 +3,27 @@ import {
   FiUser,
   FiUsers,
   FiUserCheck,
-  FiLayers,
-  FiGrid,
+  FiBriefcase,
+  FiSliders,
   FiPackage,
   FiShield,
-  FiLock,
+  FiKey,
   FiDatabase,
   FiLogOut,
-  FiUserPlus,
+  FiFilePlus,
+  FiFileText,
+  FiMessageSquare,
+  FiActivity,
+  FiShare2,
+  FiBookOpen,
+  FiSettings,
 } from "react-icons/fi";
 
 import { ROUTES } from "../../constants/routes.js";
 
 export const navItems = [
-  { id: "audit-log", label: "Audit Log", icon: FiShield, to: "/audit-log" },
-  { id: "catalog-publications", label: "Publish External API", icon: FiLayers, to: "/catalog-publications" },
-  { id: "complaints", label: "Customer Care", icon: FiUserCheck, to: "/complaints" },
-  { id: "notifications", label: "Notifications", icon: FiUserCheck, to: ROUTES.NOTIFICATIONS },
+  { id: "audit-log", label: "Audit Log", icon: FiActivity, to: "/audit-log" },
+  { id: "complaints", label: "Complaints", icon: FiMessageSquare, to: "/complaints" },
   {
     id: "home",
     label: "Home",
@@ -30,19 +34,19 @@ export const navItems = [
   {
     id: "partner",
     label: "Partner",
-    icon: FiUserCheck,
+    icon: FiShare2,
 
     children: [
       {
         id: "tenant",
-        label: "Tenant",
-        icon: FiLayers,
+        label: "Tenants",
+        icon: FiBriefcase,
         to: ROUTES.TENANT,
       },
       {
         id: "tenant-onboarding",
         label: "Tenant Onboarding",
-        icon: FiUserPlus,
+        icon: FiFilePlus,
         to: ROUTES.TENANT_ONBOARDING,
       },
     ],
@@ -51,28 +55,24 @@ export const navItems = [
   {
     id: "manager",
     label: "Manager",
-    icon: FiGrid,
-    children: [
-      { id: "business-dashboard", label: "Business Dashboard", icon: FiGrid, to: "/manager/business" },
-      { id: "invoice-dashboard", label: "Invoice Dashboard", icon: FiGrid, to: "/manager/invoices" },
-      { id: "customer-dashboard", label: "Customer Dashboard", icon: FiGrid, to: "/manager/customers" },
-    ],
+    icon: FiSliders,
+    to: ROUTES.MANAGER,
   },
 
   {
     id: "product-library",
     label: "Product Library",
-    icon: FiPackage,
+    icon: FiBookOpen,
     children: [
       { id: "products", label: "Products", icon: FiPackage, to: ROUTES.PRODUCTS },
-      { id: "propositions", label: "Propositions", icon: FiLayers, to: ROUTES.PROPOSITIONS },
+      { id: "propositions", label: "Propositions", icon: FiFileText, to: ROUTES.PROPOSITIONS },
     ],
   },
 
   {
     id: "users-group",
     label: "Users",
-    icon: FiUsers,
+    icon: FiUserCheck,
 
     children: [
       {
@@ -89,8 +89,8 @@ export const navItems = [
       },
       {
         id: "permissions",
-        label: "Permission",
-        icon: FiLock,
+        label: "Permissions",
+        icon: FiKey,
         to: ROUTES.PERMISSIONS,
       },
       {
@@ -105,7 +105,7 @@ export const navItems = [
   {
     id: "account",
     label: "Account",
-    icon: FiUser,
+    icon: FiSettings,
 
     children: [
       {

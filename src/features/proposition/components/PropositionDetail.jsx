@@ -213,11 +213,6 @@ function PlansPanel({ proposition: p, onPlan }) {
     },
     { id: "country", accessorFn: (row) => row.regionIds.join(", "), header: "Country of Sale" },
     {
-      id: "effective",
-      accessorFn: (row) => `${showDate(row.startDate)} – ${showDate(row.endDate)}`,
-      header: "Effective period",
-    },
-    {
       id: "updatedAt",
       accessorFn: (row) => showDate(row.updatedAt),
       header: "Last updated",

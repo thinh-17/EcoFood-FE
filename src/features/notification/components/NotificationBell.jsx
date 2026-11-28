@@ -11,13 +11,15 @@ import { StatusBadge } from "../../../components/StatusBadge.jsx";
 import { useNotificationHistory } from "../hooks/useNotificationHistory.js";
 import { NotificationDetailDialog } from "./NotificationDetailDialog.jsx";
 import { recentNotifications } from "../lib/recentNotifications.js";
+import { unreadBadge } from "../lib/unreadNotifications.js";
 import "./NotificationPopup.css";
 
 export function NotificationBell() {
   const token = useAuthStore((state) => state.internalAccessToken);
+  const tenantId = useAuthStore((state) => state.tenantId);
   let claims = {};
   try { claims = decodeJwt(token) || {}; } catch { /* Existing auth guard handles the session. */ }
-  return notificationAccess(claims).read ? <AuthorizedBell /> : null;
+  return notificationAccess(claims).read ? <AuthorizedBell key={`${token}:${tenantId}`} /> : null;
 }
 
 function AuthorizedBell() {
@@ -26,7 +28,7 @@ function AuthorizedBell() {
   const navigate = useNavigate();
   const client = useQueryClient();
   const container = useRef(null), bell = useRef(null), popup = useRef(null);
-  const { root, capabilities, history } = useNotificationHistory({ enabled: open, secondary: true });
+  const { root, capabilities, history, unread } = useNotificationHistory({ enabled: open, secondary: true, monitorUnread: true });
   const rights = capabilities.data || {};
   function close(restore = true) { setOpen(false); if (restore) bell.current?.focus(); }
   useEffect(() => {
@@ -46,9 +48,14 @@ function AuthorizedBell() {
   }, [open]);
   const error = capabilities.error || history.error;
   const recent = recentNotifications(history.data?.content);
+  const count = rights.read && !unread.isError ? unread.data?.count ?? 0 : 0;
+  const badge = unreadBadge(count);
   return <div className="eco-notification-anchor" ref={container}>
-    <button ref={bell} type="button" className="eco-notification-bell" title="Notifications" aria-label="Notifications"
-      aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? "notification-popup" : undefined} onClick={() => setOpen((value) => !value)}><FiBell size={19} /></button>
+    <button ref={bell} type="button" className={`eco-notification-bell${badge ? " eco-notification-bell--unread" : ""}`}
+      title={badge ? `${count} unread notifications` : "Notifications"} aria-label={badge ? `Notifications, ${count} unread` : "Notifications"}
+      aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? "notification-popup" : undefined} onClick={() => setOpen((value) => !value)}>
+      <FiBell size={19} aria-hidden="true" />{badge && <span className="eco-notification-badge" aria-hidden="true">{badge}</span>}
+    </button>
     {open && <section ref={popup} id="notification-popup" className="eco-notification-popup" role="dialog" aria-label="Recent notifications">
       <header className="eco-notification-popup__header"><div><h2>Notifications</h2><p>Recent notifications</p></div>
         <button type="button" aria-label="Refresh notifications" title="Refresh" disabled={capabilities.isFetching || history.isFetching}

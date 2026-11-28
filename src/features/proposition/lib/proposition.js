@@ -274,8 +274,6 @@ export function planFormState(plan, p, sourceProcess) {
       .map((step) => ({ ...step, description: step.description ?? "" })),
     regionIds: [...(plan?.regionIds ?? [])],
     tenantIds: [...(plan?.tenantIds ?? [])],
-    startDate: localDate(plan?.startDate ?? p.definition.startDate),
-    endDate: localDate(plan?.endDate ?? p.definition.endDate),
     currency:
       costing?.currency ??
       (p.availableCurrencies.includes(p.definition.currency)
@@ -380,11 +378,7 @@ export function planPayload(form, p) {
           },
     regionIds: form.regionIds,
     tenantIds: form.tenantIds,
-    startDate: utcDate(form.startDate),
-    endDate: utcDate(form.endDate),
   };
-  if (result.startDate && result.endDate && result.startDate >= result.endDate)
-    throw new Error("End date must be after start date.");
   return result;
 }
 

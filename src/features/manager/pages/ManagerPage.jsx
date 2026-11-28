@@ -13,6 +13,8 @@ const BusinessDashboardPage = lazy(() => import("../../dashboard/pages/BusinessD
   .then((module) => ({ default: module.BusinessDashboardPage })));
 const InvoiceListPage = lazy(() => import("../../transaction/pages/InvoiceListPage.jsx")
   .then((module) => ({ default: module.InvoiceListPage })));
+const CustomerDashboardPage = lazy(() => import("../../dashboard/pages/CustomerDashboardPage.jsx")
+  .then((module) => ({ default: module.CustomerDashboardPage })));
 
 export function ManagerPage() {
   const token = useAuthStore((state) => state.internalAccessToken);
@@ -33,7 +35,7 @@ export function ManagerPage() {
   return <div className="manager-page">
     <div className="manager-tabs"><CoreTabs tabs={tabs} activeId={active} onChange={selectTab} /></div>
     <Suspense fallback={<LoadingPage title="Loading Manager" />}>
-      {active === "dashboard" ? <BusinessDashboardPage key={token} /> : <InvoiceListPage key={token} />}
+      {active === "dashboard" ? <BusinessDashboardPage key={token} /> : active === "invoices" ? <InvoiceListPage key={token} /> : <CustomerDashboardPage key={token} />}
     </Suspense>
   </div>;
 }
