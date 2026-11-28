@@ -40,6 +40,33 @@
 .product-version-chips button.product-status { border: 1px solid transparent; cursor: pointer; }
 .product-version-chips button.product-status:disabled { cursor: default; opacity: .6; }
 .product-version-chips button.product-status.is-current { box-shadow: 0 0 0 2px var(--fnb-accent); font-weight: 700; }
+/* Version chips: each status has its own colour + icon; the version being
+   viewed is filled with its status colour so it stands out from the rest. */
+.product-version-chip {
+  --chip-ink: #475569; --chip-bg: #f8fafc; --chip-border: #cbd5e1; --chip-solid: #64748b;
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 5px 12px;
+  border: 1px solid var(--chip-border); border-radius: var(--fnb-radius, 8px);
+  background: var(--chip-bg); color: var(--chip-ink); font: inherit; font-size: 12px; line-height: 1.4;
+  cursor: pointer; transition: background-color .15s, border-color .15s, box-shadow .15s;
+}
+.product-version-chip strong { font-weight: 700; }
+.product-version-chip__icon { flex-shrink: 0; width: 14px; height: 14px; }
+.product-version-chip__status { font-weight: 500; }
+.product-version-chip__viewing {
+  margin-left: 2px; padding: 1px 6px; border-radius: 999px; background: rgba(255, 255, 255, .24);
+  font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+}
+.product-version-chip--draft { border-style: dashed; }
+.product-version-chip--pending_review { --chip-ink: #92400e; --chip-bg: #fffbeb; --chip-border: #fcd34d; --chip-solid: #d97706; }
+.product-version-chip--approved { --chip-ink: #15803d; --chip-bg: #f0fdf4; --chip-border: #86efac; --chip-solid: #16a34a; }
+.product-version-chip--rejected { --chip-ink: #b91c1c; --chip-bg: #fef2f2; --chip-border: #fca5a5; --chip-solid: #dc2626; }
+.product-version-chip:hover:not(:disabled):not(.is-current) { border-color: var(--chip-solid); box-shadow: 0 1px 2px rgba(15, 23, 42, .08); }
+.product-version-chip.is-current {
+  border-style: solid; border-color: var(--chip-solid); background: var(--chip-solid); color: #fff;
+  box-shadow: 0 0 0 3px var(--chip-bg), 0 0 0 4px var(--chip-border); cursor: default;
+}
+.product-version-chip:focus-visible { outline: 2px solid var(--fnb-accent, #075acd); outline-offset: 3px; }
+.product-version-chip:disabled { cursor: not-allowed; opacity: .55; }
 .product-version-bar__actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .product-version-bar .product-facts { margin-top: 0; }
 .product-state { text-align: center; padding: 50px 18px; color: var(--fnb-muted); }

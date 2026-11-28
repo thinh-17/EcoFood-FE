@@ -5,6 +5,12 @@
   display: block;
 }
 
+/* "Belongs to" column: parent name with its relation underneath. */
+.tenant-list__parent { display: inline-flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tenant-list__parent > span { color: var(--fnb-ink); overflow-wrap: anywhere; }
+.tenant-list__parent > small { color: var(--fnb-muted); font-size: 12px; }
+.tenant-list__muted { color: var(--fnb-text-muted); }
+
 .tenant-list__error {
   color: #b42318;
   margin-bottom: 12px;
@@ -25,5 +31,5 @@
   border-top: 1px solid var(--fnb-line);
 }
 
-.tenant-edit-form__footer { margin: 24px 0 0; padding: 16px 0 0; }.tenant-edit-form { background: white; border: 1px solid var(--fnb-line); border-radius: 8px; padding: 24px; }.tenant-list-page .fe-table { min-width: 600px; }
+.tenant-edit-form__footer { margin: 24px 0 0; padding: 16px 0 0; }.tenant-edit-form { background: white; border: 1px solid var(--fnb-line); border-radius: 8px; padding: 24px; }.tenant-list-page .fe-table { min-width: 760px; }
 @media (max-width: 600px) { .tenant-edit-form { padding: 16px; } }

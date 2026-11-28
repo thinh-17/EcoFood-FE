@@ -231,16 +231,18 @@ function SaleOrchestratorForm({ row, proposition, plans, onSaved, onCancel }) {
           </CoreExpansionPanel>
         ),
       )}
-      {!readOnly && (
-        <PayloadPreview
-          payload={samplePayload(
-            planIds,
-            fieldLists.planItems,
-            fieldLists.additionalInfoFields,
-            fieldLists.invoiceHolder,
-          )}
-        />
-      )}
+      {/* The preview is view-only, so every viewer the backend lets read this
+          Orchestrator (same Proposition scope, see loadForView) sees it too,
+          not only the Tenant that can edit it. */}
+      <PayloadPreview
+        payload={samplePayload(
+          planIds,
+          fieldLists.planItems,
+          fieldLists.additionalInfoFields,
+          fieldLists.invoiceHolder,
+        )}
+      />
+
       <div className="sale-form-actions">
         {!readOnly && (
           <CoreButton

@@ -1,7 +1,7 @@
 import { FeedbackMessage } from "../../../components/FeedbackMessage.jsx";
-import { CoreLoadingState } from "@thinh-17/fe-core";
+import { CoreLoadingState, CoreNotFoundState } from "@thinh-17/fe-core";
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   keepPreviousData,
   useQuery,
@@ -29,7 +29,10 @@ import { PlanForm } from "../components/PlanForm.jsx";
 import { PlanDetail } from "../components/PlanDetail.jsx";
 import { isEnterpriseSaleOrchestratorActor } from "../../orchestrator/lib/planSale.js";
 import { SaleOrchestratorEditor } from "../../orchestrator/pages/PlanSaleOrchestrator.jsx";
+import { propositionPaths, tabFromSearch } from "../lib/propositionRoutes.js";
 import "./PropositionPage.css";
+
+const DETAIL_VIEWS = ["detail", "edit", "plan", "sale-orchestrator"];
 
 const PAGE_SIZE = 20;
 const COLUMNS = [
@@ -62,7 +65,10 @@ const COLUMNS = [
   },
 ];
 
-export function PropositionPage() {
+// `view` comes from the matched route (see AppRouter) and every id from the
+// URL (see propositionRoutes.js), so each Proposition, Plan and Sale
+// Orchestrator screen has its own /{id} URL.
+export function PropositionPage({ view = "list" }) {
   const tenant = useAuthStore((state) => state.tenantId),
     roles = useCurrentRoles();
   const scope = `${tenant}:${roles.join(",")}`;
@@ -75,30 +81,32 @@ export function PropositionPage() {
         />
       </section>
     );
-  return <PropositionDirectory key={scope} scope={scope} />;
+  return <PropositionDirectory key={scope} scope={scope} view={view} />;
 }
-export function PropositionDirectory({ scope }) {
+export function PropositionDirectory({ scope, view = "list" }) {
   const client = useQueryClient();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { propositionId: id, planId, orchestratorId } = useParams();
   const tenant = useAuthStore((state) => state.tenantId),
     roles = useCurrentRoles();
   // Reached from a Product's "Create Proposition" button (see
-  // ProductDetail.jsx) carrying the APPROVED ProductProcess to source from —
-  // read once on mount so Create opens straight into PropositionForm with
-  // that product already chosen, skipping the search/select UI entirely.
-  const [createSource] = useState(location.state?.createFromSource ?? null);
-  const [view, setView] = useState(createSource ? "create" : "list"),
-    [id, setId] = useState(null),
-    [plan, setPlan] = useState(null),
-    [saleOrchestrator, setSaleOrchestrator] = useState(null),
-    [notice, setNotice] = useState("");
+  // ProductDetail.jsx), which navigates to the list URL carrying the
+  // APPROVED ProductProcess to source from — forwarded to /new below so
+  // Create opens straight into PropositionForm with that product chosen.
+  const createSource = view === "create" ? (location.state?.createFromSource ?? null) : null;
+  const [notice, setNotice] = useState("");
   const [search, setSearch] = useState(""),
     [page, setPage] = useState(0);
   const term = useDebouncedValue(search, 400);
+  // Permissions first: `options` carries this caller's Proposition rights
+  // (canCreate, brands, distribution partners). Data for the current screen
+  // is requested only after it has loaded successfully — never in parallel.
   const options = useQuery({
     queryKey: ["propositions", scope, "options"],
     queryFn: ({ signal }) => propositionOptions(signal),
   });
+  const permissionsReady = options.isSuccess;
   const list = useQuery({
     queryKey: ["propositions", scope, "list", term, page],
     queryFn: ({ signal }) =>
@@ -107,45 +115,60 @@ export function PropositionDirectory({ scope }) {
         signal,
       ),
     placeholderData: keepPreviousData,
-    enabled: view === "list",
+    enabled: permissionsReady && view === "list",
   });
   const detail = useQuery({
     queryKey: ["propositions", scope, "detail", id],
     queryFn: ({ signal }) => getProposition(id, signal),
-    enabled: Boolean(id) && ["detail", "edit", "plan", "sale-orchestrator"].includes(view),
+    enabled: permissionsReady && Boolean(id) && DETAIL_VIEWS.includes(view),
     refetchInterval: view === "detail" ? 30000 : false,
   });
   const reload = () =>
     client.invalidateQueries({ queryKey: ["propositions", scope] });
-  const open = (value) => {
-    setId(value);
-    setView("detail");
-  };
+  const toDetail = (propositionId = id, tab) => navigate(propositionPaths.detail(propositionId, tab));
+  const toList = () => navigate(propositionPaths.list());
   const saved = (result) => {
     client.setQueryData(["propositions", scope, "detail", result.id], result);
     reload();
     setNotice("Proposition saved.");
-    open(result.id);
+    toDetail(result.id);
   };
   const saleOrchestratorSaved = () => {
     client.invalidateQueries({ queryKey: ["propositions", id, "sale-orchestrators", "directory"] });
     setNotice("Sale Orchestrator saved.");
-    setView("detail");
+    toDetail(id, "orchestrator");
   };
+  // Plans come from the already-loaded Proposition (only the Plans visible to
+  // this caller — see PropositionMapper/PropositionAccess.visiblePlan), so a
+  // /plans/{planId} URL resolves without a separate request.
+  const plan = planId ? (detail.data?.plans ?? []).find((p) => p.id === planId) : null;
   const title = {
     list: "Propositions",
     create: "Create Proposition",
     edit: "Edit Proposition",
     detail: "Proposition details",
-    plan: plan ? "Edit Plan" : "Create Plan",
-    "sale-orchestrator": saleOrchestrator ? "Edit Sale Orchestrator" : "Create Sale Orchestrator",
+    plan: planId ? "Edit Plan" : "Create Plan",
+    "sale-orchestrator": orchestratorId ? "Edit Sale Orchestrator" : "Create Sale Orchestrator",
   }[view];
+  // Header Back goes one level up: Plan / Sale Orchestrator / edit → this
+  // Proposition (on the tab they were opened from); detail / create → list.
+  const back = {
+    create: { onBack: toList, label: "Back to propositions" },
+    detail: { onBack: toList, label: "Back to propositions" },
+    edit: { onBack: () => toDetail(), label: "Back to proposition" },
+    plan: { onBack: () => toDetail(), label: "Back to proposition" },
+    "sale-orchestrator": { onBack: () => toDetail(id, "orchestrator"), label: "Back to proposition" },
+  }[view];
+  // Old entry point: the Product page navigates to the list URL with a
+  // createFromSource state — forward it to the dedicated /new URL.
+  if (view === "list" && location.state?.createFromSource)
+    return <Navigate to={propositionPaths.create()} replace state={location.state} />;
   return (
     <section className="prop-page">
       <CorePageHeader
         title={title}
-        onBack={view !== "list" ? () => setView("list") : undefined}
-        backLabel="Back to propositions"
+        onBack={back?.onBack}
+        backLabel={back?.label}
         description="Commercial proposals, partner Plans and market pricing for approved product versions."
       />
       {notice && (
@@ -169,11 +192,11 @@ export function PropositionDirectory({ scope }) {
         <PropositionForm
           options={{ ...options.data, scope }}
           presetSource={createSource}
-          onCancel={() => setView("list")}
+          onCancel={toList}
           onSaved={saved}
         />
       )}
-      {["detail", "edit", "plan", "sale-orchestrator"].includes(view) && (
+      {permissionsReady && DETAIL_VIEWS.includes(view) && (
         <>
           {detail.isPending && <CoreLoadingState title="Loading Proposition" />}
           {detail.isError && (
@@ -187,16 +210,15 @@ export function PropositionDirectory({ scope }) {
                 <PropositionDetail
                   proposition={detail.data}
                   options={options.data}
-                  onBack={() => setView("list")}
-                  onEdit={() => setView("edit")}
-                  onPlan={(value) => {
-                    setPlan(value);
-                    setView("plan");
-                  }}
-                  onSaleOrchestrator={(value) => {
-                    setSaleOrchestrator(value);
-                    setView("sale-orchestrator");
-                  }}
+                  activeTab={tabFromSearch(location.search)}
+                  // Tab switches replace the history entry — Back leaves the
+                  // Proposition instead of stepping through every tab.
+                  onTabChange={(tab) => navigate(propositionPaths.detail(id, tab), { replace: true })}
+                  onEdit={() => navigate(propositionPaths.edit(id))}
+                  onPlan={(value) => navigate(propositionPaths.plan(id, value?.id))}
+                  onSaleOrchestrator={(value) =>
+                    navigate(propositionPaths.saleOrchestrator(id, value?.id))
+                  }
                 />
               )}
               {view === "edit" && options.data && (
@@ -204,8 +226,19 @@ export function PropositionDirectory({ scope }) {
                   key={`${id}:${detail.data.revision}`}
                   proposition={detail.data}
                   options={{ ...options.data, scope }}
-                  onCancel={() => setView("detail")}
+                  onCancel={() => toDetail()}
                   onSaved={saved}
+                />
+              )}
+              {view === "plan" && planId && !plan && (
+                <CoreNotFoundState
+                  title="Plan not found"
+                  description="This Plan was removed or is not in your data scope."
+                  actions={
+                    <CoreButton variant="secondary" onClick={() => toDetail()}>
+                      Back to proposition
+                    </CoreButton>
+                  }
                 />
               )}
               {view === "plan" && plan && (
@@ -220,25 +253,25 @@ export function PropositionDirectory({ scope }) {
                       ...detail.data.eligibleTenants,
                     ].find((t) => t.id === tenantId)?.name ?? tenantId
                   }
-                  onCancel={() => setView("detail")}
+                  onCancel={() => toDetail()}
                   onSaved={saved}
                   onReload={reload}
                 />
               )}
-              {view === "plan" && !plan && (
+              {view === "plan" && !planId && (
                 <PlanForm
                   key={`${id}:new:${detail.data.revision}`}
                   proposition={detail.data}
                   plan={null}
-                  onCancel={() => setView("detail")}
+                  onCancel={() => toDetail()}
                   onSaved={saved}
                 />
               )}
               {view === "sale-orchestrator" && (
                 <SaleOrchestratorEditor
-                  key={`${id}:${saleOrchestrator?.id ?? "new"}`}
+                  key={`${id}:${orchestratorId ?? "new"}`}
                   proposition={detail.data}
-                  id={saleOrchestrator?.id ?? null}
+                  id={orchestratorId ?? null}
                   // A Tenant declared as a distribution partner on the
                   // Proposition itself (definition.distributionPartnerIds)
                   // gets every Plan in it, not only ones that separately
@@ -250,7 +283,7 @@ export function PropositionDirectory({ scope }) {
                       ? detail.data.plans
                       : detail.data.plans.filter((p) => (p.tenantIds ?? []).includes(tenant))
                   }
-                  onCancel={() => setView("detail")}
+                  onCancel={() => toDetail(id, "orchestrator")}
                   onSaved={saleOrchestratorSaved}
                 />
               )}
@@ -258,7 +291,7 @@ export function PropositionDirectory({ scope }) {
           )}
         </>
       )}
-      {view === "list" && (
+      {permissionsReady && view === "list" && (
         <CoreCard>
           <div className="prop-toolbar">
             <input
@@ -284,7 +317,7 @@ export function PropositionDirectory({ scope }) {
             pageSize={list.data?.size ?? PAGE_SIZE}
             totalElements={list.data?.totalElements ?? 0}
             onPageChange={setPage}
-            onRowClick={(row) => open(row.id)}
+            onRowClick={(row) => toDetail(row.id)}
             emptyTitle="No propositions found"
             emptyDescription="Try a different search term."
           />

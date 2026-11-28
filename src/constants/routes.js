@@ -16,6 +16,7 @@ export const ROUTES = {
   PRODUCTS: "/product-library/products",
   PRODUCT_NEW: "/product-library/products/new",
   PRODUCT_DETAIL: "/product-library/products/:id",
+  // Child URLs (/{id}, Plans, Sale Orchestrators) are built by features/proposition/lib/propositionRoutes.js.
   PROPOSITIONS: "/product-library/propositions",
 
   USERS: "/users",

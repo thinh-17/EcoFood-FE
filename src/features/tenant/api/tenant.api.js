@@ -61,9 +61,12 @@ export async function getRootTenant() {
 // omitted entirely means "no search yet" (the first call, before the user
 // has typed anything); once they've typed, pass whatever string they typed,
 // including "" if they clear the box, per TenantService.listTenantDirectory.
-export async function getTenantDirectory({ page = 0, size = 20, sort, search } = {}, signal) {
+// `includeRegional` (Tenant tab only) also returns an Enterprise's Regional
+// Enterprises and their sub-tenants; omitted → the original scope, which the
+// Proposition partner picker and user role assignment rely on.
+export async function getTenantDirectory({ page = 0, size = 20, sort, search, includeRegional } = {}, signal) {
   const response = await apiClient.get("/api/v1/tenants/directory", {
-    params: { page, size, sort, search },
+    params: { page, size, sort, search, ...(includeRegional ? { includeRegional: true } : {}) },
     signal,
   });
   return unwrapData(response);

@@ -8,6 +8,8 @@ import {
   planFormState,
   planPayload,
   partnerCountries,
+  PLAN_COST_KEYS,
+  missingPlanCosts,
 } from "./proposition.js";
 
 test("country ordering is explicit, unique and independent of input order", () => {
@@ -78,7 +80,7 @@ const planSourceProcess = () => ({
     ],
   },
 });
-test("a brand new Plan clones the source product's definition, binds its version and starts at zero cost", () => {
+test("a brand new Plan clones the source product's definition, binds its version and starts with empty costs", () => {
   const p = planProposition();
   const form = planFormState(null, p, planSourceProcess());
   assert.equal(form.productVersion, 3);
@@ -86,7 +88,41 @@ test("a brand new Plan clones the source product's definition, binds its version
   assert.equal(form.category, "Meals");
   assert.equal(form.imageUrl, "https://example.com/chicken.png");
   assert.equal(form.sellingPrice, "");
-  assert.equal("ingredientCost" in form.costing, false);
+  for (const key of PLAN_COST_KEYS) assert.equal(form.costing[key], "", key);
+  assert.deepEqual(missingPlanCosts(form.costing), ["ingredientCost", "packagingCost", "laborCost", "operationCost", "marketingFee"]);
+});
+const zeroCosts = { ingredientCost: 0, packagingCost: 0, laborCost: 0, operationCost: 0, marketingFee: 0 };
+test("saving a Plan requires all five costs, accepts real zeros and lists the missing fields", () => {
+  const p = planProposition();
+  const form = { ...planFormState(null, p, planSourceProcess()), name: "South", regionIds: ["SOUTH"], tenantIds: ["partner"] };
+  assert.throws(() => planPayload(form, p), (error) => {
+    assert.deepEqual(error.costFields, PLAN_COST_KEYS);
+    assert.match(error.message, /Ingredient cost, Packaging cost, Labor cost, Operation cost, Marketing fee/);
+    return true;
+  });
+  assert.throws(
+    () => planPayload({ ...form, costing: { ...form.costing, ...zeroCosts, laborCost: "" } }, p),
+    (error) => error.costFields.length === 1 && error.costFields[0] === "laborCost",
+  );
+  assert.throws(() => planPayload({ ...form, costing: { ...form.costing, ...zeroCosts, packagingCost: "-1" } }, p), /non-negative/);
+  const payload = planPayload({ ...form, costing: { ...form.costing, ...zeroCosts } }, p);
+  assert.deepEqual(
+    PLAN_COST_KEYS.map((key) => payload.costing[key]),
+    [0, 0, 0, 0, 0],
+  );
+});
+test("a legacy Plan without a stored ingredient cost shows 0 and can be re-saved", () => {
+  const p = planProposition();
+  const plan = {
+    productVersion: 5, name: "Legacy", description: "", category: "", imageUrl: "", ingredients: [],
+    recipe: { enabled: false, steps: [] },
+    costing: { ingredientCost: null, packagingCost: 1, laborCost: 2, operationCost: 3, marketingFee: 4, targetMargin: 0, tax: 0, currency: "VND" },
+    regionIds: ["SOUTH"], tenantIds: ["partner"],
+  };
+  const form = planFormState(plan, p);
+  assert.equal(form.costing.ingredientCost, 0);
+  assert.deepEqual(missingPlanCosts(form.costing), []);
+  assert.equal(planPayload(form, p).costing.ingredientCost, 0);
 });
 test("Draft Plan allows empty pricing; a selling price auto-derives its cost basis", () => {
   const p = planProposition();
@@ -95,13 +131,14 @@ test("Draft Plan allows empty pricing; a selling price auto-derives its cost bas
     name: "South",
     regionIds: ["SOUTH"],
     tenantIds: ["partner"],
+    costing: { ...planFormState(null, p, planSourceProcess()).costing, ...zeroCosts },
   };
   assert.equal(planPayload(form, p).pricing, null);
   const costing = { ...form.costing, ingredientCost: 50000, packagingCost: 5000, laborCost: 10000, operationCost: 3000, marketingFee: 2000, targetMargin: 30, tax: 10 };
   const payload = planPayload({ ...form, costing, currency: "THB", sellingPrice: "120000" }, p);
   assert.equal(payload.pricing.sellingPrice, 120000);
-  assert.equal(payload.pricing.costPrice, 20000);
-  assert.equal("ingredientCost" in payload.costing, false);
+  assert.equal(payload.pricing.costPrice, 70000);
+  assert.equal(payload.costing.ingredientCost, 50000);
   assert.equal(payload.pricing.currency, "THB");
   assert.equal(payload.costing.currency, "THB");
   assert.equal(payload.expectedRevision, 7);

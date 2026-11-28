@@ -16,7 +16,9 @@ export const canViewProducts = (roles) =>
   );
 export const productDate = (value) => value ? new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
 export const productMoney = (value, currency = "VND") => `${Number(value).toLocaleString("en-US")} ${currency}`;
-export const COST_FIELDS = { packagingCost: "Packaging cost", laborCost: "Labor cost", operationCost: "Operation cost", marketingFee: "Marketing fee" };
+// Only the Plan costing step (ProductCostingPanel via PlanForm) uses these — a Product has no costing of its own.
+// Ingredient cost is entered manually per Plan; the backend's Plan write path stores and totals it.
+export const COST_FIELDS = { ingredientCost: "Ingredient cost", packagingCost: "Packaging cost", laborCost: "Labor cost", operationCost: "Operation cost", marketingFee: "Marketing fee" };
 export function calculateProductCost(costing) {
   const totalCost = Object.keys(COST_FIELDS).reduce((total, key) => total + Number(costing[key] || 0), 0);
   const margin = Number(costing.targetMargin || 0);

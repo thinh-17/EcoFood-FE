@@ -29,9 +29,15 @@ export function PropositionDetail({
   onEdit,
   onPlan,
   onSaleOrchestrator,
+  // Controlled by the page's ?tab= URL (see propositionRoutes.js); falls back
+  // to local state when rendered without one.
+  activeTab: controlledTab,
+  onTabChange,
 }) {
   const [overviewTab, setOverviewTab] = useState("overview");
-  const [activeTab, setActiveTab] = useState("plans");
+  const [localTab, setLocalTab] = useState("plans");
+  const activeTab = controlledTab ?? localTab;
+  const setActiveTab = onTabChange ?? setLocalTab;
   const tenantName = (id) =>
     [
       ...(options?.brands ?? []),
