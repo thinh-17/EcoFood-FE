@@ -11,7 +11,7 @@ import { HomePage } from "../../features/home/pages/HomePage/HomePage.jsx";
 import { useAuthStore } from "../../features/auth/store/authStore.js";
 import { decodeJwt } from "../../features/auth/lib/jwt.js";
 
-import { ModulePage } from "../../features/modules/pages/ModulePage/ModulePage.jsx";
+import { AccountPage } from "../../features/account/pages/AccountPage/AccountPage.jsx";
 import { ProductListPage } from "../../features/product/pages/ProductListPage.jsx";
 import { ProductCreatePage } from "../../features/product/pages/ProductCreatePage.jsx";
 import { ProductDetailPage } from "../../features/product/pages/ProductDetailPage.jsx";
@@ -86,15 +86,7 @@ export function AppRouter() {
         <Route path="complaints" element={<ComplaintManagementPage />} />
         <Route path="catalog-publications" element={<CatalogPage />} />
 
-        <Route
-          path="account"
-          element={
-            <ModulePage
-              title="Account"
-              description="Manage account information and user profile."
-            />
-          }
-        />
+        <Route path="account" element={<AccountPage />} />
 
         <Route element={<RequirePartnerAccess />}>
           <Route

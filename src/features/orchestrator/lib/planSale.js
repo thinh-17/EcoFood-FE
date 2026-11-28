@@ -98,8 +98,8 @@ export function requestForSave(row, value) {
 }
 
 const EXAMPLE_VALUES = { STRING: "example", NUMBER: 1, BOOLEAN: true, DATE: "2026-01-01T00:00:00Z" };
-const exampleFor = (f) => EXAMPLE_VALUES[f.dataType] ?? "example";
-const keyedExamples = (fields) =>
+export const exampleFor = (f) => EXAMPLE_VALUES[f.dataType] ?? "example";
+export const keyedExamples = (fields) =>
   Object.fromEntries((fields ?? []).filter((f) => f.key?.trim()).map((f) => [f.key, exampleFor(f)]));
 
 // Sample submit-transaction payload reflecting exactly what's currently

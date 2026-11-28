@@ -11,6 +11,7 @@ import { useAuthStore } from "../../auth/store/authStore.js";
 import { useCurrentRoles } from "../../auth/hooks/useCurrentRoles.js";
 import { canViewSaleOrchestratorDirectory } from "../../orchestrator/lib/planSale.js";
 import { useSaleOrchestratorDirectory } from "../../orchestrator/hooks/useSaleOrchestratorDirectory.js";
+import { UploadTransactionPanel } from "./UploadTransactionPanel.jsx";
 
 const OVERVIEW_TABS = [
   { id: "overview", label: "Overview" },
@@ -20,6 +21,7 @@ const OVERVIEW_TABS = [
 const TABS = [
   { id: "plans", label: "Plans & Market Configuration" },
   { id: "orchestrator", label: "Sale Orchestrator" },
+  { id: "upload-transaction", label: "Upload Transaction" },
 ];
 export function PropositionDetail({
   proposition: p,
@@ -56,6 +58,7 @@ export function PropositionDetail({
       {activeTab === "orchestrator" && (
         <SaleOrchestratorPanel proposition={p} onSaleOrchestrator={onSaleOrchestrator} />
       )}
+      {activeTab === "upload-transaction" && <UploadTransactionPanel proposition={p} />}
     </>
   );
 }
