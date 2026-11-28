@@ -194,19 +194,18 @@ export function CustomerPortalPage() {
   });
   const invoiceColumns = [
     {
-      accessorKey: "invoiceNumber",
+      accessorKey: "id",
       header: "Invoice",
       cell: ({ row }) => (
-        <Link to={customerInvoicePath(row.original.id, profile.data.tenantId)}>{row.original.invoiceNumber}</Link>
+        <Link to={customerInvoicePath(row.original.id, profile.data.tenantId)}>{row.original.id}</Link>
       ),
     },
-    { accessorKey: "transactionTime", header: "Date", cell: ({ getValue }) => date(getValue()) },
+    { accessorKey: "receivedAt", header: "Received date", cell: ({ getValue }) => date(getValue()) },
     {
       accessorKey: "totalAmount",
       header: "Total",
       cell: ({ row }) => customerMoney(row.original.totalAmount, row.original.currency),
     },
-    { accessorKey: "paymentStatus", header: "Status", cell: ({ getValue }) => getValue() || "Unknown" },
   ];
 
   return (
@@ -289,10 +288,9 @@ export function InvoiceContent({ invoice }) {
   ];
   return (
     <CoreCard className="customer-panel">
-      <h2>Invoice {invoice.invoiceNumber}</h2>
+      <h2>Invoice {invoice.id}</h2>
       {(invoice.tenantId || invoice.tenantName) && <p>Submitted by tenant: {invoice.tenantName || invoice.tenantId}</p>}
-      <p>Date: {date(invoice.transactionTime)}</p>
-      {invoice.paymentStatus && <p>Status: {invoice.paymentStatus}</p>}
+      <p>Received date: {date(invoice.receivedAt)}</p>
       <CoreTable columns={itemColumns} data={invoice.items || []} emptyTitle="No items on this invoice." />
       <p className="customer-total">Total: {customerMoney(invoice.totalAmount, invoice.currency)}</p>
     </CoreCard>

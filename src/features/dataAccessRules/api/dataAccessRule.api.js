@@ -36,3 +36,7 @@ export async function updateDataAccessRule(id, payload) {
   const response = await apiClient.put(`/api/v1/data-access-rules/${id}`, payload);
   return unwrapData(response);
 }
+
+export async function deleteDataAccessRule(id) {
+  await apiClient.delete(`/api/v1/data-access-rules/${encodeURIComponent(id)}`);
+}

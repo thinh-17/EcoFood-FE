@@ -1,20 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { canReadBusinessDashboard, dashboardParams, formatDashboardValue, expectedLabel, periodLabel, dashboardChartValue } from "./businessDashboard.js";
+import { canReadBusinessDashboard, dashboardDefaults, dashboardParams, formatDashboardValue, expectedLabel, periodLabel, dashboardChartValue } from "./businessDashboard.js";
 import { filterNavItems } from "../../../app/navigation/navAccess.js";
 
-test("business dashboard requires explicit permission before API queries", () => {
-  assert.equal(canReadBusinessDashboard({ roles: ["ECO_ADMIN"] }), false);
-  assert.equal(canReadBusinessDashboard({ permissions: ["DASHBOARD_READ"] }), true);
+test("business dashboard uses roles for navigation independently of data rules", () => {
+  assert.equal(canReadBusinessDashboard({ roles: ["ECO_ADMIN"] }), true);
+  assert.equal(canReadBusinessDashboard({ permissions: ["DASHBOARD_READ"] }), false);
   const items = [{ id: "home" }, { id: "manager" }];
-  assert.equal(filterNavItems(items, ["TENANT_ADMIN"]).length, 1);
-  assert.equal(filterNavItems(items, [], ["DASHBOARD_READ"]).length, 2);
+  assert.equal(filterNavItems(items, ["TENANT_ADMIN"]).length, 2);
+  assert.equal(filterNavItems(items, [], ["DASHBOARD_READ"]).length, 1);
 });
 test("null is missing, real zero remains zero and profit can be negative", () => {
   assert.equal(formatDashboardValue(null, "USD"), "Insufficient data");
   assert.notEqual(formatDashboardValue("0", "USD"), "Insufficient data");
   assert.match(formatDashboardValue("-20.50", "USD"), /-/);
-  assert.match(formatDashboardValue("10", "USD"), /US\$/);
+  assert.equal(formatDashboardValue("10", "USD"), "10,00\u00a0US$");
   assert.match(formatDashboardValue("10", "VND"), /₫/);
   assert.equal(expectedLabel({ expected: null, expectedStatus: "OVERLAPPING_PERIODS" }), "Overlapping expected periods");
 });
@@ -28,4 +28,19 @@ test("period and currency parameters retain selected scope without Plan inferenc
 test("charts leave missing/non-finite values absent instead of creating zero or Infinity", () => {
   assert.equal(dashboardChartValue(null), null); assert.equal(dashboardChartValue("0"), 0);
   assert.equal(dashboardChartValue("1E+600"), null); assert.equal(dashboardChartValue("-20.5"), -20.5);
+});
+
+test("tenant checkbox defaults select accessible children and omit unavailable tenants", () => {
+  const defaults = dashboardDefaults({ currentTenantId: "parent", tenants: [
+    { id: "parent", accessible: true }, { id: "b", accessible: true }, { id: "c", accessible: true }, { id: "d", accessible: false },
+  ], currencies: ["USD"] });
+  assert.deepEqual(defaults.tenantIds, ["b", "c"]);
+  const params = dashboardParams({ ...defaults, tenantIds: ["c", "b", "b"], year: 2026, quarter: 4 });
+  assert.equal(params.tenantIds, "b,c");
+  assert.equal(params.tenantId, undefined);
+  assert.equal(params.propositionTotal, undefined);
+});
+test("a standalone tenant retains its own authorized selection", () => {
+  assert.deepEqual(dashboardDefaults({ currentTenantId: "a", tenants: [{ id: "a", accessible: true }], currencies: [] }).tenantIds, ["a"]);
+  assert.deepEqual(dashboardDefaults({ currentTenantId: "a", tenants: [{ id: "a", accessible: false }], currencies: [] }).tenantIds, []);
 });

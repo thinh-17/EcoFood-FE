@@ -121,6 +121,9 @@ export function AppRouter() {
           path="manager"
           element={<Suspense fallback={<LoadingPage title="Loading Manager" />}><ManagerPage /></Suspense>}
         />
+        <Route path="manager/business" element={<Navigate to="/manager" replace />} />
+        <Route path="manager/invoices" element={<Navigate to="/manager?tab=invoices" replace />} />
+        <Route path="manager/customers" element={<Navigate to="/manager?tab=customers" replace />} />
 
         <Route
           path="product-library"

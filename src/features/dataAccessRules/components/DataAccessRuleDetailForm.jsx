@@ -1,8 +1,7 @@
-import { FeedbackMessage } from "../../../components/FeedbackMessage.jsx";
+import { ENTITY_TYPE_OPTIONS, ruleEntityTypes } from "../lib/entityTypes.js";
 import { useState } from "react";
 
-import { CoreMultiSelect, CoreSelect, CoreTabs } from "@thinh-17/fe-core";
-import { CoreFormActions } from "@thinh-17/fe-core";
+import { CoreFormActions, CoreMultiSelect, CoreTabs } from "@thinh-17/fe-core";
 
 import { useAllUsersForPicker } from "../hooks/useAllUsersForPicker.js";
 import { useUpdateDataAccessRule } from "../hooks/useUpdateDataAccessRule.js";
@@ -12,21 +11,12 @@ const TABS = [
   { id: "users", label: "Users" },
 ];
 
-// Same hardcoded list as DataAccessRuleDetailPage's create form — no
-// backend entity-type catalog exists yet.
-const ENTITY_TYPE_OPTIONS = [
-  { value: "Dashboard_bills", label: "Dashboard_bills" },
-  { value: "Dashboard_Customer", label: "Dashboard_Customer" },
-  { value: "Product", label: "Product" },
-];
 
 function validate(form) {
   const errors = {};
   if (!form.ruleName.trim()) errors.ruleName = "Rule Name is required.";
   if (!form.description.trim()) errors.description = "Description is required.";
-  if (form.accessLevel === "LIMITED_ACCESS" && form.limitedEntityIds.length === 0) {
-    errors.limitedEntityIds = "Select at least one entity the users can access.";
-  }
+  if (!form.accessEntityTypes.length) errors.accessEntityTypes = "Select at least one dashboard.";
   return errors;
 }
 
@@ -44,14 +34,12 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
   const [form, setForm] = useState({
     ruleName: rule.ruleName ?? "",
     description: rule.description ?? "",
-    accessEntityType: rule.accessEntityType ?? "",
-    accessLevel: rule.accessLevel ?? "LIMITED_ACCESS",
-    limitedEntityIds: rule.limitedEntityIds ?? [],
+    accessEntityTypes: ruleEntityTypes(rule),
   });
   const [userIds, setUserIds] = useState(rule.userIds ?? []);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  const { data: users, isLoading: isUsersLoading } = useAllUsersForPicker();
+  const { data: users, isLoading: isUsersLoading } = useAllUsersForPicker(rule.businessEntityId);
   const updateRule = useUpdateDataAccessRule();
 
   const userOptions = (users ?? []).map((user) => ({
@@ -59,12 +47,18 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
     label: `${user.firstName} ${user.lastName} (${user.email})`,
   }));
 
-  // Same placeholder-until-a-real-entity-record-endpoint-exists gap as the
-  // create form — see DataAccessRuleDetailPage.jsx's own comment on this.
-  const entityOptionsByType = [];
 
   function updateField(field) {
-    return (value) => setForm((prev) => ({ ...prev, [field]: value }));
+    return (value) => {
+
+      setForm((prev) => ({ ...prev, [field]: value }));
+    };
+  }
+
+  function handleNext() {
+    const errors = rule.editable ? validate(form) : {};
+    setFieldErrors(errors);
+    if (Object.keys(errors).length === 0) setActiveTab("users");
   }
 
   function handleSave() {
@@ -78,9 +72,9 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
     const payload = {
       ruleName: form.ruleName.trim(),
       description: form.description.trim(),
-      accessEntityType: form.accessEntityType || undefined,
-      accessLevel: form.accessLevel,
-      limitedEntityIds: form.accessLevel === "LIMITED_ACCESS" ? form.limitedEntityIds : [],
+      accessEntityTypes: form.accessEntityTypes,
+      accessLevel: "FULL_ACCESS",
+      limitedEntityIds: [],
       userIds,
     };
 
@@ -88,13 +82,13 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
   }
 
   return (
-    <div className="dar-detail-form">
+    <div>
       <CoreTabs tabs={TABS} activeId={activeTab} onChange={setActiveTab} />
 
       {!rule.editable && (
-        <FeedbackMessage tone="warning">
+        <p className="dar-error" role="alert" style={{ marginTop: 12 }}>
           Only the creator of this rule can edit it — fields are shown read-only.
-        </FeedbackMessage>
+        </p>
       )}
 
       {activeTab === "configuration" && (
@@ -128,13 +122,14 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
 
           <label className="fe-field">
             Entity Type
-            <CoreSelect
-              value={form.accessEntityType}
-              onChange={updateField("accessEntityType")}
+            <CoreMultiSelect
+                selected={form.accessEntityTypes}
+                onChange={updateField("accessEntityTypes")}
               options={ENTITY_TYPE_OPTIONS}
-              placeholder="Select an entity type..."
+              placeholder="Select dashboard types..."
               disabled={!rule.editable}
             />
+              {fieldErrors.accessEntityTypes && <span className="dar-error">{fieldErrors.accessEntityTypes}</span>}
           </label>
 
           <label className="fe-field">
@@ -144,9 +139,8 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
                 <input
                   type="radio"
                   name="accessLevel"
-                  checked={form.accessLevel === "LIMITED_ACCESS"}
-                  onChange={() => updateField("accessLevel")("LIMITED_ACCESS")}
-                  disabled={!rule.editable}
+                  checked={false}
+                  disabled
                 />
                 Limited Access
               </label>
@@ -154,31 +148,14 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
                 <input
                   type="radio"
                   name="accessLevel"
-                  checked={form.accessLevel === "FULL_ACCESS"}
-                  onChange={() => updateField("accessLevel")("FULL_ACCESS")}
-                  disabled={!rule.editable}
+                  checked
+                  disabled
                 />
                 Full Access
               </label>
             </div>
           </label>
 
-          {form.accessLevel === "LIMITED_ACCESS" && (
-            <label className="fe-field">
-              Entities
-              <CoreMultiSelect
-                selected={form.limitedEntityIds}
-                onChange={updateField("limitedEntityIds")}
-                options={entityOptionsByType}
-                placeholder="Select entities..."
-                searchPlaceholder="Search entities..."
-                disabled={!rule.editable}
-              />
-              {fieldErrors.limitedEntityIds && (
-                <span className="dar-error">{fieldErrors.limitedEntityIds}</span>
-              )}
-            </label>
-          )}
         </div>
       )}
 
@@ -199,18 +176,18 @@ export function DataAccessRuleDetailForm({ rule, onCancel, onSaved }) {
       )}
 
       {updateRule.isError && (
-        <FeedbackMessage error={updateRule.error}>
+        <p className="dar-error" role="alert">
           {updateRule.error?.response?.data?.message || "Failed to save the data access rule."}
-        </FeedbackMessage>
+        </p>
       )}
 
       <div className="fe-modal__footer dar-detail-form__footer">
         <CoreFormActions
           onCancel={onCancel}
-          onConfirm={handleSave}
-          confirmLabel="Save"
-          confirmDisabled={!rule.editable}
-          confirmLoading={updateRule.isPending}
+          onConfirm={activeTab === "configuration" ? handleNext : handleSave}
+          confirmLabel={activeTab === "configuration" ? "Next" : "Save"}
+          confirmDisabled={activeTab === "users" && !rule.editable}
+          confirmLoading={activeTab === "users" && updateRule.isPending}
         />
       </div>
     </div>

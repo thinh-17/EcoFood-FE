@@ -9,6 +9,9 @@ export function useUpdateDataAccessRule() {
     mutationFn: ({ id, payload }) => updateDataAccessRule(id, payload),
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["data-access-rules", "directory"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-access"] });
+      queryClient.invalidateQueries({ queryKey: ["business-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["invoice-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["data-access-rules", "detail", id] });
     },
   });

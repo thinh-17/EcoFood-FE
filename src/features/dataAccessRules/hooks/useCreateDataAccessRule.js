@@ -9,6 +9,9 @@ export function useCreateDataAccessRule() {
     mutationFn: (payload) => createDataAccessRule(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["data-access-rules", "directory"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-access"] });
+      queryClient.invalidateQueries({ queryKey: ["business-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["invoice-dashboard"] });
     },
   });
 }

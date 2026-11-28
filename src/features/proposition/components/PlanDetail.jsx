@@ -13,6 +13,10 @@ import { errorMessage, showDate } from "../lib/proposition.js";
 import { PlanForm } from "./PlanForm.jsx";
 import { PlanStatus } from "./PlanStatus.jsx";
 
+// Hidden: Plans no longer have their own dates, so an approved new version would replace
+// the current one immediately and break Sale Orchestrators still pointing at the old planId.
+const PLAN_VERSIONING_ENABLED = false;
+
 const MESSAGES = {
   removePlan: "Remove this Draft Plan?",
   versionPlan:
@@ -94,7 +98,7 @@ export function PlanDetail({ proposition: p, plan, tenantName, onCancel, onSaved
           </CoreButton>
         </>
       )}
-      {plan.canCreateVersion && (
+      {PLAN_VERSIONING_ENABLED && plan.canCreateVersion && (
         <CoreButton variant="secondary" disabled={mutation.isPending} onClick={() => confirm("versionPlan")}>
           Create New Version
         </CoreButton>
@@ -118,12 +122,6 @@ export function PlanDetail({ proposition: p, plan, tenantName, onCancel, onSaved
         <div>
           <dt>Distribution Sub-Tenants</dt>
           <dd>{plan.tenantIds.map(tenantName).join(", ")}</dd>
-        </div>
-        <div>
-          <dt>Effective period</dt>
-          <dd>
-            {showDate(plan.startDate)} – {showDate(plan.endDate)}
-          </dd>
         </div>
         <div>
           <dt>Operation</dt>

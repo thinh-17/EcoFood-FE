@@ -3,17 +3,17 @@ import assert from "node:assert/strict";
 import { managerTabs } from "./manager.lib.js";
 import { filterNavItems } from "../../../app/navigation/navAccess.js";
 
-test("Manager exposes Dashboard and Invoice independently by permission", () => {
-  assert.deepEqual(managerTabs({ permissions: ["DASHBOARD_READ", "TRANSACTION_READ"] }).map((tab) => tab.id), ["dashboard", "invoices"]);
-  assert.deepEqual(managerTabs({ permissions: ["TRANSACTION_READ"] }).map((tab) => tab.id), ["invoices"]);
-  assert.deepEqual(managerTabs({ permissions: ["DASHBOARD_READ"] }).map((tab) => tab.id), ["dashboard"]);
+test("Manager keeps main tab UI while roles control visibility independently of DAR", () => {
+  assert.deepEqual(managerTabs({ roles: ["TENANT_ADMIN"] }).map((tab) => tab.id), ["dashboard", "invoices", "customers"]);
+  assert.deepEqual(managerTabs({ roles: ["REGIONAL_DASHBOARD_MANAGER"] }).map((tab) => tab.id), ["dashboard", "invoices", "customers"]);
+  assert.deepEqual(managerTabs({ permissions: ["DASHBOARD_READ", "TRANSACTION_READ"] }), []);
   assert.deepEqual(managerTabs({ permissions: ["TRANSACTION_SUBMIT"] }), []);
   assert.deepEqual(managerTabs({ permissions: "TRANSACTION_READ" }), []);
 });
 
-test("Invoice readers can reach Manager without receiving Dashboard access", () => {
+test("Manager navigation preserves role checks after restoring upstream UI", () => {
   const navigation = [{ id: "manager" }, { id: "business-dashboard" }];
-  assert.deepEqual(filterNavItems(navigation, [], ["TRANSACTION_READ"]), [{ id: "manager" }]);
+  assert.deepEqual(filterNavItems(navigation, [], ["TRANSACTION_READ"]), []);
   assert.deepEqual(filterNavItems(navigation, [], []), []);
-  assert.deepEqual(filterNavItems(navigation, [], ["DASHBOARD_READ"]), navigation);
+  assert.deepEqual(filterNavItems(navigation, ["TENANT_ADMIN"], []), navigation);
 });

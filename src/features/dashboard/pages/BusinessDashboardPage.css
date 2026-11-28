@@ -1,4 +1,7 @@
 .business-dashboard { color: var(--fnb-ink); min-width: 0; }
+.business-actions { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+.business-dashboard .dashboard-tenant-picker { width: 100%; }
+.business-dashboard .dashboard-tenant-picker__panel label { flex-direction: row; }
 .business-dashboard select, .business-refresh { min-height: 40px; border: 1px solid var(--fnb-line); border-radius: 6px; padding: 8px 12px; background: white; color: inherit; font: inherit; }
 .business-refresh { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 20px; }.business-refresh:hover { background: var(--fnb-accent-soft); color: var(--fnb-accent); }
 .business-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 20px; margin-bottom: 24px; background: white; border: 1px solid var(--fnb-line); border-radius: 8px; }.business-dashboard label { display: flex; flex-direction: column; gap: 8px; font-size: 13px; min-width: 0; }.business-dashboard select { min-width: 0; max-width: 100%; width: 100%; }

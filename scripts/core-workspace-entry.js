@@ -3,4 +3,4 @@
 // Override only the shared UI components maintained in the adjacent core source.
 export * from "../node_modules/@thinh-17/fe-core/dist/index.js";
 export { CoreButton, CoreFormActions, CoreTable, CoreBackButton, CorePagination, CoreStatusBadge, CoreTimeline, CoreLoadingState, CoreNotFoundState, CorePopover, CoreFeedbackDialog, CoreFeedbackProvider, CoreFeedbackMessage }
-  from "../../corefe/src/index.js";
+  from "../../EcoFood-FEcore/src/index.js";

@@ -1,4 +1,7 @@
 .eco-notification-anchor { position: relative; flex-shrink: 0; }
+.eco-notification-bell { position: relative; overflow: visible; }
+.eco-notification-bell.eco-notification-bell--unread { color: var(--fnb-accent, #075acd); background: var(--fnb-accent-soft, #e8f1ff); box-shadow: 0 0 0 2px var(--fnb-accent-soft, #e8f1ff); }
+.eco-notification-badge { position: absolute; top: -7px; right: -9px; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 4px; box-sizing: border-box; border: 2px solid var(--fnb-canvas, #f6f8fb); border-radius: 999px; background: var(--fnb-error, #dc2626); color: white; font-size: 10px; font-weight: 700; line-height: 1; pointer-events: none; }
 .eco-notification-bell, .eco-notification-popup__header button { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 6px; background: transparent; color: var(--fnb-muted); }
 .eco-notification-bell:hover, .eco-notification-bell[aria-expanded="true"], .eco-notification-popup__header button:hover { background: var(--fnb-accent-soft); color: var(--fnb-accent); }
 .eco-notification-popup { position: fixed; top: 20px; left: calc(var(--eco-sidebar-width) + 12px); width: min(390px, calc(100vw - var(--eco-sidebar-width) - 28px)); max-height: min(510px, calc(100dvh - 40px)); display: flex; flex-direction: column; background: white; border: 1px solid var(--fnb-line); border-radius: 12px; box-shadow: 0 12px 36px #17263b24; color: var(--fnb-ink); z-index: 100; text-align: left; }

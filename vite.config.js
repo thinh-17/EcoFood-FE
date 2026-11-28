@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs';
 
 // Use shared source while both repositories are present. Standalone frontend
 // builds consume the published package and require its new public UI exports.
-const workspaceCore = existsSync(fileURLToPath(new URL('../corefe/src/index.js', import.meta.url)));
+const workspaceCore = existsSync(fileURLToPath(new URL('../EcoFood-FEcore/src/index.js', import.meta.url)));
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],

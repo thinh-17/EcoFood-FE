@@ -1,4 +1,6 @@
 import { FeedbackMessage } from "../../../components/FeedbackMessage.jsx";
+import { DashboardTenantPicker } from "../components/DashboardTenantPicker.jsx";
+import { DashboardAccessDenied, DashboardNoAccess } from "../components/DashboardAccessDenied.jsx";
 import { CoreLoadingState } from "@thinh-17/fe-core";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,39 +26,32 @@ function DashboardWorkspace({ scope }) {
   const [draft, setDraft] = useState(null), [kpi, setKpi] = useState("totalSalesVolume");
   const chosen = draft || (options.data ? dashboardDefaults(options.data) : null);
   const params = chosen ? dashboardParams(chosen) : null;
-  const ready = !!options.data && !!chosen?.currency;
+  const ready = !!options.data && !!chosen?.currency && !!chosen?.tenantIds?.length;
   const summary = useQuery({ queryKey: [...root, "summary", params], queryFn: () => api.summary(params), enabled: ready, retry: false });
   const trends = useQuery({ queryKey: [...root, "trends", params], queryFn: () => api.trends(params), enabled: ready, retry: false });
   const comparison = useQuery({ queryKey: [...root, "comparison", params], queryFn: () => api.comparison(params), enabled: ready, retry: false });
   function change(field, value) {
-    setDraft((previous) => {
-      const next = { ...(previous || chosen), [field]: value };
-      const prop = options.data.propositions.find((p) => p.id === next.propositionId);
-      if (field === "propositionId" && prop?.canViewTotal && !prop.tenantIds.includes(next.tenantId)) next.tenantId = "__TOTAL__";
-      if (field === "tenantId" && prop && next.tenantId !== "__TOTAL__" && !prop.tenantIds.includes(next.tenantId)) next.propositionId = "";
-      if (field === "propositionId" && next.tenantId === "__TOTAL__" && !prop?.canViewTotal) next.tenantId = options.data.currentTenantId;
-      return next;
-    });
+    setDraft((previous) => ({ ...(previous || chosen), [field]: value, ...(field === "tenantIds" ? { propositionId: "" } : {}) }));
   }
   const error = options.error || summary.error || trends.error || comparison.error;
   const unavailable = error?.response?.status === 403 || error?.response?.status === 401;
-  const availableProps = (options.data?.propositions || []).filter((p) => chosen?.tenantId === "__TOTAL__" ? p.canViewTotal : p.canViewTotal || p.tenantIds.includes(chosen?.tenantId));
-  const selectedProp = options.data?.propositions.find((p) => p.id === chosen?.propositionId);
+  const selectedScope = new Set((options.data?.tenants || []).filter((t) => chosen?.tenantIds.includes(t.id))
+    .flatMap((t) => t.scopeTenantIds || [t.id]));
+  const availableProps = (options.data?.propositions || []).filter((p) => p.tenantIds.some((id) => selectedScope.has(id)));
   const chartData = (trends.data || []).map((row) => ({ name: periodLabel(row.selection), row,
     actual: dashboardChartValue(row.metrics[kpi]?.actual), expected: dashboardChartValue(row.metrics[kpi]?.expected) }));
   const single = summary.data ? [{ name: periodLabel(summary.data.selection), row: summary.data,
     actual: dashboardChartValue(summary.data.metrics[kpi].actual), expected: dashboardChartValue(summary.data.metrics[kpi].expected) }] : [];
+  if (options.error?.response?.status === 403 || options.data && !options.data.tenants.some((t) => t.accessible !== false))
+    return <DashboardAccessDenied title="Business Dashboard" />;
   return <section className="business-dashboard">
     <CorePageHeader title="Business Dashboard" description="Compare expected and actual performance by tenant, proposition, period and currency." />
     <button className="business-refresh" onClick={() => client.invalidateQueries({ queryKey: root })}><FiRefreshCw /> Refresh</button>
     {options.isPending && <CoreLoadingState title="Loading dashboard scope" />}
-    {error && <FeedbackMessage error={error}><FiAlertCircle /> {unavailable ? "You do not have dashboard access in the selected scope. " : ""}{dashboardError(error)}</FeedbackMessage>}
+    {unavailable ? <DashboardNoAccess /> : error && <FeedbackMessage error={error}><FiAlertCircle /> {dashboardError(error)}</FeedbackMessage>}
     {options.data && chosen && <>
       <div className="business-filters">
-        <label>Tenant<select value={chosen.tenantId} onChange={(e) => change("tenantId", e.target.value)}>
-          {options.data.tenants.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-          {options.data.partnerComparisonAllowed && selectedProp?.canViewTotal && <option value="__TOTAL__">Proposition total within your scope</option>}
-        </select></label>
+        <DashboardTenantPicker tenants={options.data.tenants} selected={chosen.tenantIds} onChange={(ids) => change("tenantIds", ids)} />
         <label>Proposition<select value={chosen.propositionId} onChange={(e) => change("propositionId", e.target.value)}>
           <option value="">All within your scope</option>{availableProps.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select></label>
@@ -64,13 +59,14 @@ function DashboardWorkspace({ scope }) {
           {!chosen.currency && <option value="">Currency not available</option>}{options.data.currencies.map((c) => <option key={c}>{c}</option>)}
         </select></label>
         <label>Year<select value={chosen.year} onChange={(e) => change("year", Number(e.target.value))}>{options.data.years.map((y) => <option key={y}>{y}</option>)}</select></label>
-        <label>Period type<select value={chosen.period} onChange={(e) => change("period", e.target.value)}><option value="MONTHLY">Monthly</option><option value="QUARTERLY">Quarterly</option><option value="YEARLY">Yearly</option></select></label>
+        <label>Period type<select value={chosen.period} onChange={(e) => change("period", e.target.value)}><option value="QUARTERLY">Quarterly</option><option value="YEARLY">Yearly</option></select></label>
         {chosen.period === "MONTHLY" && <label key="month">Month<select value={chosen.month} onChange={(e) => change("month", Number(e.target.value))}>{Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>}
         {chosen.period === "QUARTERLY" && <label key="quarter">Quarter<select value={chosen.quarter} onChange={(e) => change("quarter", Number(e.target.value))}>{Array.from({ length: 4 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>}
       </div>
       {!chosen.currency && <p role="status">No currency is available from expected or actual data.</p>}
+      {!chosen.tenantIds.length && <p role="status">Select at least one tenant to view dashboard data.</p>}
       {ready && summary.isPending && <CoreLoadingState title="Loading KPIs" />}
-      {summary.data && !summary.isError && <>
+      {summary.data && !summary.isError && !unavailable && <>
         <p className="business-period">{periodLabel(summary.data.selection)} · {chosen.currency} · Actual period: Asia/Ho_Chi_Minh</p>
         <div className="business-cards">{Object.entries(KPI_NAMES).map(([name, label]) => <KpiCard key={name} name={name} label={label} metric={summary.data.metrics[name]} selected={kpi === name} onSelect={() => setKpi(name)} />)}</div>
         {summary.data.metrics.totalSalesVolume.actualStatus === "NO_RECORDED_TRANSACTIONS" && <p role="status">No transactions recorded for the selected filters and period.</p>}
@@ -79,7 +75,8 @@ function DashboardWorkspace({ scope }) {
           <article><h2>Expected vs Actual</h2><ChartNotice metric={summary.data.metrics[kpi]} /><div className="business-chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={single}><CartesianGrid strokeDasharray="3 3" stroke="#e5eaf1" vertical={false} /><XAxis dataKey="name" /><YAxis /><Tooltip content={<KpiTooltip kpi={kpi} />} /><Legend /><Bar dataKey="actual" name="Actual" fill="#075acd" isAnimationActive={false} /><Bar dataKey="expected" name="Expected" fill="#a8c7f4" isAnimationActive={false} /></BarChart></ResponsiveContainer></div></article>
           <article><h2>Annual trend {chosen.year}</h2>{trends.isPending && <CoreLoadingState title="Loading trends" />}<div className="business-chart"><ResponsiveContainer width="100%" height="100%"><LineChart data={chartData}><CartesianGrid strokeDasharray="3 3" stroke="#e5eaf1" vertical={false} /><XAxis dataKey="name" /><YAxis /><Tooltip content={<KpiTooltip kpi={kpi} />} /><Legend /><Line type="linear" dataKey="actual" name="Actual" stroke="#075acd" connectNulls={false} isAnimationActive={false} /><Line type="linear" dataKey="expected" name="Expected" stroke="#a8c7f4" connectNulls={false} isAnimationActive={false} /></LineChart></ResponsiveContainer></div></article>
         </div>
-        {comparison.data && <BreakdownTable comparison={comparison.data} kpi={kpi} options={options.data} />}
+        {comparison.data && (comparison.data.byTenant.length > 0 || comparison.data.byProposition.length > 0)
+          && <BreakdownTable comparison={comparison.data} kpi={kpi} options={options.data} />}
         <p className="business-sync">Last updated: {summary.data.lastUpdatedAt ? new Date(summary.data.lastUpdatedAt).toLocaleString("en-US") : "Not available"}.</p>
         <p className="business-sync">Expected values use the current configuration. Quarterly expectations are not split into months, and currencies are not converted. Costs above budget are not treated as favorable performance.</p>
       </>}
